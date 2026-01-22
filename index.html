@@ -11,23 +11,16 @@
         .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent); }
         h2 { text-align: center; font-size: 1.4em; margin-bottom: 10px; text-transform: uppercase; }
         p.subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 30px; }
-        
         label { display: block; margin: 20px 0 8px; font-weight: 600; font-size: 0.9em; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
-        input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 5px rgba(192, 57, 43, 0.2); }
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-
         .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 150px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
         .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
         .check-group input { width: auto; margin-top: 4px; }
-
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
         button:hover { background: #a93226; transform: translateY(-2px); }
         button:disabled { background: #ccc; cursor: not-allowed; }
-
-        .loading-select { color: #888; font-style: italic; }
     </style>
 </head>
 <body>
@@ -38,12 +31,11 @@
         <p class="subtitle">Ficha de Inscripción para Madres, Padres, Tutores y Cuidadores</p>
 
         <form id="inscripcionFdh">
-            
             <label>Correo electrónico *</label>
             <input type="email" id="correo" placeholder="ejemplo@correo.com" required>
 
             <label>Nombre(s) *</label>
-            <input type="text" id="nombre" placeholder="Como aparece en su identificación" required>
+            <input type="text" id="nombre" required>
 
             <div class="grid">
                 <div>
@@ -57,16 +49,16 @@
             </div>
 
             <label>Teléfono celular (10 dígitos) *</label>
-            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" placeholder="4421234567" required>
+            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required>
 
             <label>Taller que va a cursar *</label>
             <select id="taller" required>
-                <option value="" class="loading-select">Cargando talleres disponibles...</option>
+                <option value="">Cargando talleres disponibles...</option>
             </select>
 
             <label>Quien canaliza *</label>
             <select id="canaliza" required onchange="toggleExpediente(this.value)">
-                <option value="">Seleccione una opción...</option>
+                <option value="">Seleccione...</option>
                 <option value="Juzgado Familiar">Juzgado Familiar</option>
                 <option value="Coordinación SEDIF">Coordinación SEDIF</option>
                 <option value="Voluntario">Voluntario / Particular</option>
@@ -74,30 +66,22 @@
 
             <div id="seccionExpediente" style="display:none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px;">
                 <label>Número de Expediente *</label>
-                <input type="text" id="expediente" placeholder="Ej. 123/2024">
+                <input type="text" id="expediente">
                 <label>Número de Juzgado y/o Entidad *</label>
-                <input type="text" id="juzgado" placeholder="Ej. Juzgado 5 Familiar">
+                <input type="text" id="juzgado">
             </div>
 
-            <label>Aviso de Privacidad *</label>
             <div class="check-group">
                 <input type="checkbox" id="aceptoPrivacidad" required>
-                <span>He leído y acepto el <b>Aviso de Privacidad Simplificado</b> para la restitución de derechos.</span>
+                <span>Acepto el <b>Aviso de Privacidad Simplificado</b>.</span>
             </div>
 
-            <label>Reglamento de la Escuela FDH *</label>
             <div class="terms-box">
-                <b>LINEAMIENTOS GENERALES:</b><br>
-                1. Asistir al total de las sesiones programadas (8 sesiones) para obtener constancia.<br>
-                2. La tolerancia de entrada es de 10 minutos.<br>
-                3. El uso de celular queda restringido durante la sesión.<br>
-                4. No se permite el acceso con niñas, niños o acompañantes.<br>
-                5. Faltas de respeto causarán baja inmediata y notificación a la autoridad remitente.<br>
-                6. La constancia se emite únicamente al cumplir el proceso completo.
+                <b>REGLAMENTO:</b> Asistir a las 8 sesiones programadas para obtener constancia. Tolerancia de 10 min.
             </div>
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>Acepto cumplir con el reglamento y lineamientos del taller.</span>
+                <span>Acepto el reglamento y lineamientos.</span>
             </div>
 
             <button type="submit" id="btnEnviar">REALIZAR INSCRIPCIÓN</button>
@@ -105,69 +89,47 @@
     </div>
 
     <script>
+        // AQUÍ YA ESTÁ TU WEBHOOK REAL
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
-        // 1. CARGAR TALLERES DESDE LA PESTAÑA "TALLERES" DE TU EXCEL
-     async function cargarTalleres() {
-    const select = document.getElementById('taller');
-    try {
-        // Tu URL de Webhook con el parámetro de listar
-        const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-        const talleres = await res.json();
-        
-        console.log("Datos recibidos de Make:", talleres); // Para depurar en consola (F12)
-        
-        select.innerHTML = '<option value="">Selecciona un taller...</option>';
-        
-        talleres.forEach(t => {
-            // Buscamos la propiedad Nombre_Taller (B) o Nombre_Taller
-            // Dependiendo de cómo Sheets envíe el JSON
-            const nombre = t.Nombre_Taller || t["Nombre_Taller (B)"] || t.nombre_taller;
-            const estatus = t.Estatus || t["Estatus (C)"] || t.estatus;
+        async function cargarTalleres() {
+            const select = document.getElementById('taller');
+            try {
+                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+                const talleres = await res.json();
+                select.innerHTML = '<option value="">Selecciona un taller...</option>';
+                
+                talleres.forEach(t => {
+                    const nombre = t.Nombre_Taller || t["Nombre_Taller (B)"] || t.nombre_taller;
+                    const estatus = t.Estatus || t["Estatus (C)"] || t.estatus;
 
-            if(estatus === 'ACTIVO') {
-                let opt = document.createElement('option');
-                opt.value = nombre;
-                opt.textContent = nombre;
-                select.appendChild(opt);
-            }
-        });
-    } catch (e) {
-        console.error("Error al cargar talleres:", e);
-        select.innerHTML = '<option value="">Error al cargar. Intente de nuevo.</option>';
-    }
-}
-        // 2. MOSTRAR/OCULTAR CAMPOS DE JUZGADO
-        function toggleExpediente(valor) {
-            const div = document.getElementById('seccionExpediente');
-            const expInput = document.getElementById('expediente');
-            const juzInput = document.getElementById('juzgado');
-            
-            if (valor === 'Voluntario') {
-                div.style.display = 'none';
-                expInput.required = false;
-                juzInput.required = false;
-            } else {
-                div.style.display = 'block';
-                expInput.required = true;
-                juzInput.required = true;
+                    if(estatus === 'ACTIVO') {
+                        let opt = document.createElement('option');
+                        opt.value = nombre;
+                        opt.textContent = nombre;
+                        select.appendChild(opt);
+                    }
+                });
+            } catch (e) {
+                select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
             }
         }
 
-        // 3. ENVIAR FORMULARIO
+        function toggleExpediente(valor) {
+            const div = document.getElementById('seccionExpediente');
+            div.style.display = (valor === 'Voluntario') ? 'none' : 'block';
+        }
+
         document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnEnviar');
-            
-            btn.innerText = "PROCESANDO REGISTRO...";
+            btn.innerText = "ENVIANDO...";
             btn.disabled = true;
 
             const datos = {
                 fecha: new Date().toLocaleString(),
                 correo: document.getElementById('correo').value,
-                nombre: document.getElementById('nombre').value,
-                paterno: document.getElementById('paterno').value,
-                materno: document.getElementById('materno').value,
+                nombre: `${document.getElementById('nombre').value} ${document.getElementById('paterno').value} ${document.getElementById('materno').value}`,
                 telefono: document.getElementById('telefono').value,
                 taller: document.getElementById('taller').value,
                 canaliza: document.getElementById('canaliza').value,
@@ -181,23 +143,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datos)
                 });
-
                 if (response.ok) {
-                    alert("¡Inscripción realizada con éxito!\nEn breve recibirá su comprobante en su correo electrónico.");
+                    alert("¡Inscripción exitosa!");
                     document.getElementById('inscripcionFdh').reset();
-                    toggleExpediente('Voluntario');
-                } else {
-                    throw new Error();
                 }
             } catch (error) {
-                alert("Hubo un error al procesar su registro. Por favor, intente más tarde.");
+                alert("Error al enviar registro.");
             } finally {
                 btn.innerText = "REALIZAR INSCRIPCIÓN";
                 btn.disabled = false;
             }
         });
 
-        // Ejecutar carga al abrir
         window.onload = cargarTalleres;
     </script>
 </body>
