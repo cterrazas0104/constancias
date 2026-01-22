@@ -2,30 +2,59 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador de Constancias - SEDIF</title>
+    <title>Inscripción Escuela FDH</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #00ad9f; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: var(--primary); margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,173,159,0.3); }
+        :root { --primary: #2c3e50; --accent: #c0392b; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; }
+        .form-card { background: white; padding: 40px; border-radius: 8px; max-width: 600px; margin: auto; border-top: 10px solid var(--accent); }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Consultar Constancia</h2>
-        <input type="text" id="curp" placeholder="Ingresa tu CURP o Folio">
-        <button onclick="buscar()">BUSCAR DOCUMENTO</button>
-        <p id="mensaje" style="margin-top: 15px; font-size: 0.9em; color: #666;"></p>
+    <div class="form-card">
+        <h2>Ficha de Inscripción</h2>
+        <form id="inscripcionFdh">
+            <label>Nombre(s) *</label>
+            <input type="text" id="nombre" required>
+
+            <label>Taller *</label>
+            <select id="taller" required>
+                <option value="">Cargando talleres disponibles...</option>
+            </select>
+
+            <button type="submit" id="btnEnviar">ENVIAR REGISTRO</button>
+        </form>
     </div>
+
     <script>
-        function buscar() {
-            const val = document.getElementById('curp').value;
-            document.getElementById('mensaje').innerText = "Buscando registro para: " + val;
-            // Aquí irá tu lógica de Make para constancias
+        // FUNCIÓN PARA CARGAR TALLERES DINÁMICAMENTE
+        async function cargarTalleres() {
+            const webhookListar = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n'; 
+            try {
+                const res = await fetch(webhookListar + '?accion=listarTalleres');
+                const talleres = await res.json();
+                const select = document.getElementById('taller');
+                select.innerHTML = '<option value="">Selecciona un taller...</option>';
+                
+                talleres.forEach(t => {
+                    if(t.Estatus === 'ACTIVO') {
+                        let opt = document.createElement('option');
+                        opt.value = t.ID_Taller; // Guardamos el ID, no el nombre
+                        opt.textContent = t.Nombre_Taller;
+                        select.appendChild(opt);
+                    }
+                });
+            } catch (e) { console.error("Error al cargar talleres"); }
         }
+
+        window.onload = cargarTalleres;
+
+        document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Lógica de envío igual a la anterior enviando el ID del taller
+        });
     </script>
 </body>
 </html>
