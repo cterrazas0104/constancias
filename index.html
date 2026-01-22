@@ -108,30 +108,35 @@
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
         // 1. CARGAR TALLERES DESDE LA PESTAÑA "TALLERES" DE TU EXCEL
-        async function cargarTalleres() {
-            const select = document.getElementById('taller');
-            try {
-                // Llamamos al webhook con la acción para listar
-                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-                const talleres = await res.json();
-                
-                select.innerHTML = '<option value="">Selecciona un taller...</option>';
-                
-                talleres.forEach(t => {
-                    // Solo mostramos los que estén como "ACTIVO" en tu Excel
-                    if(t.Estatus === 'ACTIVO' || t.estatus === 'ACTIVO') {
-                        let opt = document.createElement('option');
-                        opt.value = t.Nombre_Taller || t.nombre_taller;
-                        opt.textContent = t.Nombre_Taller || t.nombre_taller;
-                        select.appendChild(opt);
-                    }
-                });
-            } catch (e) {
-                console.error("Error:", e);
-                select.innerHTML = '<option value="">Error al cargar talleres. Recargue la página.</option>';
-            }
-        }
+     async function cargarTalleres() {
+    const select = document.getElementById('taller');
+    try {
+        // Tu URL de Webhook con el parámetro de listar
+        const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+        const talleres = await res.json();
+        
+        console.log("Datos recibidos de Make:", talleres); // Para depurar en consola (F12)
+        
+        select.innerHTML = '<option value="">Selecciona un taller...</option>';
+        
+        talleres.forEach(t => {
+            // Buscamos la propiedad Nombre_Taller (B) o Nombre_Taller
+            // Dependiendo de cómo Sheets envíe el JSON
+            const nombre = t.Nombre_Taller || t["Nombre_Taller (B)"] || t.nombre_taller;
+            const estatus = t.Estatus || t["Estatus (C)"] || t.estatus;
 
+            if(estatus === 'ACTIVO') {
+                let opt = document.createElement('option');
+                opt.value = nombre;
+                opt.textContent = nombre;
+                select.appendChild(opt);
+            }
+        });
+    } catch (e) {
+        console.error("Error al cargar talleres:", e);
+        select.innerHTML = '<option value="">Error al cargar. Intente de nuevo.</option>';
+    }
+}
         // 2. MOSTRAR/OCULTAR CAMPOS DE JUZGADO
         function toggleExpediente(valor) {
             const div = document.getElementById('seccionExpediente');
