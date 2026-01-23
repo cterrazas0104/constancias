@@ -144,17 +144,36 @@
             } catch (e) { console.error(e); }
         }
 
-        async function actualizarEstatus(fila, estatusActual) {
+     async function actualizarEstatus(fila, estatusActual) {
             const nuevo = estatusActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-            if(!confirm("¿Cambiar a " + nuevo + "?")) return;
+            
+            // Usamos un alert más profesional para confirmar
+            if(!confirm("¿Deseas cambiar el estatus de este taller a " + nuevo + "?")) return;
+
             try {
-                await fetch(`${WEBHOOK_URL}?accion=admin_actualizar_catalogo`, {
+                // FORZAMOS la acción en la URL para que el Router de Make la vea de inmediato
+                const urlConAccion = `${WEBHOOK_URL}?accion=admin_actualizar_catalogo`;
+                
+                const res = await fetch(urlConAccion, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fila: fila, estatus: nuevo })
+                    body: JSON.stringify({ 
+                        accion: 'admin_actualizar_catalogo', // Doble validación
+                        fila: fila, 
+                        estatus: nuevo 
+                    })
                 });
-                obtenerDatosCatalogos();
-            } catch (e) { alert("Error al conectar"); }
+                
+                if(res.ok) {
+                    alert("¡Éxito! El taller ahora está " + nuevo);
+                    obtenerDatosCatalogos(); // Refresca la tabla automáticamente
+                } else {
+                    alert("Make recibió la orden pero hubo un error en el proceso.");
+                }
+            } catch (e) { 
+                console.error("Error en la petición:", e);
+                alert("Error de conexión con el servidor de actualización."); 
+            }
         }
     </script>
 </body>
