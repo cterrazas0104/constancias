@@ -118,29 +118,31 @@
             } catch (e) { console.error(e); }
         }
 
-        async function obtenerDatosCatalogos() {
+  async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando catálogo...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Actualizando vista...</td></tr>';
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
                 tbody.innerHTML = '';
+                
                 data.forEach((item, index) => {
                     const v = Object.values(item);
-                    // Mapeo forzado: v[0]=ID (T-001), v[1]=Nombre Taller, v[2]=Estatus (ACTIVO)
-                    const id = v[0] || '---';
-                    const nombre = v[1] || 'Sin nombre';
-                    const estatus = (String(v[2] || '').toUpperCase() === 'ACTIVO') ? 'ACTIVO' : 'INACTIVO';
+                    // Forzamos el mapeo: ID en la primera columna, Nombre en la segunda
+                    const id = v[0] || 'T-' + (index + 1);
+                    const nombre = v[1] || 'Taller sin título';
+                    const estatusRaw = String(v[2] || '').toUpperCase().trim();
+                    const estatus = estatusRaw === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO';
                     
                     tbody.innerHTML += `
                         <tr>
-                            <td>${id}</td>
+                            <td><strong>${id}</strong></td>
                             <td>${nombre}</td>
                             <td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td>
-                            <td><button onclick="actualizarEstatus(${index + 2}, '${estatus}')" style="cursor:pointer; padding:5px 10px; border-radius:5px; border:1px solid #ccc;">Alternar</button></td>
+                            <td><button onclick="actualizarEstatus(${index + 2}, '${estatus}')" class="btn-toggle">Alternar</button></td>
                         </tr>`;
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error cargando tabla:", e); }
         }
 
         async function actualizarEstatus(fila, estatusActual) {
