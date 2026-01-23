@@ -130,31 +130,44 @@
             } catch (e) { error.style.display = 'block'; }
         }
 
-        async function obtenerDatos(rol, sede) {
+     async function obtenerDatos(rol, sede) {
             const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">Consultando base de datos...</td></tr>';
+            
             try {
-                // Aquí pedimos a la nueva rama que vas a crear en Make
-                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${rol === 'Administrador' ? '' : sede}`);
+                const paramSede = (rol === 'Administrador') ? '' : sede;
+                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${paramSede}`);
                 const data = await res.json();
                 
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No hay registros aún.</td></tr>';
+                // Si la respuesta es un objeto único, lo convertimos en array
+                const registros = Array.isArray(data) ? data : [data];
+
+                if (!registros || registros.length === 0 || !registros[0]) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #999;">No hay inscritos registrados.</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = '';
-                data.forEach(fila => {
+                registros.forEach(fila => {
+                    // Buscamos los datos por posición si el nombre de la columna falla
+                    const valores = Object.values(fila);
+                    const folio = fila.Folio_Inscripcion || valores[0] || 'S/F';
+                    const nombre = fila.Nombre_s || valores[3] || 'Sin nombre';
+                    const apellido = fila.Apellido_Paterno || valores[4] || '';
+                    const taller = fila.Taller_Seleccionado || valores[7] || 'Sin taller';
+
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong style="color: var(--primary);">${fila.Folio_Inscripcion || 'S/F'}</strong></td>
-                            <td>${fila.Nombre_s} ${fila.Apellido_Paterno}</td>
-                            <td>${fila.Taller_Seleccionado}</td>
-                            <td><span style="color: #27ae60; font-weight:bold;">✓ ACTIVO</span></td>
+                            <td><strong style="color: var(--primary);">${folio}</strong></td>
+                            <td>${nombre} ${apellido}</td>
+                            <td>${taller}</td>
+                            <td><span class="status-badge">ACTIVO</span></td>
                         </tr>
                     `;
                 });
             } catch (e) { 
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #fa5252;">Falta configurar la rama de Listar en Make.</td></tr>'; 
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #fa5252;">Error al cargar los registros. Revisa que el Webhook Response sea un Array.</td></tr>'; 
             }
         }
     </script>
