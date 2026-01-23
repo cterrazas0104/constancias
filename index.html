@@ -5,35 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscripción Escuela FDH - SEDIF</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #c0392b; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: var(--primary); line-height: 1.6; }
-        .form-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 700px; margin: auto; border-top: 10px solid var(--accent); }
-        .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent); font-size: 1.2em; }
-        h2 { text-align: center; font-size: 1.4em; margin-bottom: 10px; text-transform: uppercase; }
+        /* Paleta Institucional basada en tu firma de ejemplo */
+        :root { 
+            --primary-purple: #7b7bb5; 
+            --secondary-blue: #4a90e2; 
+            --text-dark: #2c3e50; 
+            --bg-light: #f8faff; 
+            --accent-purple: #5b5b95;
+        }
+        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); padding: 20px; color: var(--text-dark); line-height: 1.6; }
+        
+        .form-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 30px rgba(123, 123, 181, 0.15); 
+            width: 100%; 
+            max-width: 700px; 
+            margin: auto; 
+            border-top: 10px solid var(--primary-purple); 
+        }
+
+        .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--primary-purple); font-size: 1.3em; letter-spacing: 1px; }
+        h2 { text-align: center; font-size: 1.4em; margin-bottom: 10px; color: var(--accent-purple); text-transform: uppercase; }
         p.subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 30px; }
-        label { display: block; margin: 20px 0 8px; font-weight: 600; font-size: 0.9em; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        
+        label { display: block; margin: 20px 0 8px; font-weight: 600; font-size: 0.9em; color: var(--accent-purple); }
+        input, select { width: 100%; padding: 12px; border: 2px solid #e1e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--secondary-blue); outline: none; box-shadow: 0 0 8px rgba(74, 144, 226, 0.2); }
+
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
+
+        .terms-box { background: #fdfdff; padding: 15px; border: 1px solid #e1e8f0; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 6px; color: #555; }
+        
         .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
         .check-group input { width: auto; margin-top: 4px; }
-        button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
-        button:hover { background: #a93226; transform: translateY(-2px); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .hidden-section { display: none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid var(--accent); }
+
+        .btn-main { 
+            background: var(--primary-purple); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 6px; 
+            width: 100%; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 30px; 
+            font-size: 1.1em; 
+            transition: 0.4s;
+            text-transform: uppercase;
+        }
+        .btn-main:hover { background: var(--accent-purple); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(91, 91, 149, 0.3); }
+        .btn-main:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .hidden-section { display: none; background: #f0f4ff; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-blue); }
         
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
-        .modal-content { background: white; margin: 2% auto; padding: 20px; width: 90%; max-width: 900px; border-radius: 8px; height: 85vh; display: flex; flex-direction: column; }
-        .iframe-container { flex-grow: 1; border: 1px solid #ddd; }
-        .modal-footer { text-align: right; padding-top: 15px; }
+        /* Modal - Aviso de Privacidad */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 3% auto; padding: 25px; width: 90%; max-width: 850px; border-radius: 12px; height: 80vh; display: flex; flex-direction: column; }
+        .iframe-container { flex-grow: 1; border: 2px solid #f0f4ff; border-radius: 6px; overflow: hidden; }
+        .modal-footer { text-align: center; padding-top: 20px; }
+        
+        .btn-modal { background: var(--secondary-blue); color: white; border: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="form-card">
-        <div class="header-logo">SEDIF QUERÉTARO</div>
+        <div class="header-logo">DIF ESTATAL QUERÉTARO | UNIENDO CORAZONES</div>
         <h2>Escuela de Formación y Desarrollo Humano</h2>
         <p class="subtitle">Ficha de Inscripción para Madres, Padres, Tutores y Cuidadores</p>
 
@@ -53,7 +94,7 @@
             <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required>
 
             <label>Taller que va a cursar *</label>
-            <select id="taller" required><option value="">Cargando talleres...</option></select>
+            <select id="taller" required><option value="">Cargando talleres disponibles...</option></select>
 
             <label>Quien canaliza *</label>
             <select id="canaliza" required onchange="manejarCanalizacion(this.value)">
@@ -75,10 +116,7 @@
                 <label>Especifique quién canaliza *</label><input type="text" id="canalizaOtro">
             </div>
 
-            <div class="check-group">
-                <input type="checkbox" id="aceptoPrivacidad" required disabled>
-                <span>He leído y acepto el <a href="javascript:void(0)" onclick="abrirModal()"><b>Aviso de Privacidad Simplificado</b></a>. *</span>
-            </div>
+            <input type="hidden" id="privacidadAceptada" value="false">
 
             <div class="terms-box">
                 <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
@@ -86,29 +124,30 @@
                 2. Tomar el taller en las instalaciones indicadas.<br>
                 3. Acudir puntual (10 min antes).<br>
                 4. Asistir al total de sesiones.<br>
-                12. Menos de 8 sesiones invalida la constancia.<br>
+                12. Menos de 8 sesiones invalida la obtención de la constancia.<br>
                 13. No se admite el acceso de menores de edad.<br>
-                15. Comportamientos indebidos causan baja inmediata y notificación al área que derive.<br>
-                16. Asumir las consecuencias derivadas de un comportamiento inadecuado.
+                15. Comportamientos indebidos causan baja inmediata y notificación al juzgado.<br>
+                16. Asumir consecuencias por comportamiento inadecuado.
             </div>
             
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>Acepto el reglamento y lineamientos. *</span>
+                <span>He leído y acepto el <b>reglamento y lineamientos</b>. *</span>
             </div>
 
-            <button type="submit" id="btnEnviar">REALIZAR INSCRIPCIÓN</button>
+            <button type="submit" id="btnEnviar" class="btn-main">Realizar Inscripción</button>
         </form>
     </div>
 
     <div id="miModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0;">Aviso de Privacidad Simplificado</h3>
+            <h3 style="color: var(--primary-purple); margin-top:0;">Aviso de Privacidad Simplificado</h3>
+            <p style="font-size: 0.85em; color: #666;">Por favor, revise el documento para continuar con su registro.</p>
             <div class="iframe-container">
                 <iframe src="aviso_privacidad.pdf" width="100%" height="100%" frameborder="0"></iframe>
             </div>
             <div class="modal-footer">
-                <button onclick="cerrarModalYActivar()" style="padding: 10px 20px; width: auto; margin: 0; background: var(--primary);">Entendido y Aceptar</button>
+                <button onclick="confirmarPrivacidad()" class="btn-modal">HE LEÍDO Y ACEPTO LOS TÉRMINOS</button>
             </div>
         </div>
     </div>
@@ -116,11 +155,11 @@
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
-        function abrirModal() { document.getElementById('miModal').style.display = 'block'; }
-        function cerrarModalYActivar() {
+        function confirmarPrivacidad() {
             document.getElementById('miModal').style.display = 'none';
-            document.getElementById('aceptoPrivacidad').disabled = false;
-            document.getElementById('aceptoPrivacidad').checked = true;
+            document.getElementById('privacidadAceptada').value = "true";
+            // Ejecutamos el envío automáticamente después de aceptar
+            enviarFormulario();
         }
 
         async function cargarTalleres() {
@@ -145,13 +184,19 @@
         function manejarCanalizacion(valor) {
             document.getElementById('seccionExpediente').style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
             document.getElementById('seccionOtros').style.display = (valor === 'Otros') ? 'block' : 'none';
-            document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
-            document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
-            document.getElementById('canalizaOtro').required = (valor === 'Otros');
         }
 
-        document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
+        document.getElementById('inscripcionFdh').addEventListener('submit', function(e) {
             e.preventDefault();
+            // Si no ha aceptado la privacidad, abrimos el modal en lugar de enviar
+            if (document.getElementById('privacidadAceptada').value === "false") {
+                document.getElementById('miModal').style.display = 'block';
+            } else {
+                enviarFormulario();
+            }
+        });
+
+        async function enviarFormulario() {
             const btn = document.getElementById('btnEnviar');
             btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
@@ -177,12 +222,12 @@
                     body: JSON.stringify(datos)
                 });
                 if (response.ok) {
-                    alert("¡Inscripción exitosa! Revisa tu correo para confirmar tu folio.");
+                    alert("¡Inscripción exitosa! Revise su correo para confirmar su folio.");
                     location.reload();
                 }
             } catch (error) { alert("Error al enviar el registro."); }
             finally { btn.innerText = "REALIZAR INSCRIPCIÓN"; btn.disabled = false; }
-        });
+        }
 
         window.onload = cargarTalleres;
     </script>
