@@ -21,6 +21,7 @@
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
         button:hover { background: #a93226; transform: translateY(-2px); }
         button:disabled { background: #ccc; cursor: not-allowed; }
+        .hidden-section { display: none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -57,18 +58,26 @@
             </select>
 
             <label>Quien canaliza *</label>
-            <select id="canaliza" required onchange="toggleExpediente(this.value)">
+            <select id="canaliza" required onchange="manejarCanalizacion(this.value)">
                 <option value="">Seleccione...</option>
                 <option value="Juzgado Familiar">Juzgado Familiar</option>
                 <option value="Coordinación SEDIF">Coordinación SEDIF</option>
-                <option value="Voluntario">Voluntario / Particular</option>
+                <option value="Voluntario">Voluntario</option>
+                <option value="Corazones Mágicos">Corazones Mágicos</option>
+                <option value="Centro de Asistencia Social">Centro de Asistencia Social</option>
+                <option value="Otros">Otros</option>
             </select>
 
-            <div id="seccionExpediente" style="display:none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px;">
+            <div id="seccionExpediente" class="hidden-section">
                 <label>Número de Expediente *</label>
                 <input type="text" id="expediente">
                 <label>Número de Juzgado y/o Entidad *</label>
                 <input type="text" id="juzgado">
+            </div>
+
+            <div id="seccionOtros" class="hidden-section">
+                <label>Especifique quién canaliza *</label>
+                <input type="text" id="canalizaOtro">
             </div>
 
             <div class="check-group">
@@ -89,44 +98,44 @@
     </div>
 
     <script>
-        // AQUÍ YA ESTÁ TU WEBHOOK REAL
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
-async function cargarTalleres() {
-    const select = document.getElementById('taller');
-    try {
-        const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-        const data = await res.json();
-        
-        console.log("Datos recibidos:", data);
+        async function cargarTalleres() {
+            const select = document.getElementById('taller');
+            try {
+                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+                const data = await res.json();
+                
+                const talleres = data.map(item => {
+                    if (!item) return null;
+                    const valores = Object.values(item);
+                    return valores.find(v => typeof v === 'string' && v.length > 10);
+                }).filter(t => t);
 
-        // Limpiamos y extraemos los nombres sin importar cómo vengan
-        const talleres = data.map(item => {
-            if (!item) return null;
-            // Si es un objeto, agarramos el primer valor que sea un texto largo
-            const valores = Object.values(item);
-            return valores.find(v => typeof v === 'string' && v.length > 10);
-        }).filter(t => t !== null && t !== undefined);
+                select.innerHTML = '<option value="">Selecciona un taller...</option>';
+                [...new Set(talleres)].forEach(nombre => {
+                    let opt = document.createElement('option');
+                    opt.value = nombre;
+                    opt.textContent = nombre;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
+            }
+        }
 
-        select.innerHTML = '<option value="">Selecciona un taller...</option>';
-        
-        // Usamos un Set para eliminar duplicados si los hubiera
-        [...new Set(talleres)].forEach(nombre => {
-            let opt = document.createElement('option');
-            opt.value = nombre;
-            opt.textContent = nombre;
-            select.appendChild(opt);
-        });
+        function manejarCanalizacion(valor) {
+            const divExp = document.getElementById('seccionExpediente');
+            const divOtros = document.getElementById('seccionOtros');
+            
+            // Mostrar u ocultar secciones
+            divExp.style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
+            divOtros.style.display = (valor === 'Otros') ? 'block' : 'none';
 
-    } catch (e) {
-        console.error("Error detallado:", e);
-        select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
-    }
-}
-
-        function toggleExpediente(valor) {
-            const div = document.getElementById('seccionExpediente');
-            div.style.display = (valor === 'Voluntario') ? 'none' : 'block';
+            // Obligatoriedad dinámica
+            document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
+            document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
+            document.getElementById('canalizaOtro').required = (valor === 'Otros');
         }
 
         document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
@@ -135,13 +144,19 @@ async function cargarTalleres() {
             btn.innerText = "ENVIANDO...";
             btn.disabled = true;
 
+            // Determinar valor de canalización
+            let canalizaVal = document.getElementById('canaliza').value;
+            if (canalizaVal === 'Otros') {
+                canalizaVal = document.getElementById('canalizaOtro').value;
+            }
+
             const datos = {
                 fecha: new Date().toLocaleString(),
                 correo: document.getElementById('correo').value,
                 nombre: `${document.getElementById('nombre').value} ${document.getElementById('paterno').value} ${document.getElementById('materno').value}`,
                 telefono: document.getElementById('telefono').value,
                 taller: document.getElementById('taller').value,
-                canaliza: document.getElementById('canaliza').value,
+                canaliza: canalizaVal,
                 expediente: document.getElementById('expediente').value || "N/A",
                 juzgado: document.getElementById('juzgado').value || "N/A"
             };
@@ -155,6 +170,7 @@ async function cargarTalleres() {
                 if (response.ok) {
                     alert("¡Inscripción exitosa!");
                     document.getElementById('inscripcionFdh').reset();
+                    manejarCanalizacion(""); // Ocultar secciones tras reset
                 }
             } catch (error) {
                 alert("Error al enviar registro.");
