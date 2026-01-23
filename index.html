@@ -97,29 +97,30 @@ async function cargarTalleres() {
     try {
         const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
         const data = await res.json();
-        console.log("Datos crudos recibidos:", data); // Esto nos dirá la verdad en F12
+        
+        console.log("Datos recibidos:", data);
 
-        // Esta lógica limpia cualquier formato raro de Make
-        let talleres = [];
-        if (Array.isArray(data)) {
-            talleres = data.map(item => {
-                if (typeof item === 'string') return item;
-                if (typeof item === 'object') return Object.values(item)[0];
-                return null;
-            }).filter(t => t && t.length > 5);
-        }
+        // Limpiamos y extraemos los nombres sin importar cómo vengan
+        const talleres = data.map(item => {
+            if (!item) return null;
+            // Si es un objeto, agarramos el primer valor que sea un texto largo
+            const valores = Object.values(item);
+            return valores.find(v => typeof v === 'string' && v.length > 10);
+        }).filter(t => t !== null && t !== undefined);
 
         select.innerHTML = '<option value="">Selecciona un taller...</option>';
         
-        talleres.forEach(nombre => {
+        // Usamos un Set para eliminar duplicados si los hubiera
+        [...new Set(talleres)].forEach(nombre => {
             let opt = document.createElement('option');
             opt.value = nombre;
             opt.textContent = nombre;
             select.appendChild(opt);
         });
+
     } catch (e) {
-        console.error("Error al cargar talleres:", e);
-        select.innerHTML = '<option value="">Error al cargar. Recargue la página.</option>';
+        console.error("Error detallado:", e);
+        select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
     }
 }
 
