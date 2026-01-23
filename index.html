@@ -15,7 +15,7 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 150px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
+        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
         .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
         .check-group input { width: auto; margin-top: 4px; }
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
@@ -82,12 +82,28 @@
 
             <div class="check-group">
                 <input type="checkbox" id="aceptoPrivacidad" required>
-                <span>Acepto el <b>Aviso de Privacidad Simplificado</b>.</span>
+                <span>Acepto el <a href="https://portal.queretaro.gob.mx/Uploads/ContenidosDIF/105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS_ADOLESCENTES.pdf" target="_blank"><b>Aviso de Privacidad Simplificado</b></a>.</span>
             </div>
 
             <div class="terms-box">
-                <b>REGLAMENTO:</b> Asistir a las 8 sesiones programadas para obtener constancia. Tolerancia de 10 min.
+                <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
+                1. Aceptar el reglamento.<br>
+                2. Tomar el taller en las instalaciones indicadas.<br>
+                3. Acudir de manera puntual (10 minutos antes).<br>
+                4. Asistir al total de sesiones del taller.<br>
+                5. Permanecer en cada sesión hasta que finalice.<br>
+                6. Suspender el uso del celular durante el taller.<br>
+                7. Participar de manera respetuosa y activa.<br>
+                8. Realizar las tareas e indicaciones de talleristas.<br>
+                9. Llevar su propio control de asistencias.<br>
+                10. Portar libreta y repasar notas.<br>
+                11. Aplicar lo aprendido en la vida diaria.<br>
+                12. Menos de 8 sesiones invalida la Constancia.<br>
+                13. No se admite el acceso de niñas, niños o adolescentes.<br>
+                14. No se admite asistencia de personas no inscritas.<br>
+                15. Faltas de respeto causan baja inmediata y notificación al juzgado.<br>
             </div>
+            
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
                 <span>Acepto el reglamento y lineamientos.</span>
@@ -105,7 +121,6 @@
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
-                
                 const talleres = data.map(item => {
                     if (!item) return null;
                     const valores = Object.values(item);
@@ -127,12 +142,8 @@
         function manejarCanalizacion(valor) {
             const divExp = document.getElementById('seccionExpediente');
             const divOtros = document.getElementById('seccionOtros');
-            
-            // Mostrar u ocultar secciones
             divExp.style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
             divOtros.style.display = (valor === 'Otros') ? 'block' : 'none';
-
-            // Obligatoriedad dinámica
             document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
             document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
             document.getElementById('canalizaOtro').required = (valor === 'Otros');
@@ -144,11 +155,8 @@
             btn.innerText = "ENVIANDO...";
             btn.disabled = true;
 
-            // Determinar valor de canalización
             let canalizaVal = document.getElementById('canaliza').value;
-            if (canalizaVal === 'Otros') {
-                canalizaVal = document.getElementById('canalizaOtro').value;
-            }
+            if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
 
             const datos = {
                 fecha: new Date().toLocaleString(),
@@ -170,7 +178,7 @@
                 if (response.ok) {
                     alert("¡Inscripción exitosa!");
                     document.getElementById('inscripcionFdh').reset();
-                    manejarCanalizacion(""); // Ocultar secciones tras reset
+                    manejarCanalizacion("");
                 }
             } catch (error) {
                 alert("Error al enviar registro.");
