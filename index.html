@@ -15,13 +15,19 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 200px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; border-left: 3px solid #ccc; }
+        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
         .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
         .check-group input { width: auto; margin-top: 4px; }
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
         button:hover { background: #a93226; transform: translateY(-2px); }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .hidden-section { display: none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid var(--accent); }
+        
+        /* Estilos del Modal para el Aviso de Privacidad */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 80%; max-width: 800px; border-radius: 8px; height: 80%; }
+        .iframe-container { width: 100%; height: calc(100% - 60px); border: 1px solid #ddd; }
+        .modal-footer { text-align: right; padding-top: 15px; }
     </style>
 </head>
 <body>
@@ -39,23 +45,15 @@
             <input type="text" id="nombre" required>
 
             <div class="grid">
-                <div>
-                    <label>Apellido Paterno *</label>
-                    <input type="text" id="paterno" required>
-                </div>
-                <div>
-                    <label>Apellido Materno *</label>
-                    <input type="text" id="materno" required>
-                </div>
+                <div><label>Apellido Paterno *</label><input type="text" id="paterno" required></div>
+                <div><label>Apellido Materno *</label><input type="text" id="materno" required></div>
             </div>
 
             <label>Teléfono celular (10 dígitos) *</label>
-            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required title="Debe contener 10 dígitos numéricos">
+            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required>
 
             <label>Taller que va a cursar *</label>
-            <select id="taller" required>
-                <option value="">Cargando talleres disponibles...</option>
-            </select>
+            <select id="taller" required><option value="">Cargando talleres...</option></select>
 
             <label>Quien canaliza *</label>
             <select id="canaliza" required onchange="manejarCanalizacion(this.value)">
@@ -69,97 +67,89 @@
             </select>
 
             <div id="seccionExpediente" class="hidden-section">
-                <label>Número de Expediente *</label>
-                <input type="text" id="expediente">
-                <label>Número de Juzgado y/o Entidad *</label>
-                <input type="text" id="juzgado">
+                <label>Número de Expediente *</label><input type="text" id="expediente">
+                <label>Número de Juzgado y/o Entidad *</label><input type="text" id="juzgado">
             </div>
 
             <div id="seccionOtros" class="hidden-section">
-                <label>Especifique quién canaliza *</label>
-                <input type="text" id="canalizaOtro">
+                <label>Especifique quién canaliza *</label><input type="text" id="canalizaOtro">
             </div>
 
             <div class="check-group">
-                <input type="checkbox" id="aceptoPrivacidad" required>
-                <span>Acepto el <a href="https://portal.queretaro.gob.mx/SaveAs.aspx?Nombre=105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf&Ruta=Uploads\ContenidosDIF\105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf" target="_blank"><b>Aviso de Privacidad Simplificado</b></a>. *</span>
+                <input type="checkbox" id="aceptoPrivacidad" required disabled>
+                <span>He leído y acepto el <a href="javascript:void(0)" onclick="abrirModal()"><b>Aviso de Privacidad Simplificado</b></a>. *</span>
             </div>
 
             <div class="terms-box">
-                <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
-                1. Aceptar el reglamento.<br>
-                2. Tomar el taller en las instalaciones indicadas.<br>
-                3. Acudir de manera puntual (10 minutos antes).<br>
-                4. Asistir al total de sesiones del taller.<br>
-                5. Permanecer en cada sesión hasta que finalice.<br>
-                6. Suspender el uso del celular durante el taller.<br>
-                7. Participar de manera respetuosa y activa.<br>
-                8. Realizar las tareas e indicaciones de talleristas.<br>
-                9. Llevar su propio control de asistencias.<br>
-                10. Portar libreta y repasar notas.<br>
-                11. Aplicar lo aprendido en la vida diaria.<br>
-                12. Menos de 8 sesiones invalida la obtención de la Constancia.<br>
-                13. No se admite el acceso de niñas, niños o adolescentes al taller.<br>
-                14. No se admite la asistencia de personas que no estén inscritas.<br>
-                15. Comportamientos indebidos causan baja inmediata y notificación al juzgado o área que derive.<br>
-                16. Asumir las consecuencias derivadas de un comportamiento inadecuado, tales como faltas de respeto.
+                <b>REGLAMENTO:</b> [cite: 80]<br>
+                1. Aceptar el reglamento. [cite: 83]<br>
+                2. Tomar el taller en las instalaciones indicadas. [cite: 84]<br>
+                3. Acudir puntual (10 min antes). [cite: 86]<br>
+                4. Asistir al total de sesiones. [cite: 87]<br>
+                12. Menos de 8 sesiones invalida la constancia. [cite: 95]<br>
+                13. No se admite el acceso de menores de edad. [cite: 96]<br>
+                15. Comportamientos indebidos causan baja inmediata. [cite: 98, 99]
             </div>
             
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>He leído y acepto el <b>reglamento y lineamientos</b>. *</span>
+                <span>Acepto el reglamento y lineamientos. [cite: 115]</span>
             </div>
 
             <button type="submit" id="btnEnviar">REALIZAR INSCRIPCIÓN</button>
         </form>
     </div>
 
+    <div id="miModal" class="modal">
+        <div class="modal-content">
+            <h3>Aviso de Privacidad Simplificado</h3>
+            <div class="iframe-container">
+                <iframe src="https://portal.queretaro.gob.mx/SaveAs.aspx?Nombre=105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf&Ruta=Uploads\ContenidosDIF\105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf" width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button onclick="cerrarModalYActivar()" style="padding: 10px 20px; width: auto; margin: 0;">Entendido y Aceptar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
+
+        function abrirModal() { document.getElementById('miModal').style.display = 'block'; }
+        function cerrarModalYActivar() {
+            document.getElementById('miModal').style.display = 'none';
+            document.getElementById('aceptoPrivacidad').disabled = false;
+            document.getElementById('aceptoPrivacidad').checked = true;
+        }
 
         async function cargarTalleres() {
             const select = document.getElementById('taller');
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
-                
-                // Mapeo robusto de nombres de taller
                 const talleres = data.map(item => {
                     if (!item) return null;
                     const valores = Object.values(item);
                     return valores.find(v => typeof v === 'string' && v.length > 10);
                 }).filter(t => t);
-
                 select.innerHTML = '<option value="">Selecciona un taller...</option>';
                 [...new Set(talleres)].forEach(nombre => {
                     let opt = document.createElement('option');
-                    opt.value = nombre;
-                    opt.textContent = nombre;
+                    opt.value = nombre; opt.textContent = nombre;
                     select.appendChild(opt);
                 });
-            } catch (e) {
-                console.error("Error al cargar talleres:", e);
-                select.innerHTML = '<option value="">Error al cargar talleres. Recargue la página.</option>';
-            }
+            } catch (e) { select.innerHTML = '<option value="">Error al cargar.</option>'; }
         }
 
         function manejarCanalizacion(valor) {
-            const divExp = document.getElementById('seccionExpediente');
-            const divOtros = document.getElementById('seccionOtros');
-            
-            divExp.style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
-            divOtros.style.display = (valor === 'Otros') ? 'block' : 'none';
-
-            document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
-            document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
-            document.getElementById('canalizaOtro').required = (valor === 'Otros');
+            document.getElementById('seccionExpediente').style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
+            document.getElementById('seccionOtros').style.display = (valor === 'Otros') ? 'block' : 'none';
         }
 
         document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "PROCESANDO...";
-            btn.disabled = true;
+            btn.innerText = "ENVIANDO..."; btn.disabled = true;
 
             let canalizaVal = document.getElementById('canaliza').value;
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
@@ -182,20 +172,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datos)
                 });
-                
                 if (response.ok) {
-                    alert("¡Inscripción registrada correctamente! En breve recibirás un correo de confirmación con tu folio.");
-                    document.getElementById('inscripcionFdh').reset();
-                    manejarCanalizacion(""); 
-                } else {
-                    throw new Error();
+                    alert("¡Inscripción exitosa!");
+                    location.reload();
                 }
-            } catch (error) {
-                alert("Hubo un problema al enviar tu registro. Por favor, intenta de nuevo.");
-            } finally {
-                btn.innerText = "REALIZAR INSCRIPCIÓN";
-                btn.disabled = false;
-            }
+            } catch (error) { alert("Error al enviar."); }
+            finally { btn.innerText = "REALIZAR INSCRIPCIÓN"; btn.disabled = false; }
         });
 
         window.onload = cargarTalleres;
