@@ -23,10 +23,10 @@
         button:disabled { background: #ccc; cursor: not-allowed; }
         .hidden-section { display: none; background: #fdf2f2; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid var(--accent); }
         
-        /* Estilos del Modal para el Aviso de Privacidad */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 80%; max-width: 800px; border-radius: 8px; height: 80%; }
-        .iframe-container { width: 100%; height: calc(100% - 60px); border: 1px solid #ddd; }
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
+        .modal-content { background: white; margin: 2% auto; padding: 20px; width: 90%; max-width: 900px; border-radius: 8px; height: 85vh; display: flex; flex-direction: column; }
+        .iframe-container { flex-grow: 1; border: 1px solid #ddd; }
         .modal-footer { text-align: right; padding-top: 15px; }
     </style>
 </head>
@@ -81,19 +81,20 @@
             </div>
 
             <div class="terms-box">
-                <b>REGLAMENTO:</b> [cite: 80]<br>
-                1. Aceptar el reglamento. [cite: 83]<br>
-                2. Tomar el taller en las instalaciones indicadas. [cite: 84]<br>
-                3. Acudir puntual (10 min antes). [cite: 86]<br>
-                4. Asistir al total de sesiones. [cite: 87]<br>
-                12. Menos de 8 sesiones invalida la constancia. [cite: 95]<br>
-                13. No se admite el acceso de menores de edad. [cite: 96]<br>
-                15. Comportamientos indebidos causan baja inmediata. [cite: 98, 99]
+                <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
+                1. Aceptar el reglamento.<br>
+                2. Tomar el taller en las instalaciones indicadas.<br>
+                3. Acudir puntual (10 min antes).<br>
+                4. Asistir al total de sesiones.<br>
+                12. Menos de 8 sesiones invalida la constancia.<br>
+                13. No se admite el acceso de menores de edad.<br>
+                15. Comportamientos indebidos causan baja inmediata y notificación al área que derive.<br>
+                16. Asumir las consecuencias derivadas de un comportamiento inadecuado.
             </div>
             
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>Acepto el reglamento y lineamientos. [cite: 115]</span>
+                <span>Acepto el reglamento y lineamientos. *</span>
             </div>
 
             <button type="submit" id="btnEnviar">REALIZAR INSCRIPCIÓN</button>
@@ -102,12 +103,12 @@
 
     <div id="miModal" class="modal">
         <div class="modal-content">
-            <h3>Aviso de Privacidad Simplificado</h3>
+            <h3 style="margin-top:0;">Aviso de Privacidad Simplificado</h3>
             <div class="iframe-container">
-                <iframe src="https://portal.queretaro.gob.mx/SaveAs.aspx?Nombre=105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf&Ruta=Uploads\ContenidosDIF\105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf" width="100%" height="100%" frameborder="0"></iframe>
+                <iframe src="aviso_privacidad.pdf" width="100%" height="100%" frameborder="0"></iframe>
             </div>
             <div class="modal-footer">
-                <button onclick="cerrarModalYActivar()" style="padding: 10px 20px; width: auto; margin: 0;">Entendido y Aceptar</button>
+                <button onclick="cerrarModalYActivar()" style="padding: 10px 20px; width: auto; margin: 0; background: var(--primary);">Entendido y Aceptar</button>
             </div>
         </div>
     </div>
@@ -138,18 +139,21 @@
                     opt.value = nombre; opt.textContent = nombre;
                     select.appendChild(opt);
                 });
-            } catch (e) { select.innerHTML = '<option value="">Error al cargar.</option>'; }
+            } catch (e) { select.innerHTML = '<option value="">Error al cargar talleres.</option>'; }
         }
 
         function manejarCanalizacion(valor) {
             document.getElementById('seccionExpediente').style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
             document.getElementById('seccionOtros').style.display = (valor === 'Otros') ? 'block' : 'none';
+            document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
+            document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
+            document.getElementById('canalizaOtro').required = (valor === 'Otros');
         }
 
         document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "ENVIANDO..."; btn.disabled = true;
+            btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
             let canalizaVal = document.getElementById('canaliza').value;
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
@@ -173,10 +177,10 @@
                     body: JSON.stringify(datos)
                 });
                 if (response.ok) {
-                    alert("¡Inscripción exitosa!");
+                    alert("¡Inscripción exitosa! Revisa tu correo para confirmar tu folio.");
                     location.reload();
                 }
-            } catch (error) { alert("Error al enviar."); }
+            } catch (error) { alert("Error al enviar el registro."); }
             finally { btn.innerText = "REALIZAR INSCRIPCIÓN"; btn.disabled = false; }
         });
 
