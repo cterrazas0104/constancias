@@ -92,28 +92,34 @@
         // AQUÍ YA ESTÁ TU WEBHOOK REAL
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
-        async function cargarTalleres() {
-            const select = document.getElementById('taller');
-            try {
-                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-                const talleres = await res.json();
-                select.innerHTML = '<option value="">Selecciona un taller...</option>';
-                
-                talleres.forEach(t => {
-                    const nombre = t.Nombre_Taller || t["Nombre_Taller (B)"] || t.nombre_taller;
-                    const estatus = t.Estatus || t["Estatus (C)"] || t.estatus;
+  async function cargarTalleres() {
+    const select = document.getElementById('taller');
+    try {
+        const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+        const talleres = await res.json();
+        
+        console.log("Datos recibidos:", talleres);
+        select.innerHTML = '<option value="">Selecciona un taller...</option>';
+        
+        talleres.forEach(t => {
+            // Esta línea busca CUALQUIER columna que tenga el nombre del taller o el estatus
+            // No importa si se llama "Nombre_Taller", "Nombre", o "Columna B"
+            const valores = Object.values(t);
+            const nombre = valores.find(v => typeof v === 'string' && v.length > 15) || valores[0];
+            const estatus = valores.find(v => v === 'ACTIVO' || v === 'activo') || 'ACTIVO';
 
-                    if(estatus === 'ACTIVO') {
-                        let opt = document.createElement('option');
-                        opt.value = nombre;
-                        opt.textContent = nombre;
-                        select.appendChild(opt);
-                    }
-                });
-            } catch (e) {
-                select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
+            if(estatus.toUpperCase() === 'ACTIVO') {
+                let opt = document.createElement('option');
+                opt.value = nombre;
+                opt.textContent = nombre;
+                select.appendChild(opt);
             }
-        }
+        });
+    } catch (e) {
+        console.error("Error detallado:", e);
+        select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
+    }
+}
 
         function toggleExpediente(valor) {
             const div = document.getElementById('seccionExpediente');
