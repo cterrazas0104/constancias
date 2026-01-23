@@ -8,14 +8,14 @@
         :root { --primary: #2c3e50; --accent: #c0392b; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: var(--primary); line-height: 1.6; }
         .form-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 700px; margin: auto; border-top: 10px solid var(--accent); }
-        .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent); }
+        .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent); font-size: 1.2em; }
         h2 { text-align: center; font-size: 1.4em; margin-bottom: 10px; text-transform: uppercase; }
         p.subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 30px; }
         label { display: block; margin: 20px 0 8px; font-weight: 600; font-size: 0.9em; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; }
+        .terms-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; height: 200px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 4px; color: #555; border-left: 3px solid #ccc; }
         .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
         .check-group input { width: auto; margin-top: 4px; }
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.1em; transition: 0.3s; }
@@ -25,6 +25,7 @@
     </style>
 </head>
 <body>
+
     <div class="form-card">
         <div class="header-logo">SEDIF QUERÉTARO</div>
         <h2>Escuela de Formación y Desarrollo Humano</h2>
@@ -49,7 +50,7 @@
             </div>
 
             <label>Teléfono celular (10 dígitos) *</label>
-            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required>
+            <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required title="Debe contener 10 dígitos numéricos">
 
             <label>Taller que va a cursar *</label>
             <select id="taller" required>
@@ -81,7 +82,7 @@
 
             <div class="check-group">
                 <input type="checkbox" id="aceptoPrivacidad" required>
-                <span>Acepto el <a href="https://portal.queretaro.gob.mx/Uploads/ContenidosDIF/105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS_ADOLESCENTES.pdf" target="_blank"><b>Aviso de Privacidad Simplificado</b></a>.</span>
+                <span>Acepto el <a href="https://portal.queretaro.gob.mx/SaveAs.aspx?Nombre=105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf&Ruta=Uploads\ContenidosDIF\105_2647_74_2112912187_AVISO_DE_PRIVACIDAD_SIMPLIFICADO.-_RESTITUCION_DE_DERECHOS_NINAS._NINOS__ADOLESCENTES.pdf" target="_blank"><b>Aviso de Privacidad Simplificado</b></a>. *</span>
             </div>
 
             <div class="terms-box">
@@ -93,19 +94,20 @@
                 5. Permanecer en cada sesión hasta que finalice.<br>
                 6. Suspender el uso del celular durante el taller.<br>
                 7. Participar de manera respetuosa y activa.<br>
-                8. Realizar las tareas e ejercicios indicados.<br>
+                8. Realizar las tareas e indicaciones de talleristas.<br>
                 9. Llevar su propio control de asistencias.<br>
                 10. Portar libreta y repasar notas.<br>
                 11. Aplicar lo aprendido en la vida diaria.<br>
-                12. Menos de 8 sesiones invalida la constancia.<br>
-                13. No se admite el acceso de menores al taller.<br>
-                14. No se admite asistencia de personas no inscritas.<br>
-                15. Comportamientos indebidos causan baja inmediata.
+                12. Menos de 8 sesiones invalida la obtención de la Constancia.<br>
+                13. No se admite el acceso de niñas, niños o adolescentes al taller.<br>
+                14. No se admite la asistencia de personas que no estén inscritas.<br>
+                15. Comportamientos indebidos causan baja inmediata y notificación al juzgado o área que derive.<br>
+                16. Asumir las consecuencias derivadas de un comportamiento inadecuado, tales como faltas de respeto.
             </div>
             
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>Acepto el reglamento y lineamientos.</span>
+                <span>He leído y acepto el <b>reglamento y lineamientos</b>. *</span>
             </div>
 
             <button type="submit" id="btnEnviar">REALIZAR INSCRIPCIÓN</button>
@@ -120,6 +122,8 @@
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
+                
+                // Mapeo robusto de nombres de taller
                 const talleres = data.map(item => {
                     if (!item) return null;
                     const valores = Object.values(item);
@@ -134,15 +138,18 @@
                     select.appendChild(opt);
                 });
             } catch (e) {
-                select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
+                console.error("Error al cargar talleres:", e);
+                select.innerHTML = '<option value="">Error al cargar talleres. Recargue la página.</option>';
             }
         }
 
         function manejarCanalizacion(valor) {
             const divExp = document.getElementById('seccionExpediente');
             const divOtros = document.getElementById('seccionOtros');
+            
             divExp.style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
             divOtros.style.display = (valor === 'Otros') ? 'block' : 'none';
+
             document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
             document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
             document.getElementById('canalizaOtro').required = (valor === 'Otros');
@@ -151,7 +158,7 @@
         document.getElementById('inscripcionFdh').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "ENVIANDO...";
+            btn.innerText = "PROCESANDO...";
             btn.disabled = true;
 
             let canalizaVal = document.getElementById('canaliza').value;
@@ -175,13 +182,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datos)
                 });
+                
                 if (response.ok) {
-                    alert("¡Inscripción exitosa!");
+                    alert("¡Inscripción registrada correctamente! En breve recibirás un correo de confirmación con tu folio.");
                     document.getElementById('inscripcionFdh').reset();
-                    manejarCanalizacion("");
+                    manejarCanalizacion(""); 
+                } else {
+                    throw new Error();
                 }
             } catch (error) {
-                alert("Error al enviar registro.");
+                alert("Hubo un problema al enviar tu registro. Por favor, intenta de nuevo.");
             } finally {
                 btn.innerText = "REALIZAR INSCRIPCIÓN";
                 btn.disabled = false;
