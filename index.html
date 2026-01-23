@@ -86,10 +86,10 @@
             transition: 0.3s; 
             box-shadow: 0 4px 10px rgba(123, 123, 181, 0.2); 
         }
+        .btn-main:disabled { background: #ccc; cursor: not-allowed; }
 
         .hidden-section { display: none; background: #f0f4ff; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-blue); }
         
-        /* Modal Adaptado a móviles sin visor PDF */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.9); }
         .modal-content { 
             background: white; 
@@ -154,24 +154,25 @@
             </div>
 
             <input type="hidden" id="privacidadAceptada" value="false">
-<div class="terms-box">
+
+            <div class="terms-box">
                 <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
-                1. Aceptar el reglamento.<br>
-                2. Tomar el taller en las instalaciones indicadas.<br>
-                3. Acudir puntual (llegar 10 min antes).<br>
-                4. Asistir al total de sesiones del taller.<br>
-                5. Permanecer en cada sesión hasta que finalice.<br>
-                6. Suspender el uso del celular durante el taller.<br>
-                7. Participar de manera respetuosa y activa.<br>
-                8. Realizar las tareas e indicaciones de talleristas.<br>
-                9. Llevar mi propio control de asistencias.<br>
-                10. Portar libreta y repasar notas.<br>
-                11. Aplicar lo aprendido en la vida diaria.<br>
-                12. Menos de 8 sesiones invalida la obtención de la Constancia.<br>
-                13. No se admite el acceso de niñas, niños o adolescentes al taller.<br>
-                14. No se admite asistencia de personas no inscritas.<br>
-                15. Comportamientos indebidos causan baja inmediata y notificación al juzgado.<br>
-                16. Asumir las consecuencias derivadas de un comportamiento inadecuado.
+                1. [cite_start]Aceptar el reglamento. [cite: 83]<br>
+                2. [cite_start]Tomar el taller en las instalaciones indicadas. [cite: 84]<br>
+                3. [cite_start]Acudir puntual (llegar 10 min antes). [cite: 86]<br>
+                4. [cite_start]Asistir al total de sesiones del taller. [cite: 87]<br>
+                5. [cite_start]Permanecer en cada sesión hasta que finalice. [cite: 88]<br>
+                6. [cite_start]Suspender el uso del celular durante el taller. [cite: 89]<br>
+                7. [cite_start]Participar de manera respetuosa y activa. [cite: 90]<br>
+                8. [cite_start]Realizar las tareas e indicaciones de talleristas. [cite: 91]<br>
+                9. [cite_start]Llevar mi propio control de asistencias. [cite: 92]<br>
+                10. [cite_start]Portar libreta y repasar notas. [cite: 93]<br>
+                11. [cite_start]Aplicar lo aprendido en la vida diaria. [cite: 94]<br>
+                12. [cite_start]Menos de 8 sesiones invalida la Constancia. [cite: 95]<br>
+                13. [cite_start]No se admite el acceso de menores de edad. [cite: 96]<br>
+                14. [cite_start]No se admite asistencia de personas no inscritas. [cite: 97]<br>
+                15. [cite_start]Comportamientos indebidos causan baja inmediata. [cite: 99]<br>
+                16. [cite_start]Asumir consecuencias por comportamiento inadecuado. [cite: 100]
             </div>
             
             <label class="check-container">
@@ -188,8 +189,8 @@
             <h3 style="color: var(--primary-purple); margin-top:0; font-size: 1.1em;">Aviso de Privacidad Simplificado</h3>
             <div class="text-scroll">
                 <p>La Procuraduría de Protección de Niñas, Niños y Adolescentes del Estado de Querétaro informa que sus datos personales serán tratados para el proceso de inscripción y seguimiento a los talleres de la Escuela de Formación y Desarrollo Humano.</p>
-                <p>Usted puede consultar el aviso completo y ejercer sus derechos de acceso o rectificación enviando una solicitud oficial.</p>
-                <a href="aviso_privacidad.pdf" target="_blank" style="color: var(--secondary-blue); font-weight: bold;">Descargar documento completo (PDF)</a>
+                <p>Usted puede ejercer sus derechos de acceso o rectificación enviando una solicitud oficial a la institución.</p>
+                <p><a href="aviso_privacidad.pdf" target="_blank" style="color: var(--secondary-blue); font-weight: bold;">Ver documento completo (PDF)</a></p>
             </div>
             <div class="modal-footer">
                 <button onclick="confirmarPrivacidad()" style="background: var(--secondary-blue); color:white; border:none; padding: 15px 25px; border-radius:6px; cursor:pointer; font-weight:bold; width: 100%;">ACEPTAR Y CONTINUAR</button>
@@ -199,6 +200,7 @@
 
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
+        let estaEnviando = false;
 
         function confirmarPrivacidad() {
             document.getElementById('miModal').style.display = 'none';
@@ -235,6 +237,8 @@
 
         document.getElementById('inscripcionFdh').addEventListener('submit', function(e) {
             e.preventDefault();
+            if (estaEnviando) return; // Bloqueo de envíos múltiples
+
             if (document.getElementById('privacidadAceptada').value === "false") {
                 document.getElementById('miModal').style.display = 'block';
             } else {
@@ -243,8 +247,12 @@
         });
 
         async function enviarFormulario() {
+            if (estaEnviando) return;
+            estaEnviando = true;
+
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "ENVIANDO..."; btn.disabled = true;
+            btn.innerText = "ENVIANDO..."; 
+            btn.disabled = true;
 
             let canalizaVal = document.getElementById('canaliza').value;
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
@@ -271,12 +279,15 @@
                     alert("¡Inscripción exitosa! En breve recibirá su folio por correo.");
                     location.reload();
                 }
-            } catch (error) { alert("Error al enviar."); btn.disabled = false; btn.innerText = "Realizar Inscripción"; }
+            } catch (error) { 
+                alert("Error al enviar. Por favor intente de nuevo."); 
+                estaEnviando = false;
+                btn.disabled = false; 
+                btn.innerText = "Realizar Inscripción"; 
+            }
         }
 
         window.onload = cargarTalleres;
     </script>
-</body>
-</html>
 </body>
 </html>
