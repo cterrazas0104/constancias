@@ -92,23 +92,34 @@
         // AQUÍ YA ESTÁ TU WEBHOOK REAL
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
- async function cargarTalleres() {
+async function cargarTalleres() {
     const select = document.getElementById('taller');
     try {
         const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-        const talleres = await res.json(); // Ahora esto será una lista simple de nombres
+        const textoOriginal = await res.text();
+        
+        let talleres;
+        try {
+            // Intentamos leerlo como lista normal
+            talleres = JSON.parse(textoOriginal);
+        } catch (e) {
+            // Si Make mandó texto suelto "Taller1, Taller2", lo convertimos a lista
+            talleres = textoOriginal.split(',').map(t => t.trim().replace(/"/g, ''));
+        }
         
         select.innerHTML = '<option value="">Selecciona un taller...</option>';
         
-        talleres.forEach(nombre => {
+        // Limpiamos nombres vacíos y llenamos el select
+        talleres.filter(t => t.length > 5).forEach(nombre => {
             let opt = document.createElement('option');
             opt.value = nombre;
             opt.textContent = nombre;
             select.appendChild(opt);
         });
+
     } catch (e) {
-        console.error("Error:", e);
-        select.innerHTML = '<option value="">Error al cargar talleres. Recargue.</option>';
+        console.error("Error final:", e);
+        select.innerHTML = '<option value="">Error al cargar talleres. Reintente.</option>';
     }
 }
 
