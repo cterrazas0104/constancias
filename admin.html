@@ -7,22 +7,41 @@
     <style>
         :root { --primary: #7b7bb5; --secondary: #4a90e2; --bg: #f0f2f5; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+
+        /* Login - Pantalla Sólida (Sin transparencias) */
+        #login-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #7b7bb5; 
+            display: flex; align-items: center; justify-content: center; z-index: 10000; 
+        }
         .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 90%; max-width: 350px; text-align: center; }
+
+        /* Estructura del Panel */
         #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
-        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; }
+        .sidebar { 
+            width: 260px; background: white; height: 100vh; padding: 30px 20px; 
+            position: fixed; border-right: 1px solid #e1e8f0; display: flex; 
+            flex-direction: column; box-sizing: border-box; z-index: 100;
+        }
         .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; }
+
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
+
+        /* Tablas */
+        .content-section { display: none; }
+        .content-section.active { display: block; }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
+
         .status-pill { padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.7em; }
         .activo { background: #e6fcf5; color: #0ca678; }
         .inactivo { background: #fff5f5; color: #fa5252; }
-        .btn-toggle { background: #eee; border: 1px solid #ccc; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-weight: bold; }
+        .btn-toggle { background: #eee; border: 1px solid #ccc; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
+
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
     </style>
@@ -31,7 +50,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--primary);">Acceso Administrativo</h2>
+            <h2 style="color: #7b7bb5; margin-top:0;">Panel Administrativo</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-login" onclick="ejecutarLogin()">ENTRAR</button>
@@ -52,7 +71,7 @@
 
         <div class="main-content">
             <div id="sec-inscritos" class="content-section active">
-                <h1>Inscripciones Recientes</h1>
+                <h1>Inscripciones Escuela FDH</h1>
                 <div class="table-card">
                     <table>
                         <thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Canalización</th></tr></thead>
@@ -60,7 +79,7 @@
                     </table>
                 </div>
             </div>
-            <div id="sec-catalogos" class="content-section" style="display:none;">
+            <div id="sec-catalogos" class="content-section">
                 <h1>Gestión de Talleres</h1>
                 <div class="table-card">
                     <table>
@@ -105,7 +124,7 @@
 
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
                 const data = await res.json();
@@ -113,7 +132,7 @@
                 (Array.isArray(data) ? data : [data]).forEach(item => {
                     const v = Object.values(item);
                     if(v[0] && v[0] !== 'empty') {
-                        tbody.innerHTML += `<tr><td><strong>${v[0]}</strong></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td>${v[8]}</td></tr>`;
+                        tbody.innerHTML += `<tr><td><strong>${v[0]}</strong></td><td>${(v[3]||'')+' '+(v[4]||'')}</td><td>${v[7]}</td><td>${v[8]}</td></tr>`;
                     }
                 });
             } catch (e) { console.error(e); }
@@ -121,17 +140,18 @@
 
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando catálogo...</td></tr>';
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
                 tbody.innerHTML = '';
                 data.forEach((item, index) => {
                     const v = Object.values(item);
-                    // Mapeo: 0=ID, 1=Nombre, 2=Estatus
+                    // Mapeo dinámico: v[0]=ID, v[1]=Nombre, v[2]=Estatus
                     const id = v[0] || '---';
                     const nombre = v[1] || 'Sin nombre';
-                    const estatus = (String(v[2] || '').toUpperCase() === 'ACTIVO') ? 'ACTIVO' : 'INACTIVO';
+                    const estatusRaw = String(v[2] || '').toUpperCase().trim();
+                    const estatus = estatusRaw === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO';
                     
                     tbody.innerHTML += `
                         <tr>
@@ -144,36 +164,19 @@
             } catch (e) { console.error(e); }
         }
 
-     async function actualizarEstatus(fila, estatusActual) {
+        async function actualizarEstatus(fila, estatusActual) {
             const nuevo = estatusActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-            
-            // Usamos un alert más profesional para confirmar
-            if(!confirm("¿Deseas cambiar el estatus de este taller a " + nuevo + "?")) return;
-
+            if(!confirm("¿Cambiar estatus a " + nuevo + "?")) return;
             try {
-                // FORZAMOS la acción en la URL para que el Router de Make la vea de inmediato
-                const urlConAccion = `${WEBHOOK_URL}?accion=admin_actualizar_catalogo`;
-                
-                const res = await fetch(urlConAccion, {
+                // CAMBIO CLAVE: Usamos 'accion_admin' para que la Rama 1 lo ignore
+                await fetch(`${WEBHOOK_URL}?accion_admin=actualizar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        accion: 'admin_actualizar_catalogo', // Doble validación
-                        fila: fila, 
-                        estatus: nuevo 
-                    })
+                    body: JSON.stringify({ accion_admin: 'actualizar', fila: fila, estatus: nuevo })
                 });
-                
-                if(res.ok) {
-                    alert("¡Éxito! El taller ahora está " + nuevo);
-                    obtenerDatosCatalogos(); // Refresca la tabla automáticamente
-                } else {
-                    alert("Make recibió la orden pero hubo un error en el proceso.");
-                }
-            } catch (e) { 
-                console.error("Error en la petición:", e);
-                alert("Error de conexión con el servidor de actualización."); 
-            }
+                alert("Actualizado correctamente");
+                obtenerDatosCatalogos();
+            } catch (e) { alert("Error al actualizar"); }
         }
     </script>
 </body>
