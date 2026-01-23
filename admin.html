@@ -119,19 +119,22 @@
             } catch (e) { console.error(e); }
         }
 
-        async function obtenerDatosCatalogos() {
+ async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando catálogo...</td></tr>';
             try {
+                // Esta sigue usando accion=listar porque ya funciona
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
                 tbody.innerHTML = '';
+                
                 data.forEach((item, index) => {
                     const v = Object.values(item);
-                    // Mapeo: 0=ID, 1=Nombre, 2=Estatus
+                    // Mapeo dinámico: v[0]=ID (T-001), v[1]=Nombre (Solución...), v[2]=Estatus (ACTIVO)
                     const id = v[0] || '---';
                     const nombre = v[1] || 'Sin nombre';
-                    const estatus = (String(v[2] || '').toUpperCase() === 'ACTIVO') ? 'ACTIVO' : 'INACTIVO';
+                    const estatusRaw = String(v[2] || '').toUpperCase().trim();
+                    const estatus = estatusRaw === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO';
                     
                     tbody.innerHTML += `
                         <tr>
@@ -141,9 +144,27 @@
                             <td><button onclick="actualizarEstatus(${index + 2}, '${estatus}')" class="btn-toggle">Alternar</button></td>
                         </tr>`;
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Error al cargar catálogo.</td></tr>'; }
         }
 
+        async function actualizarEstatus(fila, estatusActual) {
+            const nuevo = estatusActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+            if(!confirm("¿Cambiar a " + nuevo + "?")) return;
+            try {
+                // CAMBIO CLAVE: Usamos 'metodo' en lugar de 'accion' para que la Rama 1 la ignore
+                await fetch(`${WEBHOOK_URL}?metodo=admin_actualizar_catalogo`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        metodo: 'admin_actualizar_catalogo', 
+                        fila: fila, 
+                        estatus: nuevo 
+                    })
+                });
+                alert("Solicitud enviada");
+                obtenerDatosCatalogos(); 
+            } catch (e) { alert("Error al conectar"); }
+        }
      async function actualizarEstatus(fila, estatusActual) {
             const nuevo = estatusActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
             
