@@ -12,8 +12,25 @@
             --bg-light: #f8faff; 
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); padding: 20px; color: var(--text-dark); }
-        .form-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(123, 123, 181, 0.15); width: 100%; max-width: 700px; margin: auto; border-top: 10px solid var(--primary-purple); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); padding: 10px; color: var(--text-dark); line-height: 1.6; }
+        
+        /* Ajuste de tarjeta para móviles */
+        .form-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 30px rgba(123, 123, 181, 0.15); 
+            width: 100%; 
+            max-width: 700px; 
+            margin: auto; 
+            border-top: 10px solid var(--primary-purple); 
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 600px) {
+            body { padding: 20px; }
+            .form-card { padding: 40px; }
+        }
         
         .header-logo { text-align: center; margin-bottom: 5px; font-weight: bold; color: var(--primary-purple); font-size: 1.1em; }
         .sub-header { text-align: center; font-size: 0.85em; color: var(--secondary-blue); margin-bottom: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
@@ -22,38 +39,91 @@
         p.subtitle { text-align: center; color: #666; font-size: 0.85em; margin-bottom: 30px; }
         
         label { display: block; margin: 18px 0 6px; font-weight: 600; font-size: 0.9em; color: var(--primary-purple); }
-        input, select { width: 100%; padding: 12px; border: 2px solid #e1e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
-        input:focus { border-color: var(--secondary-blue); outline: none; }
+        
+        /* Inputs más grandes para facilitar el toque en móviles */
+        input, select { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e1e8f0; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px; /* Evita zoom automático en iPhone */
+            transition: 0.3s; 
+        }
+        input:focus, select:focus { border-color: var(--secondary-blue); outline: none; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { 
+            .grid { grid-template-columns: 1fr 1fr; gap: 20px; } 
+        }
 
-        .terms-box { background: #fdfdff; padding: 15px; border: 1px solid #e1e8f0; height: 160px; overflow-y: scroll; font-size: 0.8em; margin: 15px 0; border-radius: 6px; color: #555; }
-        .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; }
+        .terms-box { 
+            background: #fdfdff; 
+            padding: 15px; 
+            border: 1px solid #e1e8f0; 
+            height: 180px; 
+            overflow-y: scroll; 
+            font-size: 0.85em; 
+            margin: 15px 0; 
+            border-radius: 6px; 
+            color: #555; 
+            text-align: justify; 
+        }
+        
+        .check-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 25px 0; font-size: 0.9em; color: var(--text-dark); cursor: pointer; }
+        .check-container input { height: 22px; width: 22px; cursor: pointer; flex-shrink: 0; }
 
-        .btn-main { background: var(--primary-purple); color: white; border: none; padding: 18px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.1em; text-transform: uppercase; transition: 0.3s; }
+        .btn-main { 
+            background: var(--primary-purple); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 6px; 
+            width: 100%; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            font-size: 1.1em; 
+            text-transform: uppercase; 
+            transition: 0.3s; 
+            box-shadow: 0 4px 10px rgba(123, 123, 181, 0.2); 
+        }
         .btn-main:hover { background: #5b5b95; transform: translateY(-2px); }
 
         .hidden-section { display: none; background: #f0f4ff; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-blue); }
         
-        /* Modal */
+        /* Modal Adaptado a móviles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.9); }
-        .modal-content { background: white; margin: 2% auto; padding: 25px; width: 90%; max-width: 850px; border-radius: 12px; height: 85vh; display: flex; flex-direction: column; }
-        .iframe-container { flex-grow: 1; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 15px; 
+            width: 95%; 
+            max-width: 850px; 
+            border-radius: 12px; 
+            height: 85vh; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box;
+        }
+        @media (min-width: 600px) {
+            .modal-content { margin: 2% auto; padding: 25px; width: 90%; }
+        }
+        .iframe-container { flex-grow: 1; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; -webkit-overflow-scrolling: touch; }
         .modal-footer { text-align: center; padding-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="form-card">
-        <div class="header-logo">DIF ESTATAL QUERÉTARO</div>
+        <div class="header-logo">DIF ESTATAL QUERÉTARO | UNIENDO CORAZONES</div>
         <div class="sub-header">Procuraduría de Protección de Niñas, Niños y Adolescentes</div>
         <h2>Escuela de Formación y Desarrollo Humano</h2>
         <p class="subtitle">Ficha de Inscripción para Madres, Padres, Tutores y Cuidadores</p>
 
         <form id="inscripcionFdh">
             <label>Correo electrónico *</label>
-            <input type="email" id="correo" required>
+            <input type="email" id="correo" placeholder="ejemplo@correo.com" required>
 
             <label>Nombre(s) *</label>
             <input type="text" id="nombre" required>
@@ -95,14 +165,26 @@
                 <b>REGLAMENTO PARA PARTICIPANTES:</b><br><br>
                 1. Aceptar el reglamento.<br>
                 2. Tomar el taller en las instalaciones indicadas.<br>
-                3. Acudir puntual (10 min antes).<br>
-                ... (los 16 puntos que ya tienes) ...
+                3. Acudir puntual (llegar 10 min antes).<br>
+                4. Asistir al total de sesiones del taller.<br>
+                5. Permanecer en cada sesión hasta que finalice.<br>
+                6. Suspender el uso del celular durante el taller.<br>
+                7. Participar de manera respetuosa y activa.<br>
+                8. Realizar las tareas e indicaciones de talleristas.<br>
+                9. Llevar mi propio control de asistencias.<br>
+                10. Portar libreta y repasar notas.<br>
+                11. Aplicar lo aprendido en la vida diaria.<br>
+                12. Menos de 8 sesiones invalida la Constancia.<br>
+                13. No se admite el acceso de menores de edad.<br>
+                14. No se admite asistencia de personas no inscritas.<br>
+                15. Comportamientos indebidos causan baja inmediata.<br>
+                16. Asumir consecuencias por comportamiento inadecuado.
             </div>
             
-            <div class="check-group">
+            <label class="check-container">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>Acepto el reglamento y lineamientos. *</span>
-            </div>
+                <span>He leído y acepto el reglamento y lineamientos. *</span>
+            </label>
 
             <button type="submit" id="btnEnviar" class="btn-main">Realizar Inscripción</button>
         </form>
@@ -110,13 +192,13 @@
 
     <div id="miModal" class="modal">
         <div class="modal-content">
-            <h3 style="color: var(--primary-purple); margin-top:0;">Aviso de Privacidad Simplificado</h3>
-            <p style="font-size: 0.8em; color: #666;">Procuraduría de Protección de Niñas, Niños y Adolescentes del Estado de Querétaro.</p>
+            <h3 style="color: var(--primary-purple); margin-top:0; font-size: 1.1em;">Aviso de Privacidad Simplificado</h3>
+            <p style="font-size: 0.75em; color: #666; margin-bottom: 10px;">Procuraduría de Protección de Niñas, Niños y Adolescentes del Estado de Querétaro.</p>
             <div class="iframe-container">
                 <iframe src="aviso_privacidad.pdf" width="100%" height="100%" frameborder="0"></iframe>
             </div>
             <div class="modal-footer">
-                <button onclick="confirmarPrivacidad()" style="background: var(--secondary-blue); color:white; border:none; padding:12px 25px; border-radius:6px; cursor:pointer; font-weight:bold;">ACEPTAR Y CONTINUAR</button>
+                <button onclick="confirmarPrivacidad()" style="background: var(--secondary-blue); color:white; border:none; padding: 15px 25px; border-radius:6px; cursor:pointer; font-weight:bold; width: 100%;">ACEPTAR Y CONTINUAR</button>
             </div>
         </div>
     </div>
@@ -124,8 +206,6 @@
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
-        function abrirModal() { document.getElementById('miModal').style.display = 'block'; }
-        
         function confirmarPrivacidad() {
             document.getElementById('miModal').style.display = 'none';
             document.getElementById('privacidadAceptada').value = "true";
@@ -154,12 +234,15 @@
         function manejarCanalizacion(valor) {
             document.getElementById('seccionExpediente').style.display = (valor === 'Juzgado Familiar') ? 'block' : 'none';
             document.getElementById('seccionOtros').style.display = (valor === 'Otros') ? 'block' : 'none';
+            document.getElementById('expediente').required = (valor === 'Juzgado Familiar');
+            document.getElementById('juzgado').required = (valor === 'Juzgado Familiar');
+            document.getElementById('canalizaOtro').required = (valor === 'Otros');
         }
 
         document.getElementById('inscripcionFdh').addEventListener('submit', function(e) {
             e.preventDefault();
             if (document.getElementById('privacidadAceptada').value === "false") {
-                abrirModal();
+                document.getElementById('miModal').style.display = 'block';
             } else {
                 enviarFormulario();
             }
