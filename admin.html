@@ -118,9 +118,9 @@
             } catch (e) { console.error(e); }
         }
 
-  async function obtenerDatosCatalogos() {
+async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Actualizando vista...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando...</td></tr>';
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
                 const data = await res.json();
@@ -128,21 +128,36 @@
                 
                 data.forEach((item, index) => {
                     const v = Object.values(item);
-                    // Forzamos el mapeo: ID en la primera columna, Nombre en la segunda
-                    const id = v[0] || 'T-' + (index + 1);
-                    const nombre = v[1] || 'Taller sin título';
-                    const estatusRaw = String(v[2] || '').toUpperCase().trim();
-                    const estatus = estatusRaw === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO';
+                    
+                    // LÓGICA DE DETECCIÓN INTELIGENTE:
+                    // El ID suele empezar con "T-"
+                    // El Estatus es "ACTIVO" o "INACTIVO"
+                    // El Nombre es lo que sobra (texto largo)
+                    
+                    const id = v.find(val => String(val).startsWith('T-')) || `ID-${index+1}`;
+                    const estatusRaw = v.find(val => {
+                        const s = String(val).toUpperCase();
+                        return s === 'ACTIVO' || s === 'INACTIVO';
+                    }) || 'INACTIVO';
+                    
+                    const estatus = estatusRaw.toUpperCase();
+                    
+                    // El nombre es el valor que no es ID ni es Estatus
+                    const nombre = v.find(val => 
+                        val !== id && 
+                        val !== estatusRaw && 
+                        String(val).length > 5
+                    ) || 'Taller sin título';
                     
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${id}</strong></td>
+                            <td><strong style="color:var(--primary)">${id}</strong></td>
                             <td>${nombre}</td>
                             <td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td>
                             <td><button onclick="actualizarEstatus(${index + 2}, '${estatus}')" class="btn-toggle">Alternar</button></td>
                         </tr>`;
                 });
-            } catch (e) { console.error("Error cargando tabla:", e); }
+            } catch (e) { console.error("Error:", e); }
         }
 
         async function actualizarEstatus(fila, estatusActual) {
