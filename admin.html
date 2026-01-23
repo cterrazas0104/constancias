@@ -92,33 +92,39 @@
             } catch (e) { alert("Error de conexión"); }
         }
 
-   async function obtenerDatos(rol, sede) {
+async function obtenerDatos(rol, sede) {
             const tbody = document.getElementById('table-body');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">Consultando base de datos...</td></tr>';
+            
             try {
-                // Si es administrador mandamos sede vacía, si no, la sede del tallerista
                 const paramSede = (rol === 'Administrador') ? '' : sede;
-                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${paramSede}`);
-                const data = await res.json();
+                const url = `${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${paramSede}`;
                 
-                // Forzamos que 'data' sea un array para poder usar .map
+                const res = await fetch(url);
+                
+                // Si la respuesta no es JSON (es "Accepted"), lanzamos error informativo
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const textoError = await res.text();
+                    throw new Error("Make no respondió con datos, respondió: " + textoError);
+                }
+
+                const data = await res.json();
                 const rawData = Array.isArray(data) ? data : [data];
 
                 const registros = rawData.map(item => {
                     if (!item) return null;
-                    // Extraemos los valores sin importar el nombre de la columna
                     const v = Object.values(item);
-                    
                     return {
-                        folio: v[0] || 'S/F',       // EFDH-2026-001
-                        nombre: (v[3] || '') + " " + (v[4] || '') + " " + (v[5] || ''), // Nombre + Apellidos
+                        folio: v[0] || 'S/F',
+                        nombre: (v[3] || '') + " " + (v[4] || '') + " " + (v[5] || ''),
                         taller: v[7] || 'Sin taller', 
                         canaliza: v[8] || 'N/A'
                     };
-                }).filter(r => r && r.folio !== 'empty'); // Limpiamos nulos o vacíos
+                }).filter(r => r && r.folio && r.folio !== 'empty');
 
                 if (registros.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No hay registros encontrados.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No se encontraron registros.</td></tr>';
                     return;
                 }
 
@@ -134,8 +140,10 @@
                     `;
                 });
             } catch (e) { 
-                console.error("Error procesando JSON:", e);
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:red;">Error al procesar los datos recibidos.</td></tr>'; 
+                console.error("Error detallado:", e);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:red;">
+                    ${e.message}<br><small>Verifica que la rama de 'Listar' en Make tenga un Webhook Response al final.</small>
+                </td></tr>`; 
             }
         }
     </script>
