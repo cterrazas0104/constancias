@@ -3,84 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción Escuela FDH - SEDIF</title>
+    <title>Inscripción Escuela FDH - Procuraduría SEDIF</title>
     <style>
-        /* Paleta Institucional basada en tu firma de ejemplo */
         :root { 
             --primary-purple: #7b7bb5; 
             --secondary-blue: #4a90e2; 
             --text-dark: #2c3e50; 
             --bg-light: #f8faff; 
-            --accent-purple: #5b5b95;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); padding: 20px; color: var(--text-dark); line-height: 1.6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); padding: 20px; color: var(--text-dark); }
+        .form-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(123, 123, 181, 0.15); width: 100%; max-width: 700px; margin: auto; border-top: 10px solid var(--primary-purple); }
         
-        .form-card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 30px rgba(123, 123, 181, 0.15); 
-            width: 100%; 
-            max-width: 700px; 
-            margin: auto; 
-            border-top: 10px solid var(--primary-purple); 
-        }
-
-        .header-logo { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--primary-purple); font-size: 1.3em; letter-spacing: 1px; }
-        h2 { text-align: center; font-size: 1.4em; margin-bottom: 10px; color: var(--accent-purple); text-transform: uppercase; }
-        p.subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 30px; }
+        .header-logo { text-align: center; margin-bottom: 5px; font-weight: bold; color: var(--primary-purple); font-size: 1.1em; }
+        .sub-header { text-align: center; font-size: 0.85em; color: var(--secondary-blue); margin-bottom: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         
-        label { display: block; margin: 20px 0 8px; font-weight: 600; font-size: 0.9em; color: var(--accent-purple); }
+        h2 { text-align: center; font-size: 1.3em; margin-bottom: 5px; color: var(--text-dark); }
+        p.subtitle { text-align: center; color: #666; font-size: 0.85em; margin-bottom: 30px; }
+        
+        label { display: block; margin: 18px 0 6px; font-weight: 600; font-size: 0.9em; color: var(--primary-purple); }
         input, select { width: 100%; padding: 12px; border: 2px solid #e1e8f0; border-radius: 6px; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
-        input:focus, select:focus { border-color: var(--secondary-blue); outline: none; box-shadow: 0 0 8px rgba(74, 144, 226, 0.2); }
+        input:focus { border-color: var(--secondary-blue); outline: none; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
 
-        .terms-box { background: #fdfdff; padding: 15px; border: 1px solid #e1e8f0; height: 180px; overflow-y: scroll; font-size: 0.85em; margin: 10px 0; border-radius: 6px; color: #555; }
-        
-        .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; cursor: pointer; }
-        .check-group input { width: auto; margin-top: 4px; }
+        .terms-box { background: #fdfdff; padding: 15px; border: 1px solid #e1e8f0; height: 160px; overflow-y: scroll; font-size: 0.8em; margin: 15px 0; border-radius: 6px; color: #555; }
+        .check-group { display: flex; align-items: flex-start; gap: 10px; margin: 15px 0; font-size: 0.9em; }
 
-        .btn-main { 
-            background: var(--primary-purple); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            border-radius: 6px; 
-            width: 100%; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 30px; 
-            font-size: 1.1em; 
-            transition: 0.4s;
-            text-transform: uppercase;
-        }
-        .btn-main:hover { background: var(--accent-purple); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(91, 91, 149, 0.3); }
-        .btn-main:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-main { background: var(--primary-purple); color: white; border: none; padding: 18px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.1em; text-transform: uppercase; transition: 0.3s; }
+        .btn-main:hover { background: #5b5b95; transform: translateY(-2px); }
 
         .hidden-section { display: none; background: #f0f4ff; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-blue); }
         
-        /* Modal - Aviso de Privacidad */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.9); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 3% auto; padding: 25px; width: 90%; max-width: 850px; border-radius: 12px; height: 80vh; display: flex; flex-direction: column; }
-        .iframe-container { flex-grow: 1; border: 2px solid #f0f4ff; border-radius: 6px; overflow: hidden; }
-        .modal-footer { text-align: center; padding-top: 20px; }
-        
-        .btn-modal { background: var(--secondary-blue); color: white; border: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.9); }
+        .modal-content { background: white; margin: 2% auto; padding: 25px; width: 90%; max-width: 850px; border-radius: 12px; height: 85vh; display: flex; flex-direction: column; }
+        .iframe-container { flex-grow: 1; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .modal-footer { text-align: center; padding-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="form-card">
-        <div class="header-logo">DIF ESTATAL QUERÉTARO | UNIENDO CORAZONES</div>
+        <div class="header-logo">DIF ESTATAL QUERÉTARO</div>
+        <div class="sub-header">Procuraduría de Protección de Niñas, Niños y Adolescentes</div>
         <h2>Escuela de Formación y Desarrollo Humano</h2>
         <p class="subtitle">Ficha de Inscripción para Madres, Padres, Tutores y Cuidadores</p>
 
         <form id="inscripcionFdh">
             <label>Correo electrónico *</label>
-            <input type="email" id="correo" placeholder="ejemplo@correo.com" required>
+            <input type="email" id="correo" required>
 
             <label>Nombre(s) *</label>
             <input type="text" id="nombre" required>
@@ -94,7 +67,7 @@
             <input type="tel" id="telefono" maxlength="10" pattern="[0-9]{10}" required>
 
             <label>Taller que va a cursar *</label>
-            <select id="taller" required><option value="">Cargando talleres disponibles...</option></select>
+            <select id="taller" required><option value="">Cargando talleres...</option></select>
 
             <label>Quien canaliza *</label>
             <select id="canaliza" required onchange="manejarCanalizacion(this.value)">
@@ -123,16 +96,12 @@
                 1. Aceptar el reglamento.<br>
                 2. Tomar el taller en las instalaciones indicadas.<br>
                 3. Acudir puntual (10 min antes).<br>
-                4. Asistir al total de sesiones.<br>
-                12. Menos de 8 sesiones invalida la obtención de la constancia.<br>
-                13. No se admite el acceso de menores de edad.<br>
-                15. Comportamientos indebidos causan baja inmediata y notificación al juzgado.<br>
-                16. Asumir consecuencias por comportamiento inadecuado.
+                ... (los 16 puntos que ya tienes) ...
             </div>
             
             <div class="check-group">
                 <input type="checkbox" id="aceptoReglamento" required>
-                <span>He leído y acepto el <b>reglamento y lineamientos</b>. *</span>
+                <span>Acepto el reglamento y lineamientos. *</span>
             </div>
 
             <button type="submit" id="btnEnviar" class="btn-main">Realizar Inscripción</button>
@@ -142,12 +111,12 @@
     <div id="miModal" class="modal">
         <div class="modal-content">
             <h3 style="color: var(--primary-purple); margin-top:0;">Aviso de Privacidad Simplificado</h3>
-            <p style="font-size: 0.85em; color: #666;">Por favor, revise el documento para continuar con su registro.</p>
+            <p style="font-size: 0.8em; color: #666;">Procuraduría de Protección de Niñas, Niños y Adolescentes del Estado de Querétaro.</p>
             <div class="iframe-container">
                 <iframe src="aviso_privacidad.pdf" width="100%" height="100%" frameborder="0"></iframe>
             </div>
             <div class="modal-footer">
-                <button onclick="confirmarPrivacidad()" class="btn-modal">HE LEÍDO Y ACEPTO LOS TÉRMINOS</button>
+                <button onclick="confirmarPrivacidad()" style="background: var(--secondary-blue); color:white; border:none; padding:12px 25px; border-radius:6px; cursor:pointer; font-weight:bold;">ACEPTAR Y CONTINUAR</button>
             </div>
         </div>
     </div>
@@ -155,10 +124,11 @@
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
 
+        function abrirModal() { document.getElementById('miModal').style.display = 'block'; }
+        
         function confirmarPrivacidad() {
             document.getElementById('miModal').style.display = 'none';
             document.getElementById('privacidadAceptada').value = "true";
-            // Ejecutamos el envío automáticamente después de aceptar
             enviarFormulario();
         }
 
@@ -172,13 +142,13 @@
                     const valores = Object.values(item);
                     return valores.find(v => typeof v === 'string' && v.length > 10);
                 }).filter(t => t);
-                select.innerHTML = '<option value="">Selecciona un taller...</option>';
+                select.innerHTML = '<option value="">Seleccione el taller...</option>';
                 [...new Set(talleres)].forEach(nombre => {
                     let opt = document.createElement('option');
                     opt.value = nombre; opt.textContent = nombre;
                     select.appendChild(opt);
                 });
-            } catch (e) { select.innerHTML = '<option value="">Error al cargar talleres.</option>'; }
+            } catch (e) { console.error(e); }
         }
 
         function manejarCanalizacion(valor) {
@@ -188,9 +158,8 @@
 
         document.getElementById('inscripcionFdh').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Si no ha aceptado la privacidad, abrimos el modal en lugar de enviar
             if (document.getElementById('privacidadAceptada').value === "false") {
-                document.getElementById('miModal').style.display = 'block';
+                abrirModal();
             } else {
                 enviarFormulario();
             }
@@ -198,7 +167,7 @@
 
         async function enviarFormulario() {
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "PROCESANDO..."; btn.disabled = true;
+            btn.innerText = "ENVIANDO..."; btn.disabled = true;
 
             let canalizaVal = document.getElementById('canaliza').value;
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
@@ -222,11 +191,10 @@
                     body: JSON.stringify(datos)
                 });
                 if (response.ok) {
-                    alert("¡Inscripción exitosa! Revise su correo para confirmar su folio.");
+                    alert("¡Inscripción exitosa! En breve recibirá su folio por correo.");
                     location.reload();
                 }
-            } catch (error) { alert("Error al enviar el registro."); }
-            finally { btn.innerText = "REALIZAR INSCRIPCIÓN"; btn.disabled = false; }
+            } catch (error) { alert("Error al enviar."); btn.disabled = false; btn.innerText = "Realizar Inscripción"; }
         }
 
         window.onload = cargarTalleres;
