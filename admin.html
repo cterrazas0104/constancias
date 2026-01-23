@@ -3,16 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrativo - Procuraduría SEDIF</title>
+    <title>Panel Administrativo - SEDIF</title>
     <style>
-        :root { 
-            --primary: #7b7bb5; 
-            --secondary: #4a90e2; 
-            --bg: #f0f2f5; 
-            --text: #2c3e50; 
-            --white: #ffffff;
-        }
-
+        :root { --primary: #7b7bb5; --secondary: #4a90e2; --bg: #f0f2f5; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
 
         /* Login - Pantalla Completa Bloqueante */
@@ -22,17 +15,17 @@
             display: flex; align-items: center; justify-content: center; z-index: 9999;
         }
         .login-card { 
-            background: var(--white); padding: 40px; border-radius: 16px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 380px; text-align: center; 
+            background: white; padding: 40px; border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; 
         }
 
-        /* Panel Principal - Estructura Sidebar + Contenido */
+        /* Panel Administrativo */
         #admin-panel { display: none; min-height: 100vh; }
         
         .sidebar { 
-            width: 260px; background: var(--white); height: 100vh; 
+            width: 260px; background: white; height: 100vh; 
             padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0;
-            box-sizing: border-box; display: flex; flex-direction: column;
+            display: flex; flex-direction: column; box-sizing: border-box;
         }
         .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
 
@@ -45,16 +38,16 @@
             cursor: pointer; transition: 0.3s; font-weight: 500; color: #555;
             display: flex; align-items: center; gap: 10px;
         }
-        .nav-btn:hover { background: #f0f2f5; color: var(--primary); }
+        .nav-btn:hover, .nav-btn.active { background: #f0f2f5; color: var(--primary); }
         .nav-btn.active { background: var(--primary); color: white; }
 
-        /* Tabla */
+        /* Estilo de la Tabla */
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
+        th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; border-bottom: 1px solid #f0f2f5; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
         
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -63,18 +56,18 @@
     <div id="login-screen">
         <div class="login-card">
             <h2 style="color: var(--primary); margin-top: 0;">Acceso Administrativo</h2>
-            <p style="color: #666; font-size: 0.9em;">Ingrese sus credenciales de la Procuraduría</p>
+            <p style="color: #666; font-size: 0.85em;">Ingrese sus credenciales de la Procuraduría</p>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-login" onclick="ejecutarLogin()">INICIAR SESIÓN</button>
-            <p id="error-msg" style="color: #fa5252; font-size: 0.85em; display: none; margin-top: 15px;">Credenciales incorrectas.</p>
+            <p id="error-msg" style="color: #fa5252; font-size: 0.85em; display: none; margin-top: 15px;">Datos incorrectos.</p>
         </div>
     </div>
 
     <div id="admin-panel">
         <div class="sidebar">
             <div class="user-box">
-                <h3 id="user-display">Usuario</h3>
+                <h3 id="user-display">Cargando...</h3>
                 <span id="role-display">Rol | Sede</span>
             </div>
             <div class="nav-btn active">📊 Inscritos Totales</div>
@@ -85,7 +78,7 @@
 
         <div class="main-content">
             <h1 style="margin-top: 0;">Inscripciones Recientes</h1>
-            <p style="color: #666;">Gestión y monitoreo de la Escuela FDH</p>
+            <p style="color: #666; margin-bottom: 30px;">Gestión y monitoreo de la Escuela FDH</p>
             
             <div class="table-card">
                 <table>
@@ -94,11 +87,11 @@
                             <th>Folio</th>
                             <th>Participante</th>
                             <th>Taller Seleccionado</th>
-                            <th>Sede</th>
+                            <th>Estatus</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">Cargando datos...</td></tr>
+                        <tr><td colspan="4" style="text-align: center; padding: 40px; color: #999;">Cargando datos del servidor...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -114,6 +107,7 @@
             const error = document.getElementById('error-msg');
 
             try {
+                // PRIMERO: Validamos con tu 3ra rama de Make (Login)
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -127,6 +121,8 @@
                     document.getElementById('admin-panel').style.display = 'flex';
                     document.getElementById('user-display').innerText = user.nombre;
                     document.getElementById('role-display').innerText = `${user.rol} | ${user.sede || 'Global'}`;
+                    
+                    // SEGUNDO: Pedimos los datos a la nueva 4ta rama (Listar)
                     obtenerDatos(user.rol, user.sede);
                 } else {
                     error.style.display = 'block';
@@ -137,12 +133,12 @@
         async function obtenerDatos(rol, sede) {
             const tbody = document.getElementById('table-body');
             try {
-                const paramSede = (rol === 'Administrador') ? '' : sede;
-                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${paramSede}`);
+                // Aquí pedimos a la nueva rama que vas a crear en Make
+                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos&sede=${rol === 'Administrador' ? '' : sede}`);
                 const data = await res.json();
                 
                 if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">No hay registros.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No hay registros aún.</td></tr>';
                     return;
                 }
 
@@ -153,12 +149,12 @@
                             <td><strong style="color: var(--primary);">${fila.Folio_Inscripcion || 'S/F'}</strong></td>
                             <td>${fila.Nombre_s} ${fila.Apellido_Paterno}</td>
                             <td>${fila.Taller_Seleccionado}</td>
-                            <td>${fila.Quien_Canaliza || 'N/A'}</td>
+                            <td><span style="color: #27ae60; font-weight:bold;">✓ ACTIVO</span></td>
                         </tr>
                     `;
                 });
             } catch (e) { 
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: red;">Error al cargar datos. Revisa Make.</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #fa5252;">Falta configurar la rama de Listar en Make.</td></tr>'; 
             }
         }
     </script>
