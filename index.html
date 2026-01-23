@@ -25,7 +25,6 @@
     </style>
 </head>
 <body>
-
     <div class="form-card">
         <div class="header-logo">SEDIF QUERÉTARO</div>
         <h2>Escuela de Formación y Desarrollo Humano</h2>
@@ -94,14 +93,14 @@
                 5. Permanecer en cada sesión hasta que finalice.<br>
                 6. Suspender el uso del celular durante el taller.<br>
                 7. Participar de manera respetuosa y activa.<br>
-                8. Realizar las tareas e indicaciones de talleristas.<br>
+                8. Realizar las tareas e ejercicios indicados.<br>
                 9. Llevar su propio control de asistencias.<br>
                 10. Portar libreta y repasar notas.<br>
                 11. Aplicar lo aprendido en la vida diaria.<br>
-                12. Menos de 8 sesiones invalida la Constancia.<br>
-                13. No se admite el acceso de niñas, niños o adolescentes.<br>
+                12. Menos de 8 sesiones invalida la constancia.<br>
+                13. No se admite el acceso de menores al taller.<br>
                 14. No se admite asistencia de personas no inscritas.<br>
-                15. Faltas de respeto causan baja inmediata y notificación al juzgado.<br>
+                15. Comportamientos indebidos causan baja inmediata.
             </div>
             
             <div class="check-group">
@@ -159,9 +158,10 @@
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
 
             const datos = {
-                fecha: new Date().toLocaleString(),
-                correo: document.getElementById('correo').value,
-                nombre: `${document.getElementById('nombre').value} ${document.getElementById('paterno').value} ${document.getElementById('materno').value}`,
+                correo_electronico: document.getElementById('correo').value,
+                nombres: document.getElementById('nombre').value,
+                paterno: document.getElementById('paterno').value,
+                materno: document.getElementById('materno').value,
                 telefono: document.getElementById('telefono').value,
                 taller: document.getElementById('taller').value,
                 canaliza: canalizaVal,
