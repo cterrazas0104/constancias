@@ -197,36 +197,42 @@
 
         function cerrarModal() { document.getElementById('modal-validacion').style.display = 'none'; }
 
-        async function procesarValidacion() {
-            const decision = document.getElementById('val-decision').value;
-            const sedeIdx = document.getElementById('val-sede').value;
-            const sede = Object.values(sedesGlobal[sedeIdx]);
+       async function procesarValidacion() {
+    const decision = document.getElementById('val-decision').value; // Tomará "Sí" o "No"
+    const sedeIdx = document.getElementById('val-sede').value;
+    
+    // Si la decisión es "No", enviamos datos de sede vacíos o nulos
+    const sede = (decision === 'Sí' && sedesGlobal[sedeIdx]) 
+                 ? Object.values(sedesGlobal[sedeIdx]) 
+                 : ["N/A", "N/A", "N/A", "N/A"];
 
-            const payload = {
-                metodo: 'validar_inscrito',
-                fila: itemSeleccionado.fila,
-                correo: itemSeleccionado.correo,
-                decision: decision,
-                lugar: sede[0],
-                sala: sede[1],
-                dia: sede[2],
-                horario: sede[3],
-                nombre_p: itemSeleccionado.nombre,
-                taller_p: itemSeleccionado.taller
-            };
+    const payload = {
+        metodo: 'validar_inscrito',
+        fila: itemSeleccionado.fila,
+        correo: itemSeleccionado.correo,
+        decision: decision,
+        lugar: sede[0],
+        sala: sede[1],
+        dia: sede[2],
+        horario: sede[3],
+        nombre_p: itemSeleccionado.nombre,
+        taller_p: itemSeleccionado.taller
+    };
 
-            try {
-                await fetch(`${WEBHOOK_URL}?metodo=validar_inscrito`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                alert("Proceso completado.");
-                cerrarModal();
-                cargarInscritos();
-            } catch (e) { alert("Error al procesar"); }
+    try {
+        const res = await fetch(`${WEBHOOK_URL}?metodo=validar_inscrito`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            alert(decision === 'Sí' ? "Inscripción validada y correo enviado." : "Rechazo procesado y correo de rectificación enviado.");
+            cerrarModal();
+            cargarInscritos();
         }
-
+    } catch (e) { alert("Error al procesar la solicitud en el servidor."); }
+}
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
