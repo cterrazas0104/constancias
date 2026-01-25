@@ -137,17 +137,27 @@
             } catch (e) { alert("Error de conexión"); }
         }
 
+// 1. Cargar las sedes usando una variable diferente para no chocar con la Rama 1
         async function cargarSedes() {
             try {
-                const res = await fetch(`${WEBHOOK_URL}?accion=listar_sedes`);
+                // Usamos 'catalogo_pedir' en lugar de 'accion'
+                const res = await fetch(`${WEBHOOK_URL}?catalogo_pedir=sedes`);
                 sedesGlobal = await res.json();
+                
                 const select = document.getElementById('val-sede');
-                select.innerHTML = '';
+                select.innerHTML = '<option value="">-- Selecciona una opción --</option>';
+                
                 sedesGlobal.forEach((s, idx) => {
                     const v = Object.values(s);
-                    select.innerHTML += `<option value="${idx}">${v[2]} ${v[3]} - ${v[0]}</option>`;
+                    // Mapeamos: v[0]=Lugar, v[1]=Sala, v[2]=Día, v[3]=Horario
+                    const texto = `${v[2]} | ${v[3]} - ${v[0]} (${v[1]})`;
+                    select.innerHTML += `<option value="${idx}">${texto}</option>`;
                 });
-            } catch (e) { console.error("Error sedes:", e); }
+                console.log("Sedes cargadas exitosamente");
+            } catch (e) { 
+                console.error("Error al cargar sedes:", e);
+                document.getElementById('val-sede').innerHTML = '<option>Error al cargar catálogo</option>';
+            }
         }
 
         function cambiarSeccion(sec) {
