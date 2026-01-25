@@ -170,22 +170,41 @@
 
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
             try {
                 const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
                 const data = await res.json();
                 tbody.innerHTML = '';
-                data.forEach((item, index) => {
+                
+                // Convertimos a array si no lo es
+                const lista = Array.isArray(data) ? data : [data];
+
+                lista.forEach((item, index) => {
                     const v = Object.values(item);
-                    if(v[0] && v[0] !== 'empty') {
+                    
+                    // FILTRO DE SEGURIDAD: 
+                    // Solo mostramos si el Folio (v[0]) existe y NO es "null" o "empty"
+                    if(v[0] && v[0] !== 'null' && v[0] !== 'empty' && String(v[3]).trim() !== 'null') {
                         const tr = document.createElement('tr');
                         tr.className = 'clickable';
-                        tr.innerHTML = `<td><strong>${v[0]}</strong></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td>${v[8]}</td>`;
+                        tr.innerHTML = `
+                            <td><strong>${v[0]}</strong></td>
+                            <td>${(v[3] || '')} ${(v[4] || '')}</td>
+                            <td>${v[7] || 'Sin taller'}</td>
+                            <td>${v[8] || 'N/A'}</td>
+                        `;
                         tr.onclick = () => abrirModal(index + 2, v);
                         tbody.appendChild(tr);
                     }
                 });
-            } catch (e) { console.error(e); }
+
+                if(tbody.innerHTML === '') {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay registros válidos.</td></tr>';
+                }
+            } catch (e) { 
+                console.error(e); 
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error al conectar.</td></tr>';
+            }
         }
 
         function abrirModal(fila, datos) {
