@@ -168,44 +168,46 @@
             if(sec === 'catalogos') obtenerDatosCatalogos();
         }
 
-        async function cargarInscritos() {
-            const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
-            try {
-                const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
-                const data = await res.json();
-                tbody.innerHTML = '';
-                
-                // Convertimos a array si no lo es
-                const lista = Array.isArray(data) ? data : [data];
+    async function cargarInscritos() {
+    const tbody = document.getElementById('body-inscritos');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
+    try {
+        const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
+        const data = await res.json();
+        tbody.innerHTML = '';
+        
+        const lista = Array.isArray(data) ? data : [data];
 
-                lista.forEach((item, index) => {
-                    const v = Object.values(item);
-                    
-                    // FILTRO DE SEGURIDAD: 
-                    // Solo mostramos si el Folio (v[0]) existe y NO es "null" o "empty"
-                    if(v[0] && v[0] !== 'null' && v[0] !== 'empty' && String(v[3]).trim() !== 'null') {
-                        const tr = document.createElement('tr');
-                        tr.className = 'clickable';
-                        tr.innerHTML = `
-                            <td><strong>${v[0]}</strong></td>
-                            <td>${(v[3] || '')} ${(v[4] || '')}</td>
-                            <td>${v[7] || 'Sin taller'}</td>
-                            <td>${v[8] || 'N/A'}</td>
-                        `;
-                        tr.onclick = () => abrirModal(index + 2, v);
-                        tbody.appendChild(tr);
-                    }
-                });
+        lista.forEach((item, index) => {
+            const v = Object.values(item);
+            
+            // VALIDACIÓN ESTRICTA:
+            // Solo procesamos si el Nombre (v[3]) existe, no es "null" y tiene contenido real
+            const nombreValido = v[3] && String(v[3]).trim() !== '' && String(v[3]).toLowerCase() !== 'null';
+            const folioValido = v[0] && String(v[0]).trim() !== '' && String(v[0]).toLowerCase() !== 'null';
 
-                if(tbody.innerHTML === '') {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay registros válidos.</td></tr>';
-                }
-            } catch (e) { 
-                console.error(e); 
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error al conectar.</td></tr>';
+            if(nombreValido && folioValido) {
+                const tr = document.createElement('tr');
+                tr.className = 'clickable';
+                tr.innerHTML = `
+                    <td><strong>${v[0]}</strong></td>
+                    <td>${v[3]} ${v[4] || ''}</td>
+                    <td>${v[7] || 'Sin taller'}</td>
+                    <td>${v[8] || 'N/A'}</td>
+                `;
+                tr.onclick = () => abrirModal(index + 2, v);
+                tbody.appendChild(tr);
             }
+        });
+
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay inscritos registrados todavía.</td></tr>';
         }
+    } catch (e) { 
+        console.error(e); 
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error de conexión con la base de datos.</td></tr>';
+    }
+}
 
         function abrirModal(fila, datos) {
             itemSeleccionado = { fila, correo: datos[2], nombre: datos[3] + " " + datos[4], taller: datos[7] };
