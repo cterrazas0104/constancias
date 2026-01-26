@@ -90,7 +90,7 @@
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
-                <h1>Control de Asistencias (Acumulativo)</h1>
+                <h1>Control de Asistencias (8 Sesiones)</h1>
                 <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; border-left: 5px solid var(--secondary);">
                     <label style="font-weight:bold;">Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
@@ -151,7 +151,10 @@
 
         function cambiarSeccion(sec) {
             const secciones = ['inscritos', 'catalogos', 'asistencias'];
-            secciones.forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
+            secciones.forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if(el) el.style.display = s === sec ? 'block' : 'none';
+            });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const activeTab = document.getElementById('tab-' + sec);
             if(activeTab) activeTab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
@@ -170,14 +173,15 @@
                 select.innerHTML = '<option value="">-- Todos los Talleres --</option>';
                 talleresGlobal.forEach(t => {
                     const v = Object.values(t);
-                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[0]}">${v[1]}</option>`;
+                    // IMPORTANTE: El valor del selector ahora es el NOMBRE del taller (v[1])
+                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
                 });
             } else {
-                // Tallerista: Buscamos el taller asignado por ID
+                // Tallerista: Buscamos el nombre del taller asignado mediante el tallerID
                 const miTaller = talleresGlobal.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
                 if (miTaller) {
                     const v = Object.values(miTaller);
-                    select.innerHTML = `<option value="${v[0]}">${v[1]}</option>`;
+                    select.innerHTML = `<option value="${v[1]}">${v[1]}</option>`;
                     cargarAlumnosAsistencia();
                 } else {
                     select.innerHTML = '<option value="">Sin taller asignado</option>';
@@ -186,26 +190,26 @@
         }
 
         async function cargarAlumnosAsistencia() {
-            const idTallerSel = document.getElementById('asis-taller-filtro').value;
+            const tallerNombreSel = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Buscando alumnos...</td></tr>';
 
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
             inscritosGlobal = await res.json();
             
-            // Filtramos por ID del taller (índice 7 en tu hoja de Asistentes)
-            const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === idTallerSel);
+            // Filtramos comparando el NOMBRE del taller (índice 7 en Asistentes)
+            const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === tallerNombreSel);
             tbody.innerHTML = '';
             
             if(filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin alumnos registrados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados en este taller.</td></tr>';
                 return;
             }
 
             filtrados.forEach((al) => {
                 const v = Object.values(al);
                 const filaOriginal = inscritosGlobal.indexOf(al) + 2;
-                const totalActual = v[26] || 0; // Columna AA del Excel
+                const totalActual = v[26] || 0; 
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -236,15 +240,17 @@
             });
 
             if(res.ok) {
-                alert("Guardado. Se buscará el siguiente espacio libre en el Excel.");
+                alert("Asistencia enviada.");
                 cargarAlumnosAsistencia();
             }
         }
 
+        // --- Funciones Admin Básicas ---
         async function cargarInscritos() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
             inscritosGlobal = await res.json();
             const tbody = document.getElementById('body-inscritos');
+            if(!tbody) return;
             tbody.innerHTML = '';
             inscritosGlobal.forEach((item, index) => {
                 const v = Object.values(item);
@@ -262,6 +268,7 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?catalogo_pedir=sedes`);
             sedesGlobal = await res.json();
             const select = document.getElementById('val-sede');
+            if(!select) return;
             select.innerHTML = '<option value="">-- Selecciona lugar --</option>';
             sedesGlobal.forEach((s, idx) => {
                 const v = Object.values(s);
@@ -287,6 +294,7 @@
 
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
+            if(!tbody) return;
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
             const data = await res.json();
             tbody.innerHTML = '';
