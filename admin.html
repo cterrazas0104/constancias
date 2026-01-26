@@ -30,6 +30,10 @@
         
         #modal-validacion { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; align-items:center; justify-content:center; }
         .modal-card { background:white; padding:30px; border-radius:12px; width:90%; max-width:500px; }
+        
+        /* Estilos específicos para el botón de asistencia acumulativa */
+        .btn-add-asis { background: var(--secondary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: auto; }
+        .badge-asis { background: #eee; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
@@ -84,24 +88,31 @@
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
-                <h1>Control de Asistencias</h1>
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; background:white; padding:20px; border-radius:12px;">
-                    <div><label>Taller:</label><select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select></div>
-                    <div><label>Sesión:</label><select id="asis-sesion-num">
-                        <option value="19">Sesión 1</option><option value="20">Sesión 2</option>
-                        <option value="21">Sesión 3</option><option value="22">Sesión 4</option>
-                        <option value="23">Sesión 5</option><option value="24">Sesión 6</option>
-                        <option value="25">Sesión 7</option><option value="26">Sesión 8</option>
-                    </select></div>
+                <h1>Control de Asistencias (8 Sesiones)</h1>
+                <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; border-left: 5px solid var(--secondary);">
+                    <label style="font-weight:bold;">Taller Asignado:</label>
+                    <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
+                    <p style="margin:10px 0 0 0; font-size:0.85em; color:gray;">* Presione el botón para registrar la siguiente asistencia disponible del alumno.</p>
                 </div>
-                <div class="table-card"><table><thead><tr><th>Alumno</th><th>ID Taller</th><th style="text-align:center;">Asistencia</th></tr></thead><tbody id="body-asistencias"></tbody></table></div>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Alumno</th>
+                                <th style="text-align:center;">Progreso</th>
+                                <th style="text-align:center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-asistencias"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
-        const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b'; // URL Actualizada
+        const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
         let sedesGlobal = [];
         let inscritosGlobal = [];
@@ -171,33 +182,64 @@
         async function cargarAlumnosAsistencia() {
             const idTallerSel = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            if(inscritosGlobal.length === 0) {
-                const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
-                inscritosGlobal = await res.json();
-            }
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando lista de alumnos...</td></tr>';
+
+            // Recargamos inscritos para tener los conteos de asistencia actuales
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
+            inscritosGlobal = await res.json();
+            
             const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === idTallerSel);
             tbody.innerHTML = '';
-            filtrados.forEach((al, index) => {
+            
+            if(filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos inscritos.</td></tr>';
+                return;
+            }
+
+            filtrados.forEach((al) => {
                 const v = Object.values(al);
+                const filaOriginal = inscritosGlobal.indexOf(al) + 2;
+                const totalActual = v[26] || 0; // Columna AA del Excel
+
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td style="text-align:center;"><input type="checkbox" onchange="registrarAsis(${index+2}, this)"></td>`;
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:bold;">${v[3]} ${v[4]}</div>
+                        <div style="font-size:0.75em; color:gray;">Folio: ${v[0]}</div>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="badge-asis">${totalActual} / 8</span>
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="btn-add-asis" onclick="registrarAsisAcumulativa(${filaOriginal}, '${v[3]}')">
+                            + Asistencia
+                        </button>
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function registrarAsis(fila, check) {
-            fetch(WEBHOOK_ASISTENCIA, {
+        async function registrarAsisAcumulativa(fila, nombre) {
+            if(!confirm(`¿Registrar nueva asistencia para ${nombre}?`)) return;
+
+            // Enviamos la fila. Make/Script buscarán la siguiente columna vacía (19-26)
+            const res = await fetch(WEBHOOK_ASISTENCIA, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     fila: fila, 
-                    columna: document.getElementById('asis-sesion-num').value, 
-                    valor: check.checked ? "X" : "" 
+                    accion: "registrar_siguiente"
                 })
             });
+
+            if(res.ok) {
+                alert("Asistencia registrada. El sistema procesará el diploma si llega a 8.");
+                cargarAlumnosAsistencia(); // Refrescar contador
+            }
         }
 
-        // --- Funciones de soporte (Inscritos, Sedes, Catálogos) iguales al código anterior ---
+        // --- Funciones Admin (Inscritos, Sedes, Catálogos) ---
         async function cargarInscritos() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
             inscritosGlobal = await res.json();
