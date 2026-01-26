@@ -43,6 +43,7 @@
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
+            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Credenciales incorrectas</p>
         </div>
     </div>
 
@@ -61,19 +62,7 @@
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Folio</th>
-                                <th>Nombre</th>
-                                <th>Taller Solicitado</th>
-                                <th style="text-align:center;">Validado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-inscritos"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th style="text-align:center;">Validado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
@@ -84,19 +73,11 @@
                 </div>
                 <div class="table-card">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre del Beneficiario</th>
-                                <th style="text-align:center;">Sesiones</th>
-                                <th style="text-align:center;">Asistencia Hoy</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Beneficiario</th><th style="text-align:center;">Sesiones</th><th style="text-align:center;">Asistencia Hoy</th></tr></thead>
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
-                    💾 GUARDAR ASISTENCIAS SELECCIONADAS
-                </button>
+                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR ASISTENCIAS SELECCIONADAS</button>
             </div>
         </div>
     </div>
@@ -105,29 +86,21 @@
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
-        let inscritosGlobal = [];
         let usuarioLogueado = {};
 
         async function ejecutarLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
-            const res = await fetch(WEBHOOK_LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-            });
+            const res = await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass }) });
             const user = await res.json();
             if (user.autorizado) {
-                usuarioLogueado = { nombre: user.nombre, rol: user.rol, tallerID: user.taller_id };
+                usuarioLogueado = user;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'flex';
-                document.getElementById('user-display').innerText = usuarioLogueado.nombre;
-                document.getElementById('role-display').innerText = usuarioLogueado.rol;
-                usuarioLogueado.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
-                if (usuarioLogueado.rol === 'Tallerista') {
-                    document.getElementById('tab-inscritos').style.display = 'none';
-                }
-            } else { alert("Acceso denegado"); }
+                document.getElementById('user-display').innerText = user.nombre;
+                document.getElementById('role-display').innerText = user.rol;
+                user.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
+            } else { document.getElementById('error-msg').style.display = 'block'; }
         }
 
         function cambiarSeccion(sec) {
@@ -138,7 +111,6 @@
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
-            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
@@ -153,10 +125,8 @@
                 const v = Object.values(item);
                 const status = (v[16] || "").toString().trim().toLowerCase();
                 const esSi = (status === 'sí' || status === 'si');
-                tbody.innerHTML += `<tr>
-                    <td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
-                    <td style="text-align:center;"><span class="status-pill ${esSi ? 'val-si' : 'val-no'}">${esSi ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                </tr>`;
+                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
+                    <td style="text-align:center;"><span class="status-pill ${esSi ? 'val-si' : 'val-no'}">${esSi ? 'VALIDADO' : 'PENDIENTE'}</span></td></tr>`;
             });
         }
 
@@ -164,12 +134,10 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar Taller --</option>' : '';
+            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Taller --</option>' : '';
             talleres.forEach(t => {
                 const v = Object.values(t);
-                if(usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.tallerID) {
-                    select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
-                }
+                if(usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.tallerID) select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
             });
             if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
@@ -180,6 +148,7 @@
             if(!taller) return;
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Consultando...</td></tr>';
             
+            // EL TRUCO FINAL: Usamos un timestamp aleatorio para que no lea datos viejos
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
@@ -189,34 +158,29 @@
                 document.getElementById('btn-guardar-lista').style.display = 'block';
                 filtrados.forEach(al => {
                     const v = Object.values(al);
-                    // LECTURA DIRECTA BASADA EN TU WEB RESPONSE: ÍNDICE 26
+                    // LECTURA DIRECTA BASADA EN TU IMAGEN Webhooks: ÍNDICE 26
                     const count = v[26] || 0;
                     tbody.innerHTML += `<tr>
                         <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
-                        <td style="text-align:center;"><b>${count} / 8</b></td>
+                        <td style="text-align:center;"><b style="color:var(--primary); font-size:1.2em;">${count} / 8</b></td>
                         <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${data.indexOf(al)+2}" data-folio="${v[0]}"></td>
                     </tr>`;
                 });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>';
-            }
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>'; }
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
-            if(!checks.length) return alert("Selecciona a alguien.");
+            if(!checks.length) return alert("Selecciona beneficiarios.");
             const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            const res = await fetch(WEBHOOK_ASISTENCIA, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ asistencias: lista }) 
-            });
+            const res = await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asistencias: lista }) });
             
             if(res.ok) {
-                alert("¡Guardado exitoso!");
-                await new Promise(r => setTimeout(r, 2000));
+                alert("¡Asistencias guardadas!");
+                // Pausa de 3 segundos para que Google Sheets termine de sumar en la columna AA
+                await new Promise(r => setTimeout(r, 3000));
                 await cargarAlumnosAsistencia();
             } else { alert("Error al guardar."); }
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
