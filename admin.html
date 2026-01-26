@@ -3,102 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrativo - SEDIF</title>
+    <title>Panel Administrativo - SEDIF EFDH</title>
     <style>
-        :root { --primary: #7b7bb5; --secondary: #4a90e2; --bg: #f0f2f5; --text: #2c3e50; }
+        :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; --white: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
         
-        /* Login */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7b7bb5; display: flex; align-items: center; justify-content: center; z-index: 10000; }
-        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 90%; max-width: 350px; text-align: center; }
+        /* Pantalla de Login */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
         
-        /* Layout */
+        /* Layout Principal */
         #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
         .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; }
         .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; }
         
+        /* Navegación */
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { background: #f8f9ff; }
         .nav-btn.active { background: var(--primary); color: white; }
+        .nav-btn.active-asis { background: var(--secondary); color: white; }
         
-        /* Tablas */
+        /* Tablas y Tarjetas */
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
         tr.clickable:hover { background: #f8f9ff; cursor: pointer; }
 
-        /* Status Pills */
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.7em; }
-        .activo { background: #e6fcf5; color: #0ca678; }
-        .inactivo { background: #fff5f5; color: #fa5252; }
+        /* Controles */
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
+        .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-asis { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; }
 
-        /* Modal */
+        /* Modales */
         #modal-validacion { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; align-items:center; justify-content:center; }
         .modal-card { background:white; padding:30px; border-radius:12px; width:90%; max-width:500px; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
-        select, button.btn-form { width:100%; padding:12px; margin-top:10px; border-radius:8px; border:1px solid #ddd; }
-        .btn-confirm { background:var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
-        .btn-cancel { background:#eee; border:none; margin-top:5px; cursor:pointer; }
-
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.7em; text-transform: uppercase; }
+        .activo { background: #e6fcf5; color: #0ca678; }
+        .inactivo { background: #fff5f5; color: #fa5252; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: #7b7bb5;">Acceso Administrativo</h2>
+            <h2 style="color: var(--primary); margin-bottom: 20px;">Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn-login" onclick="ejecutarLogin()">ENTRAR</button>
-            <p id="error-msg" style="color:red; display:none; margin-top:10px;">Acceso denegado</p>
+            <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR AL PANEL</button>
+            <p id="error-msg" style="color:red; display:none; margin-top:15px; font-size: 0.9em;">Credenciales incorrectas</p>
         </div>
     </div>
 
     <div id="modal-validacion">
         <div class="modal-card">
-            <h3 id="modal-nombre">Validar Inscrito</h3>
+            <h3 id="modal-nombre" style="margin-top:0;">Validar Inscrito</h3>
             <p id="modal-taller" style="color:gray; font-size:0.9em;"></p>
-            <hr>
-            <label>1. ¿Es válido el registro?</label>
+            <hr style="border:0; border-top:1px solid #eee;">
+            <label>¿Es válido el registro?</label>
             <select id="val-decision">
-                <option value="Sí">SÍ - Validar y enviar Constancia PDF</option>
-                <option value="No">NO - Rechazar y solicitar rectificación</option>
+                <option value="Sí">SÍ - Validar y enviar Constancia</option>
+                <option value="No">NO - Rechazar y solicitar corrección</option>
             </select>
-            
-            <div id="area-sede" style="margin-top:15px;">
-                <label>2. Asignar Sede (Solo si es SI):</label>
-                <select id="val-sede"></select>
-            </div>
-
-            <button class="btn-form btn-confirm" onclick="procesarValidacion()">EJECUTAR ACCIÓN</button>
-            <button class="btn-form btn-cancel" onclick="cerrarModal()">Cerrar</button>
+            <label style="margin-top:15px; display:block;">Asignar Sede y Horario:</label>
+            <select id="val-sede"></select>
+            <button class="btn-primary" onclick="procesarValidacion()" style="margin-top:20px;">EJECUTAR ACCIÓN</button>
+            <button onclick="cerrarModal()" style="background:#eee; border:none; margin-top:10px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
     <div id="admin-panel">
         <div class="sidebar">
             <div class="user-box">
-                <h3 id="user-display">Usuario</h3>
-                <span id="role-display" style="font-size:0.8em; color:gray;">Rol</span>
+                <h3 id="user-display" style="margin:0; font-size:1.1em;">Usuario</h3>
+                <small id="role-display" style="color:gray;">Rol del sistema</small>
             </div>
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
             <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Gestión de Talleres</div>
-            <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:red;">🚪 Salir</div>
+            <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pasar Asistencia</div>
+            <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Cerrar Sesión</div>
         </div>
 
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
-                <h1>Inscripciones Escuela FDH</h1>
-                <p style="font-size:0.8em; color:gray;">Haz clic en un registro para validar y asignar sede.</p>
+                <h1>Validación de Inscripciones</h1>
+                <p style="color:gray; font-size:0.9em;">Selecciona un registro para validar documentos y asignar lugar.</p>
                 <div class="table-card">
                     <table>
-                        <thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Canalización</th></tr></thead>
+                        <thead><tr><th>Folio</th><th>Nombre</th><th>Taller Solicitado</th><th>Canalización</th></tr></thead>
                         <tbody id="body-inscritos"></tbody>
                     </table>
                 </div>
             </div>
+
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>Gestión de Talleres</h1>
                 <div class="table-card">
@@ -108,106 +107,186 @@
                     </table>
                 </div>
             </div>
+
+            <div id="sec-asistencias" class="content-section" style="display:none;">
+                <h1>Control de Asistencias</h1>
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; background:white; padding:20px; border-radius:12px; margin-bottom:20px;">
+                    <div>
+                        <label style="font-weight:bold; font-size:0.8em;">1. SELECCIONAR TALLER:</label>
+                        <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
+                    </div>
+                    <div>
+                        <label style="font-weight:bold; font-size:0.8em;">2. SESIÓN:</label>
+                        <select id="asis-sesion-num">
+                            <option value="19">Sesión 1</option><option value="20">Sesión 2</option>
+                            <option value="21">Sesión 3</option><option value="22">Sesión 4</option>
+                            <option value="23">Sesión 5</option><option value="24">Sesión 6</option>
+                            <option value="25">Sesión 7</option><option value="26">Sesión 8</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th>Alumno</th><th>Taller / ID</th><th style="text-align:center;">Asistencia</th></tr></thead>
+                        <tbody id="body-asistencias"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         let sedesGlobal = [];
-        let itemSeleccionado = {};
+        let inscritosGlobal = [];
+        let talleresGlobal = [];
+        let usuarioLogueado = {};
 
+        // --- LOGIN CON SEGURIDAD POR ROL ---
         async function ejecutarLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
+            const errorMsg = document.getElementById('error-msg');
+            
             try {
-                const response = await fetch(WEBHOOK_URL, {
+                const res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
                 });
-                const user = await response.json();
+                const user = await res.json();
+
                 if (user.autorizado) {
+                    usuarioLogueado = {
+                        nombre: user.nombre,
+                        rol: user.rol,
+                        tallerID: user.taller_id, // ID asignado en la pestaña Usuarios
+                        sede: user.sede_asignada
+                    };
+
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('admin-panel').style.display = 'flex';
-                    document.getElementById('user-display').innerText = user.nombre;
-                    document.getElementById('role-display').innerText = user.rol;
+                    document.getElementById('user-display').innerText = usuarioLogueado.nombre;
+                    document.getElementById('role-display').innerText = usuarioLogueado.rol;
+                    
                     cargarInscritos();
                     cargarSedes();
-                } else { document.getElementById('error-msg').style.display = 'block'; }
-            } catch (e) { alert("Error de conexión"); }
-        }
-
-// 1. Cargar las sedes usando una variable diferente para no chocar con la Rama 1
-        async function cargarSedes() {
-            try {
-                // Usamos 'catalogo_pedir' en lugar de 'accion'
-                const res = await fetch(`${WEBHOOK_URL}?catalogo_pedir=sedes`);
-                sedesGlobal = await res.json();
-                
-                const select = document.getElementById('val-sede');
-                select.innerHTML = '<option value="">-- Selecciona una opción --</option>';
-                
-                sedesGlobal.forEach((s, idx) => {
-                    const v = Object.values(s);
-                    // Mapeamos: v[0]=Lugar, v[1]=Sala, v[2]=Día, v[3]=Horario
-                    const texto = `${v[2]} | ${v[3]} - ${v[0]} (${v[1]})`;
-                    select.innerHTML += `<option value="${idx}">${texto}</option>`;
-                });
-                console.log("Sedes cargadas exitosamente");
-            } catch (e) { 
-                console.error("Error al cargar sedes:", e);
-                document.getElementById('val-sede').innerHTML = '<option>Error al cargar catálogo</option>';
+                } else {
+                    errorMsg.style.display = 'block';
+                }
+            } catch (e) {
+                alert("Error de conexión con el servidor");
             }
         }
 
+        // --- NAVEGACIÓN ---
         function cambiarSeccion(sec) {
-            document.getElementById('sec-inscritos').style.display = sec === 'inscritos' ? 'block' : 'none';
-            document.getElementById('sec-catalogos').style.display = sec === 'catalogos' ? 'block' : 'none';
-            document.getElementById('tab-inscritos').classList.toggle('active', sec === 'inscritos');
-            document.getElementById('tab-catalogos').classList.toggle('active', sec === 'catalogos');
-            if(sec === 'catalogos') obtenerDatosCatalogos();
-        }
-
-    async function cargarInscritos() {
-    const tbody = document.getElementById('body-inscritos');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
-    try {
-        const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
-        const data = await res.json();
-        tbody.innerHTML = '';
-        
-        const lista = Array.isArray(data) ? data : [data];
-
-        lista.forEach((item, index) => {
-            const v = Object.values(item);
+            const secciones = ['inscritos', 'catalogos', 'asistencias'];
+            secciones.forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
             
-            // VALIDACIÓN ESTRICTA:
-            // Solo procesamos si el Nombre (v[3]) existe, no es "null" y tiene contenido real
-            const nombreValido = v[3] && String(v[3]).trim() !== '' && String(v[3]).toLowerCase() !== 'null';
-            const folioValido = v[0] && String(v[0]).trim() !== '' && String(v[0]).toLowerCase() !== 'null';
+            document.getElementById('tab-inscritos').className = 'nav-btn' + (sec === 'inscritos' ? ' active' : '');
+            document.getElementById('tab-catalogos').className = 'nav-btn' + (sec === 'catalogos' ? ' active' : '');
+            document.getElementById('tab-asistencias').className = 'nav-btn' + (sec === 'asistencias' ? ' active-asis' : '');
 
-            if(nombreValido && folioValido) {
-                const tr = document.createElement('tr');
-                tr.className = 'clickable';
-                tr.innerHTML = `
-                    <td><strong>${v[0]}</strong></td>
-                    <td>${v[3]} ${v[4] || ''}</td>
-                    <td>${v[7] || 'Sin taller'}</td>
-                    <td>${v[8] || 'N/A'}</td>
-                `;
-                tr.onclick = () => abrirModal(index + 2, v);
-                tbody.appendChild(tr);
-            }
-        });
-
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay inscritos registrados todavía.</td></tr>';
+            if(sec === 'catalogos') obtenerDatosCatalogos();
+            if(sec === 'asistencias') cargarFiltroTalleresPermitidos();
         }
-    } catch (e) { 
-        console.error(e); 
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error de conexión con la base de datos.</td></tr>';
-    }
-}
+
+        // --- GESTIÓN DE ASISTENCIAS (FILTRADO POR ROL) ---
+        async function cargarFiltroTalleresPermitidos() {
+            const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+            talleresGlobal = await res.json();
+            const select = document.getElementById('asis-taller-filtro');
+            select.innerHTML = '';
+
+            if (usuarioLogueado.rol === 'Administrador' || usuarioLogueado.rol === 'Supervisor') {
+                select.innerHTML = '<option value="">-- Ver Todos los Talleres --</option>';
+                talleresGlobal.forEach(t => {
+                    const v = Object.values(t);
+                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[0]}">${v[1]}</option>`;
+                });
+            } else {
+                // Tallerista solo ve su ID asignado
+                const miTaller = talleresGlobal.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
+                if (miTaller) {
+                    const v = Object.values(miTaller);
+                    select.innerHTML = `<option value="${v[0]}">${v[1]}</option>`;
+                } else {
+                    select.innerHTML = '<option value="">Sin taller asignado</option>';
+                }
+            }
+            cargarAlumnosAsistencia();
+        }
+
+        async function cargarAlumnosAsistencia() {
+            const idTallerSel = document.getElementById('asis-taller-filtro').value;
+            const tbody = document.getElementById('body-asistencias');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando lista...</td></tr>';
+            
+            // Filtramos inscritosGlobal por el ID_Taller (asumiendo que está en el índice 7 de la fila)
+            const filtrados = inscritosGlobal.filter(al => {
+                const v = Object.values(al);
+                return v[7] === idTallerSel || (idTallerSel === "" && (usuarioLogueado.rol === 'Administrador'));
+            });
+
+            tbody.innerHTML = filtrados.length ? '' : '<tr><td colspan="3" style="text-align:center;">No hay alumnos en este taller.</td></tr>';
+
+            filtrados.forEach((al, index) => {
+                const v = Object.values(al);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${v[3]} ${v[4]}</strong></td>
+                    <td><small>${v[7]}</small></td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" style="transform:scale(1.6); cursor:pointer;" onchange="registrarAsis(${index+2}, this)">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function registrarAsis(fila, check) {
+            const col = document.getElementById('asis-sesion-num').value;
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    metodo: 'registrar_asistencia', 
+                    fila: fila, 
+                    columna: col, 
+                    valor: check.checked ? "X" : "" 
+                })
+            });
+        }
+
+        // --- GESTIÓN DE INSCRITOS Y SEDES ---
+        async function cargarInscritos() {
+            const res = await fetch(`${WEBHOOK_URL}?accion=admin_listar_inscritos`);
+            inscritosGlobal = await res.json();
+            const tbody = document.getElementById('body-inscritos');
+            tbody.innerHTML = '';
+            inscritosGlobal.forEach((item, index) => {
+                const v = Object.values(item);
+                if(v[3] && String(v[3]) !== 'null') {
+                    const tr = document.createElement('tr');
+                    tr.className = 'clickable';
+                    tr.innerHTML = `<td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td>${v[8]}</td>`;
+                    tr.onclick = () => abrirModal(index + 2, v);
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        async function cargarSedes() {
+            const res = await fetch(`${WEBHOOK_URL}?catalogo_pedir=sedes`);
+            sedesGlobal = await res.json();
+            const select = document.getElementById('val-sede');
+            select.innerHTML = '<option value="">-- Selecciona lugar y horario --</option>';
+            sedesGlobal.forEach((s, idx) => {
+                const v = Object.values(s);
+                select.innerHTML += `<option value="${idx}">${v[2]} | ${v[3]} - ${v[0]}</option>`;
+            });
+        }
 
         function abrirModal(fila, datos) {
             itemSeleccionado = { fila, correo: datos[2], nombre: datos[3] + " " + datos[4], taller: datos[7] };
@@ -218,68 +297,50 @@
 
         function cerrarModal() { document.getElementById('modal-validacion').style.display = 'none'; }
 
-       async function procesarValidacion() {
-    const decision = document.getElementById('val-decision').value; // Tomará "Sí" o "No"
-    const sedeIdx = document.getElementById('val-sede').value;
-    
-    // Si la decisión es "No", enviamos datos de sede vacíos o nulos
-    const sede = (decision === 'Sí' && sedesGlobal[sedeIdx]) 
-                 ? Object.values(sedesGlobal[sedeIdx]) 
-                 : ["N/A", "N/A", "N/A", "N/A"];
-
-    const payload = {
-        metodo: 'validar_inscrito',
-        fila: itemSeleccionado.fila,
-        correo: itemSeleccionado.correo,
-        decision: decision,
-        lugar: sede[0],
-        sala: sede[1],
-        dia: sede[2],
-        horario: sede[3],
-        nombre_p: itemSeleccionado.nombre,
-        taller_p: itemSeleccionado.taller
-    };
-
-    try {
-        const res = await fetch(`${WEBHOOK_URL}?metodo=validar_inscrito`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        if (res.ok) {
-            alert(decision === 'Sí' ? "Inscripción validada y correo enviado." : "Rechazo procesado y correo de rectificación enviado.");
+        async function procesarValidacion() {
+            const decision = document.getElementById('val-decision').value;
+            const sedeIdx = document.getElementById('val-sede').value;
+            const sede = sedesGlobal[sedeIdx] ? Object.values(sedesGlobal[sedeIdx]) : ["N/A","N/A","N/A","N/A"];
+            
+            await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    metodo: 'validar_inscrito',
+                    fila: itemSeleccionado.fila,
+                    decision: decision,
+                    lugar: sede[0], sala: sede[1], dia: sede[2], horario: sede[3]
+                })
+            });
             cerrarModal();
             cargarInscritos();
         }
-    } catch (e) { alert("Error al procesar la solicitud en el servidor."); }
-}
+
+        // --- GESTIÓN DE CATÁLOGOS ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
-            try {
-                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
-                const data = await res.json();
-                tbody.innerHTML = '';
-                data.forEach((item, index) => {
-                    const v = Object.values(item);
-                    const id = v.find(val => String(val).startsWith('T-')) || `ID-${index+1}`;
-                    const estatusRaw = v.find(val => {
-                        const s = String(val).toUpperCase();
-                        return s === 'ACTIVO' || s === 'INACTIVO';
-                    }) || 'INACTIVO';
-                    const estatus = estatusRaw.toUpperCase();
-                    const nombre = v.find(val => val !== id && val !== estatusRaw && String(val).length > 5) || 'Taller';
-                    tbody.innerHTML += `<tr><td><strong>${id}</strong></td><td>${nombre}</td><td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td><td><button onclick="actualizarEstatus(${index + 2}, '${estatus}')">Alternar</button></td></tr>`;
-                });
-            } catch (e) { console.error(e); }
+            tbody.innerHTML = '<tr><td colspan="4">Cargando catálogo...</td></tr>';
+            const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+            const data = await res.json();
+            tbody.innerHTML = '';
+            data.forEach((item, index) => {
+                const v = Object.values(item);
+                const estatus = String(v[2]).toUpperCase();
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${v[0]}</b></td>
+                        <td>${v[1]}</td>
+                        <td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td>
+                        <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
+                    </tr>`;
+            });
         }
 
-        async function actualizarEstatus(fila, estatusActual) {
-            const nuevo = estatusActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-            if(!confirm("¿Cambiar a " + nuevo + "?")) return;
-            await fetch(`${WEBHOOK_URL}?metodo=admin_actualizar_catalogo`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+        async function toggleEstatus(fila, actual) {
+            const nuevo = actual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+            await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila, estatus: nuevo })
             });
             obtenerDatosCatalogos();
