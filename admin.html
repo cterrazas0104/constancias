@@ -39,11 +39,11 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--primary);">Acceso EFDH</h2>
+            <h2>Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
-            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Acceso denegado</p>
+            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Credenciales incorrectas</p>
         </div>
     </div>
 
@@ -125,7 +125,6 @@
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
         let inscritosGlobal = [];
-        let talleresGlobal = [];
         let usuarioLogueado = {};
 
         async function ejecutarLogin() {
@@ -168,10 +167,9 @@
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
-        // --- SECCIÓN: INSCRITOS (Ajustado a Columna Q) ---
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             tbody.innerHTML = '';
@@ -179,34 +177,39 @@
             inscritosGlobal.forEach((item) => {
                 const v = Object.values(item);
                 if(v[3] && String(v[3]) !== 'null') {
-                    // Columna Q es índice 16
-                    const valStatus = (v[16] || "").toString().trim().toLowerCase();
-                    const pillClass = (valStatus === 'sí' || valStatus === 'si') ? 'val-si' : 'val-no';
-                    const pillText = (valStatus === 'sí' || valStatus === 'si') ? 'VALIDADO' : 'PENDIENTE';
+                    // SEGÚN TU CAPTURA DE MAKE: El "Sí" es el índice 11
+                    const valStatus = (v[11] || "").toString().trim().toLowerCase();
+                    const esValido = (valStatus === 'sí' || valStatus === 'si');
                     
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
-                                    <td style="text-align:center;"><span class="status-pill ${pillClass}">${pillText}</span></td>`;
+                    tr.innerHTML = `
+                        <td><b>${v[0]}</b></td>
+                        <td>${v[3]} ${v[4]} ${v[5] || ""}</td>
+                        <td>${v[7]}</td>
+                        <td style="text-align:center;">
+                            <span class="status-pill ${esValido ? 'val-si' : 'val-no'}">
+                                ${esValido ? 'VALIDADO' : 'PENDIENTE'}
+                            </span>
+                        </td>`;
                     tbody.appendChild(tr);
                 }
             });
         }
 
-        // --- SECCIÓN: CATÁLOGOS ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            talleresGlobal = await res.json();
+            const data = await res.json();
             tbody.innerHTML = '';
-            talleresGlobal.forEach((item, index) => {
+            data.forEach((item, index) => {
                 const v = Object.values(item);
                 const estatus = String(v[2]).toUpperCase();
                 tbody.innerHTML += `<tr>
                     <td><b>${v[0]}</b></td>
                     <td>${v[1]}</td>
                     <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
-                    <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Cambiar</button></td>
+                    <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
                 </tr>`;
             });
         }
@@ -221,7 +224,6 @@
             obtenerDatosCatalogos();
         }
 
-        // --- SECCIÓN: ASISTENCIAS (Ajustado a Columna AA) ---
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
@@ -229,8 +231,11 @@
             select.innerHTML = '';
 
             if (usuarioLogueado.rol === 'Administrador') {
-                select.innerHTML = '<option value="">-- Taller --</option>';
-                talleres.forEach(t => select.innerHTML += `<option value="${Object.values(t)[1]}">${Object.values(t)[1]}</option>`);
+                select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
+                talleres.forEach(t => {
+                    const v = Object.values(t);
+                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
+                });
             } else {
                 const miTaller = talleres.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
                 const nombreT = miTaller ? Object.values(miTaller)[1] : "";
@@ -242,7 +247,7 @@
         async function cargarAlumnosAsistencia() {
             const tallerNombre = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
 
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
@@ -254,8 +259,9 @@
                 filtrados.forEach((al) => {
                     const v = Object.values(al);
                     const filaIdx = inscritosGlobal.indexOf(al) + 2;
-                    // Columna AA es índice 26
-                    const sesiones = v[26] || 0; 
+                    // SEGÚN TU CAPTURA DE MAKE: El total de asistencias es el índice 16
+                    const sesiones = v[16] || 0; 
+                    
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
@@ -265,21 +271,21 @@
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin beneficiarios.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados.</td></tr>';
                 document.getElementById('btn-guardar-lista').style.display = 'none';
             }
         }
 
         async function guardarAsistenciasMasivas() {
             const seleccionados = document.querySelectorAll('.check-asis:checked');
-            if (seleccionados.length === 0) return alert("Selecciona a alguien.");
+            if (seleccionados.length === 0) return alert("No has seleccionado a nadie.");
 
             const listaParaEnviar = Array.from(seleccionados).map(check => ({
                 fila: check.getAttribute('data-fila'),
                 folio: check.getAttribute('data-folio')
             }));
 
-            if (!confirm(`¿Guardar asistencia para ${seleccionados.length} beneficiarios?`)) return;
+            if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
 
             const btn = document.getElementById('btn-guardar-lista');
             btn.disabled = true;
@@ -293,11 +299,12 @@
                 });
 
                 if (res.ok) {
-                    alert("¡Asistencias registradas!");
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    alert("¡Asistencias guardadas! Refrescando contador...");
+                    // Espera para dar tiempo a que Google Sheets sume
+                    await new Promise(resolve => setTimeout(resolve, 2500));
                     await cargarAlumnosAsistencia();
                 }
-            } catch (e) { alert("Error."); }
+            } catch (e) { alert("Error al conectar."); }
             btn.disabled = false;
             btn.innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
