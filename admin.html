@@ -39,11 +39,10 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2>Acceso Administrativo</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
-            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Credenciales incorrectas</p>
         </div>
     </div>
 
@@ -68,8 +67,8 @@
                             <tr>
                                 <th>Folio</th>
                                 <th>Nombre</th>
-                                <th>Taller Solicitado</th>
-                                <th style="text-align:center;">Validado</th>
+                                <th>Taller</th>
+                                <th style="text-align:center;">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="body-inscritos"></tbody>
@@ -89,7 +88,7 @@
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
-                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
+                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary); margin-bottom: 20px;">
                     <label style="font-weight:bold;">Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
@@ -97,17 +96,15 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Nombre del Beneficiario</th>
-                                <th style="text-align:center;">Sesiones</th>
+                                <th>Beneficiario</th>
+                                <th style="text-align:center;">Asistencias</th>
                                 <th style="text-align:center;">Asistencia Hoy</th>
                             </tr>
                         </thead>
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
-                    💾 GUARDAR ASISTENCIAS SELECCIONADAS
-                </button>
+                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR LISTA DE HOY</button>
             </div>
         </div>
     </div>
@@ -129,17 +126,19 @@
             });
             const user = await res.json();
             if (user.autorizado) {
-                usuarioLogueado = { nombre: user.nombre, rol: user.rol, tallerID: user.taller_id };
+                usuarioLogueado = user;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'flex';
-                document.getElementById('user-display').innerText = usuarioLogueado.nombre;
-                document.getElementById('role-display').innerText = usuarioLogueado.rol;
-                usuarioLogueado.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
-                if (usuarioLogueado.rol === 'Tallerista') {
+                document.getElementById('user-display').innerText = user.nombre;
+                document.getElementById('role-display').innerText = user.rol;
+                if (user.rol === 'Tallerista') {
                     document.getElementById('tab-inscritos').style.display = 'none';
                     document.getElementById('tab-catalogos').style.display = 'none';
+                    cambiarSeccion('asistencias');
+                } else {
+                    cambiarSeccion('inscritos');
                 }
-            } else { alert("Acceso denegado"); }
+            } else { alert("Credenciales incorrectas"); }
         }
 
         function cambiarSeccion(sec) {
@@ -147,6 +146,7 @@
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
@@ -154,24 +154,23 @@
 
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Actualizando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            inscritosGlobal = data;
+            inscritosGlobal = await res.json();
             tbody.innerHTML = '';
-            
-            data.forEach((item) => {
+            inscritosGlobal.forEach((item) => {
                 const v = Object.values(item);
-                // Búsqueda inteligente de estatus
-                const valStatus = (v.find(x => x === "Sí" || x === "si" || x === "No") || "").toString().trim().toLowerCase();
-                const esValido = (valStatus === 'sí' || valStatus === 'si');
-                
-                tbody.innerHTML += `<tr>
-                    <td><b>${v[0]}</b></td>
-                    <td>${v[3]} ${v[4]}</td>
-                    <td>${v[7]}</td>
-                    <td style="text-align:center;"><span class="status-pill ${esValido ? 'val-si' : 'val-no'}">${esValido ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                </tr>`;
+                if(v[3]) {
+                    // Columna Q es índice 16
+                    const status = (v[16] || "").toString().trim().toLowerCase();
+                    const esSi = (status === 'sí' || status === 'si');
+                    tbody.innerHTML += `<tr>
+                        <td><b>${v[0]}</b></td>
+                        <td>${v[3]} ${v[4]}</td>
+                        <td>${v[7]}</td>
+                        <td style="text-align:center;"><span class="status-pill ${esSi ? 'val-si' : 'val-no'}">${esSi ? 'VALIDADO' : 'PENDIENTE'}</span></td>
+                    </tr>`;
+                }
             });
         }
 
@@ -183,8 +182,11 @@
             data.forEach((item, idx) => {
                 const v = Object.values(item);
                 const est = String(v[2]).toUpperCase();
-                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
-                <td><button onclick="toggleEstatus(${idx+2}, '${est}')">Alternar</button></td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td><b>${v[0]}</b></td><td>${v[1]}</td>
+                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
+                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')">Alternar</button></td>
+                </tr>`;
             });
         }
 
@@ -197,74 +199,58 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar --</option>' : '';
+            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar Taller --</option>' : '';
             talleres.forEach(t => {
                 const v = Object.values(t);
-                if(usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.tallerID) select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
+                if(usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.taller_id) {
+                    select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
+                }
             });
             if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
 
-async function cargarAlumnosAsistencia() {
-    const tallerNombre = document.getElementById('asis-taller-filtro').value;
-    const tbody = document.getElementById('body-asistencias');
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
-
-    // Agregamos el timestamp para asegurar que no lea datos viejos
-    const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-    const data = await res.json();
-    inscritosGlobal = data;
-    
-    // Filtramos por taller (asumimos que el taller sigue en el índice 7 del objeto)
-    const filtrados = data.filter(al => {
-        const valores = Object.values(al);
-        return valores.includes(tallerNombre);
-    });
-    
-    tbody.innerHTML = '';
-    
-    if (filtrados.length > 0) {
-        document.getElementById('btn-guardar-lista').style.display = 'block';
-        filtrados.forEach((al) => {
-            const v = Object.values(al);
-            const filaIdx = data.indexOf(al) + 2;
-            
-            // BUSQUEDA INTELIGENTE DEL CONTADOR:
-            // Buscamos el último valor numérico en el registro del alumno
-            // Esto evita el error si Make mueve las columnas
-            let sesiones = 0;
-            for (let i = v.length - 1; i >= 0; i--) {
-                if (typeof v[i] === 'number') {
-                    sesiones = v[i];
-                    break;
-                }
-            }
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${v[3] || "Beneficiario"} ${v[4] || ""}</strong><br><small>Folio: ${v[0]}</small></td>
-                <td style="text-align:center;"><b>${sesiones} / 8</b></td>
-                <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${filaIdx}" data-folio="${v[0]}"></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } else {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos para este taller.</td></tr>';
-        document.getElementById('btn-guardar-lista').style.display = 'none';
-    }
-}
+        async function cargarAlumnosAsistencia() {
+            const taller = document.getElementById('asis-taller-filtro').value;
+            const tbody = document.getElementById('body-asistencias');
+            if(!taller) { tbody.innerHTML = ''; return; }
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Consultando lista...</td></tr>';
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+            inscritosGlobal = await res.json();
+            const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === taller);
+            tbody.innerHTML = '';
+            if(filtrados.length) {
+                document.getElementById('btn-guardar-lista').style.display = 'block';
+                filtrados.forEach(al => {
+                    const v = Object.values(al);
+                    // Columna AA es índice 26 (Total Asistencias)
+                    const count = v[26] || 0;
+                    tbody.innerHTML += `<tr>
+                        <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
+                        <td style="text-align:center;"><b>${count} / 8</b></td>
+                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${inscritosGlobal.indexOf(al)+2}" data-folio="${v[0]}"></td>
+                    </tr>`;
+                });
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>'; }
+        }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
-            if(!checks.length) return alert("Selecciona a alguien.");
+            if(!checks.length) return alert("Selecciona a los asistentes");
             const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
-            if(!confirm("¿Guardar lista?")) return;
-            document.getElementById('btn-guardar-lista').innerText = "⏳ Guardando...";
-            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asistencias: lista }) });
-            alert("¡Listo! Actualizando...");
-            await new Promise(r => setTimeout(r, 2500));
-            await cargarAlumnosAsistencia();
-            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
+            if(!confirm(`¿Registrar asistencia para ${checks.length} personas?`)) return;
+            document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
+            const res = await fetch(WEBHOOK_ASISTENCIA, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ asistencias: lista }) 
+            });
+            if(res.ok) {
+                alert("Asistencias guardadas. El contador se actualizará en unos segundos.");
+                // Espera de 3 segundos para que Google Sheets termine de procesar la fórmula en la columna AA
+                await new Promise(r => setTimeout(r, 3000));
+                await cargarAlumnosAsistencia();
+            } else { alert("Error al conectar con el servidor."); }
+            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR LISTA DE HOY";
         }
     </script>
 </body>
