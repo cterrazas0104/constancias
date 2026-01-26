@@ -186,38 +186,40 @@
             }
         }
 
-        async function guardarAsistenciasMasivas() {
-            const seleccionados = document.querySelectorAll('.check-asis:checked');
-            if (seleccionados.length === 0) return alert("No has marcado a nadie.");
+      async function guardarAsistenciasMasivas() {
+    const seleccionados = document.querySelectorAll('.check-asis:checked');
+    if (seleccionados.length === 0) return alert("No has marcado a nadie.");
 
-            const listaParaEnviar = Array.from(seleccionados).map(check => ({
-                fila: check.getAttribute('data-fila'),
-                folio: check.getAttribute('data-folio'),
-                nombre: check.getAttribute('data-nombre')
-            }));
+    const listaParaEnviar = Array.from(seleccionados).map(check => ({
+        fila: check.getAttribute('data-fila'),
+        folio: check.getAttribute('data-folio')
+    }));
 
-            if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
+    if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
 
-            document.getElementById('btn-guardar-lista').disabled = true;
-            document.getElementById('btn-guardar-lista').innerText = "Guardando...";
+    const btn = document.getElementById('btn-guardar-lista');
+    btn.disabled = true;
+    btn.innerText = "⏳ GUARDANDO EN EXCEL...";
 
-            try {
-                // Enviamos el array completo a Make
-                const res = await fetch(WEBHOOK_ASISTENCIA, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ asistencias: listaParaEnviar })
-                });
+    try {
+        const res = await fetch(WEBHOOK_ASISTENCIA, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ asistencias: listaParaEnviar })
+        });
 
-                if (res.ok) {
-                    alert("¡Asistencias guardadas y fechas registradas!");
-                    cargarAlumnosAsistencia();
-                }
-            } catch (e) { alert("Error al guardar."); }
-            
-            document.getElementById('btn-guardar-lista').disabled = false;
-            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
+        if (res.ok) {
+            alert("¡Asistencias guardadas correctamente!");
+            // IMPORTANTE: Forzamos la recarga de los datos para ver el nuevo conteo (1/8, 2/8, etc)
+            await cargarAlumnosAsistencia(); 
         }
+    } catch (e) { 
+        alert("Error de conexión al guardar."); 
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
+    }
+}
     </script>
 </body>
 </html>
