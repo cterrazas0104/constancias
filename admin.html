@@ -209,30 +209,51 @@
             if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
 
-        async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const tbody = document.getElementById('body-asistencias');
-            if(!taller) { tbody.innerHTML = ''; return; }
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Consultando lista...</td></tr>';
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            inscritosGlobal = await res.json();
-            const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === taller);
-            tbody.innerHTML = '';
-            if(filtrados.length) {
-                document.getElementById('btn-guardar-lista').style.display = 'block';
-                filtrados.forEach(al => {
-                    const v = Object.values(al);
-                    // Columna AA es índice 26 (Total Asistencias)
-                    const count = v[26] || 0;
-                    tbody.innerHTML += `<tr>
-                        <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
-                        <td style="text-align:center;"><b>${count} / 8</b></td>
-                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${inscritosGlobal.indexOf(al)+2}" data-folio="${v[0]}"></td>
-                    </tr>`;
-                });
-            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>'; }
-        }
+async function cargarAlumnosAsistencia() {
+    const taller = document.getElementById('asis-taller-filtro').value;
+    const tbody = document.getElementById('body-asistencias');
+    if(!taller) { tbody.innerHTML = ''; return; }
+    
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Consultando lista...</td></tr>';
+    
+    // El timestamp ?t= asegura que traiga el dato real que viste en el Web Response
+    const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+    const data = await res.json();
+    inscritosGlobal = data;
 
+    // Filtramos los alumnos del taller seleccionado
+    const filtrados = data.filter(al => Object.values(al).includes(taller));
+    
+    tbody.innerHTML = '';
+    
+    if(filtrados.length) {
+        document.getElementById('btn-guardar-lista').style.display = 'block';
+        filtrados.forEach(al => {
+            const v = Object.values(al);
+            
+            // --- LÓGICA DE DETECCIÓN AUTOMÁTICA DEL CONTADOR ---
+            // Recorremos el registro del alumno de atrás hacia adelante.
+            // El primer número que encontremos (de la columna AA hacia la izquierda) será el contador.
+            let count = 0;
+            for (let i = v.length - 1; i >= 0; i--) {
+                // Verificamos si es un número y que no sea el Folio (que suele ser el índice 0)
+                if (typeof v[i] === 'number' && i > 0) {
+                    count = v[i];
+                    break; 
+                }
+            }
+
+            tbody.innerHTML += `<tr>
+                <td><strong>${v[3] || "S/N"} ${v[4] || ""}</strong><br><small>Folio: ${v[0]}</small></td>
+                <td style="text-align:center;"><b style="font-size:1.2em; color:#7b7bb5;">${count} / 8</b></td>
+                <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${inscritosGlobal.indexOf(al)+2}" data-folio="${v[0]}"></td>
+            </tr>`;
+        });
+    } else { 
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos inscritos en este taller.</td></tr>'; 
+    }
+}
+        
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona a los asistentes");
