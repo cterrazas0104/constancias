@@ -162,7 +162,6 @@
             
             data.forEach((item) => {
                 const v = Object.values(item);
-                // Búsqueda inteligente de estatus
                 const valStatus = (v.find(x => x === "Sí" || x === "si" || x === "No") || "").toString().trim().toLowerCase();
                 const esValido = (valStatus === 'sí' || valStatus === 'si');
                 
@@ -218,8 +217,17 @@
                 document.getElementById('btn-guardar-lista').style.display = 'block';
                 filtrados.forEach(al => {
                     const v = Object.values(al);
-                    // Buscamos el contador: es el valor numérico en la posición 16 o similar del Aggregator
-                    const sesiones = v[16] || 0;
+                    
+                    // LÓGICA DE BÚSQUEDA DEL CONTADOR AA:
+                    // Buscamos el último valor numérico en el bundle.
+                    let sesiones = 0;
+                    for (let i = v.length - 1; i >= 0; i--) {
+                        if (typeof v[i] === 'number' && i > 0) {
+                            sesiones = v[i];
+                            break;
+                        }
+                    }
+
                     tbody.innerHTML += `<tr>
                         <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
                         <td style="text-align:center;"><b>${sesiones} / 8</b></td>
@@ -237,7 +245,7 @@
             document.getElementById('btn-guardar-lista').innerText = "⏳ Guardando...";
             await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asistencias: lista }) });
             alert("¡Listo! Actualizando...");
-            await new Promise(r => setTimeout(r, 2500));
+            await new Promise(r => setTimeout(r, 3000));
             await cargarAlumnosAsistencia();
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
