@@ -31,9 +31,11 @@
         #modal-validacion { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; align-items:center; justify-content:center; }
         .modal-card { background:white; padding:30px; border-radius:12px; width:90%; max-width:500px; }
         
-        /* Estilos específicos para el botón de asistencia acumulativa */
         .btn-add-asis { background: var(--secondary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: auto; }
         .badge-asis { background: #eee; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #555; }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        .activo { background: #e6fcf5; color: #0ca678; }
+        .inactivo { background: #fff5f5; color: #fa5252; }
     </style>
 </head>
 <body>
@@ -88,11 +90,11 @@
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
-                <h1>Control de Asistencias (8 Sesiones)</h1>
+                <h1>Control de Asistencias (Acumulativo)</h1>
                 <div style="background:white; padding:20px; border-radius:12px; margin-bottom:20px; border-left: 5px solid var(--secondary);">
-                    <label style="font-weight:bold;">Taller Asignado:</label>
+                    <label style="font-weight:bold;">Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
-                    <p style="margin:10px 0 0 0; font-size:0.85em; color:gray;">* Presione el botón para registrar la siguiente asistencia disponible del alumno.</p>
+                    <p style="margin:10px 0 0 0; font-size:0.85em; color:gray;">* El sistema marcará automáticamente la siguiente sesión disponible para el alumno.</p>
                 </div>
                 <div class="table-card">
                     <table>
@@ -153,6 +155,7 @@
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const activeTab = document.getElementById('tab-' + sec);
             if(activeTab) activeTab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            
             if(sec === 'asistencias') cargarFiltroTalleresPermitidos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
         }
@@ -170,11 +173,14 @@
                     if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[0]}">${v[1]}</option>`;
                 });
             } else {
+                // Tallerista: Buscamos el taller asignado por ID
                 const miTaller = talleresGlobal.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
                 if (miTaller) {
                     const v = Object.values(miTaller);
                     select.innerHTML = `<option value="${v[0]}">${v[1]}</option>`;
                     cargarAlumnosAsistencia();
+                } else {
+                    select.innerHTML = '<option value="">Sin taller asignado</option>';
                 }
             }
         }
@@ -182,17 +188,17 @@
         async function cargarAlumnosAsistencia() {
             const idTallerSel = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando lista de alumnos...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
 
-            // Recargamos inscritos para tener los conteos de asistencia actuales
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
             inscritosGlobal = await res.json();
             
+            // Filtramos por ID del taller (índice 7 en tu hoja de Asistentes)
             const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === idTallerSel);
             tbody.innerHTML = '';
             
             if(filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos inscritos.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin alumnos registrados.</td></tr>';
                 return;
             }
 
@@ -223,23 +229,18 @@
         async function registrarAsisAcumulativa(fila, nombre) {
             if(!confirm(`¿Registrar nueva asistencia para ${nombre}?`)) return;
 
-            // Enviamos la fila. Make/Script buscarán la siguiente columna vacía (19-26)
             const res = await fetch(WEBHOOK_ASISTENCIA, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    fila: fila, 
-                    accion: "registrar_siguiente"
-                })
+                body: JSON.stringify({ fila: fila, accion: "registrar_siguiente" })
             });
 
             if(res.ok) {
-                alert("Asistencia registrada. El sistema procesará el diploma si llega a 8.");
-                cargarAlumnosAsistencia(); // Refrescar contador
+                alert("Guardado. Se buscará el siguiente espacio libre en el Excel.");
+                cargarAlumnosAsistencia();
             }
         }
 
-        // --- Funciones Admin (Inscritos, Sedes, Catálogos) ---
         async function cargarInscritos() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
             inscritosGlobal = await res.json();
@@ -256,6 +257,7 @@
                 }
             });
         }
+
         async function cargarSedes() {
             const res = await fetch(`${WEBHOOK_LOGIN}?catalogo_pedir=sedes`);
             sedesGlobal = await res.json();
@@ -266,6 +268,7 @@
                 select.innerHTML += `<option value="${idx}">${v[2]} | ${v[3]} - ${v[0]}</option>`;
             });
         }
+
         function abrirModal(fila, datos) {
             itemSeleccionado = { fila, correo: datos[2], nombre: datos[3] + " " + datos[4], taller: datos[7] };
             document.getElementById('modal-nombre').innerText = itemSeleccionado.nombre;
@@ -273,6 +276,7 @@
             document.getElementById('modal-validacion').style.display = 'flex';
         }
         function cerrarModal() { document.getElementById('modal-validacion').style.display = 'none'; }
+
         async function procesarValidacion() {
             const decision = document.getElementById('val-decision').value;
             const sedeIdx = document.getElementById('val-sede').value;
@@ -280,6 +284,7 @@
             await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'validar_inscrito', fila: itemSeleccionado.fila, decision: decision, lugar: sede[0], sala: sede[1], dia: sede[2], horario: sede[3] }) });
             cerrarModal(); cargarInscritos();
         }
+
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
@@ -288,9 +293,10 @@
             data.forEach((item, index) => {
                 const v = Object.values(item);
                 const estatus = String(v[2]).toUpperCase();
-                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td><td><button onclick="toggleEstatus(${index+2}, '${estatus}')">Alternar</button></td></tr>`;
+                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${estatus === 'ACTIVO' ? 'activo' : 'inactivo'}">${estatus}</span></td><td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Alternar</button></td></tr>`;
             });
         }
+
         async function toggleEstatus(fila, actual) {
             const nuevo = actual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
             await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila, estatus: nuevo }) });
