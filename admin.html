@@ -17,7 +17,6 @@
         
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
-        .nav-btn:hover { background: #f8f9ff; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
         
@@ -44,7 +43,7 @@
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
-            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Credenciales incorrectas</p>
+            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Acceso denegado</p>
         </div>
     </div>
 
@@ -169,20 +168,25 @@
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
-        // --- SECCIÓN: INSCRITOS ---
+        // --- SECCIÓN: INSCRITOS (Ajustado a Columna Q) ---
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             tbody.innerHTML = '';
             
             inscritosGlobal.forEach((item) => {
                 const v = Object.values(item);
                 if(v[3] && String(v[3]) !== 'null') {
-                    const validado = v[14] === 'Sí' ? '<span class="status-pill val-si">SÍ</span>' : '<span class="status-pill val-no">PENDIENTE</span>';
+                    // Columna Q es índice 16
+                    const valStatus = (v[16] || "").toString().trim().toLowerCase();
+                    const pillClass = (valStatus === 'sí' || valStatus === 'si') ? 'val-si' : 'val-no';
+                    const pillText = (valStatus === 'sí' || valStatus === 'si') ? 'VALIDADO' : 'PENDIENTE';
+                    
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td style="text-align:center;">${validado}</td>`;
+                    tr.innerHTML = `<td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
+                                    <td style="text-align:center;"><span class="status-pill ${pillClass}">${pillText}</span></td>`;
                     tbody.appendChild(tr);
                 }
             });
@@ -191,8 +195,8 @@
         // --- SECCIÓN: CATÁLOGOS ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4">Cargando talleres...</td></tr>';
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
+            tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             talleresGlobal = await res.json();
             tbody.innerHTML = '';
             talleresGlobal.forEach((item, index) => {
@@ -202,7 +206,7 @@
                     <td><b>${v[0]}</b></td>
                     <td>${v[1]}</td>
                     <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
-                    <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
+                    <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Cambiar</button></td>
                 </tr>`;
             });
         }
@@ -217,19 +221,16 @@
             obtenerDatosCatalogos();
         }
 
-        // --- SECCIÓN: ASISTENCIAS ---
+        // --- SECCIÓN: ASISTENCIAS (Ajustado a Columna AA) ---
         async function cargarCatalogosAsis() {
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
             select.innerHTML = '';
 
             if (usuarioLogueado.rol === 'Administrador') {
-                select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
-                talleres.forEach(t => {
-                    const v = Object.values(t);
-                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
-                });
+                select.innerHTML = '<option value="">-- Taller --</option>';
+                talleres.forEach(t => select.innerHTML += `<option value="${Object.values(t)[1]}">${Object.values(t)[1]}</option>`);
             } else {
                 const miTaller = talleres.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
                 const nombreT = miTaller ? Object.values(miTaller)[1] : "";
@@ -241,7 +242,7 @@
         async function cargarAlumnosAsistencia() {
             const tallerNombre = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando beneficiarios...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
 
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
@@ -253,6 +254,7 @@
                 filtrados.forEach((al) => {
                     const v = Object.values(al);
                     const filaIdx = inscritosGlobal.indexOf(al) + 2;
+                    // Columna AA es índice 26
                     const sesiones = v[26] || 0; 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -263,25 +265,25 @@
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos para este taller.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin beneficiarios.</td></tr>';
                 document.getElementById('btn-guardar-lista').style.display = 'none';
             }
         }
 
         async function guardarAsistenciasMasivas() {
             const seleccionados = document.querySelectorAll('.check-asis:checked');
-            if (seleccionados.length === 0) return alert("Por favor selecciona al menos un beneficiario.");
+            if (seleccionados.length === 0) return alert("Selecciona a alguien.");
 
             const listaParaEnviar = Array.from(seleccionados).map(check => ({
                 fila: check.getAttribute('data-fila'),
                 folio: check.getAttribute('data-folio')
             }));
 
-            if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
+            if (!confirm(`¿Guardar asistencia para ${seleccionados.length} beneficiarios?`)) return;
 
             const btn = document.getElementById('btn-guardar-lista');
             btn.disabled = true;
-            btn.innerText = "⏳ GUARDANDO EN EXCEL...";
+            btn.innerText = "⏳ GUARDANDO...";
 
             try {
                 const res = await fetch(WEBHOOK_ASISTENCIA, {
@@ -291,11 +293,11 @@
                 });
 
                 if (res.ok) {
-                    alert("¡Asistencias guardadas! Actualizando contador...");
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    alert("¡Asistencias registradas!");
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     await cargarAlumnosAsistencia();
                 }
-            } catch (e) { alert("Error de conexión al guardar."); }
+            } catch (e) { alert("Error."); }
             btn.disabled = false;
             btn.innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
