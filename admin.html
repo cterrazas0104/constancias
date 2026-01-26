@@ -17,6 +17,7 @@
         
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { background: #f8f9ff; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
         
@@ -27,9 +28,11 @@
 
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-save { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; font-size: 1.1em; }
+        .btn-save { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; font-size: 1.1em; width: 100%; }
 
-        /* Estilo Checkbox */
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        .val-si { background: #e6fcf5; color: #0ca678; }
+        .val-no { background: #fff5f5; color: #fa5252; }
         .check-asis { transform: scale(1.8); cursor: pointer; }
     </style>
 </head>
@@ -37,7 +40,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2 style="color: var(--primary);">Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
@@ -60,12 +63,36 @@
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card"><table><tbody id="body-inscritos"></tbody></table></div>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Nombre</th>
+                                <th>Taller Solicitado</th>
+                                <th style="text-align:center;">Validado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-inscritos"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
-                <h1>Catálogo de Talleres</h1>
-                <div class="table-card"><table><tbody id="body-catalogos"></tbody></table></div>
+                <h1>Gestión de Talleres</h1>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre del Taller</th>
+                                <th>Estatus</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-catalogos"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
@@ -99,6 +126,7 @@
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
         let inscritosGlobal = [];
+        let talleresGlobal = [];
         let usuarioLogueado = {};
 
         async function ejecutarLogin() {
@@ -128,13 +156,68 @@
         }
 
         function cambiarSeccion(sec) {
-            ['inscritos', 'catalogos', 'asistencias'].forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if(el) el.style.display = s === sec ? 'block' : 'none';
+            });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            
+            if(sec === 'inscritos') cargarInscritos();
+            if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
+        // --- SECCIÓN: INSCRITOS ---
+        async function cargarInscritos() {
+            const tbody = document.getElementById('body-inscritos');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando registros...</td></tr>';
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
+            inscritosGlobal = await res.json();
+            tbody.innerHTML = '';
+            
+            inscritosGlobal.forEach((item) => {
+                const v = Object.values(item);
+                if(v[3] && String(v[3]) !== 'null') {
+                    const validado = v[14] === 'Sí' ? '<span class="status-pill val-si">SÍ</span>' : '<span class="status-pill val-no">PENDIENTE</span>';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td style="text-align:center;">${validado}</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        // --- SECCIÓN: CATÁLOGOS ---
+        async function obtenerDatosCatalogos() {
+            const tbody = document.getElementById('body-catalogos');
+            tbody.innerHTML = '<tr><td colspan="4">Cargando talleres...</td></tr>';
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
+            talleresGlobal = await res.json();
+            tbody.innerHTML = '';
+            talleresGlobal.forEach((item, index) => {
+                const v = Object.values(item);
+                const estatus = String(v[2]).toUpperCase();
+                tbody.innerHTML += `<tr>
+                    <td><b>${v[0]}</b></td>
+                    <td>${v[1]}</td>
+                    <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
+                    <td><button onclick="toggleEstatus(${index+2}, '${estatus}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
+                </tr>`;
+            });
+        }
+
+        async function toggleEstatus(fila, actual) {
+            const nuevo = actual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+            await fetch(WEBHOOK_LOGIN, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: fila, estatus: nuevo }) 
+            });
+            obtenerDatosCatalogos();
+        }
+
+        // --- SECCIÓN: ASISTENCIAS ---
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
             const talleres = await res.json();
@@ -143,7 +226,10 @@
 
             if (usuarioLogueado.rol === 'Administrador') {
                 select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
-                talleres.forEach(t => select.innerHTML += `<option value="${Object.values(t)[1]}">${Object.values(t)[1]}</option>`);
+                talleres.forEach(t => {
+                    const v = Object.values(t);
+                    if(v[2] === 'ACTIVO') select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
+                });
             } else {
                 const miTaller = talleres.find(t => Object.values(t)[0] === usuarioLogueado.tallerID);
                 const nombreT = miTaller ? Object.values(miTaller)[1] : "";
@@ -155,11 +241,10 @@
         async function cargarAlumnosAsistencia() {
             const tallerNombre = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando lista...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando beneficiarios...</td></tr>';
 
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos`);
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
-            
             const filtrados = inscritosGlobal.filter(al => Object.values(al)[7] === tallerNombre);
             tbody.innerHTML = '';
             
@@ -169,57 +254,51 @@
                     const v = Object.values(al);
                     const filaIdx = inscritosGlobal.indexOf(al) + 2;
                     const sesiones = v[26] || 0; 
-
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
-                        <td style="text-align:center;">${sesiones} / 8</td>
-                        <td style="text-align:center;">
-                            <input type="checkbox" class="check-asis" data-fila="${filaIdx}" data-folio="${v[0]}" data-nombre="${v[3]}">
-                        </td>
+                        <td style="text-align:center;"><b>${sesiones} / 8</b></td>
+                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${filaIdx}" data-folio="${v[0]}"></td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos para este taller.</td></tr>';
                 document.getElementById('btn-guardar-lista').style.display = 'none';
             }
         }
 
-      async function guardarAsistenciasMasivas() {
-    const seleccionados = document.querySelectorAll('.check-asis:checked');
-    if (seleccionados.length === 0) return alert("No has marcado a nadie.");
+        async function guardarAsistenciasMasivas() {
+            const seleccionados = document.querySelectorAll('.check-asis:checked');
+            if (seleccionados.length === 0) return alert("Por favor selecciona al menos un beneficiario.");
 
-    const listaParaEnviar = Array.from(seleccionados).map(check => ({
-        fila: check.getAttribute('data-fila'),
-        folio: check.getAttribute('data-folio')
-    }));
+            const listaParaEnviar = Array.from(seleccionados).map(check => ({
+                fila: check.getAttribute('data-fila'),
+                folio: check.getAttribute('data-folio')
+            }));
 
-    if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
+            if (!confirm(`¿Registrar asistencia para ${seleccionados.length} beneficiarios?`)) return;
 
-    const btn = document.getElementById('btn-guardar-lista');
-    btn.disabled = true;
-    btn.innerText = "⏳ GUARDANDO EN EXCEL...";
+            const btn = document.getElementById('btn-guardar-lista');
+            btn.disabled = true;
+            btn.innerText = "⏳ GUARDANDO EN EXCEL...";
 
-    try {
-        const res = await fetch(WEBHOOK_ASISTENCIA, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ asistencias: listaParaEnviar })
-        });
+            try {
+                const res = await fetch(WEBHOOK_ASISTENCIA, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asistencias: listaParaEnviar })
+                });
 
-        if (res.ok) {
-            alert("¡Asistencias guardadas correctamente!");
-            // IMPORTANTE: Forzamos la recarga de los datos para ver el nuevo conteo (1/8, 2/8, etc)
-            await cargarAlumnosAsistencia(); 
+                if (res.ok) {
+                    alert("¡Asistencias guardadas! Actualizando contador...");
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await cargarAlumnosAsistencia();
+                }
+            } catch (e) { alert("Error de conexión al guardar."); }
+            btn.disabled = false;
+            btn.innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
-    } catch (e) { 
-        alert("Error de conexión al guardar."); 
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
-    }
-}
     </script>
 </body>
 </html>
