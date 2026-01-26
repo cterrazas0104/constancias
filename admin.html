@@ -205,29 +205,54 @@
             if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
 
-        async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const tbody = document.getElementById('body-asistencias');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            inscritosGlobal = data;
-            const filtrados = data.filter(al => Object.values(al)[7] === taller);
-            tbody.innerHTML = '';
-            if(filtrados.length) {
-                document.getElementById('btn-guardar-lista').style.display = 'block';
-                filtrados.forEach(al => {
-                    const v = Object.values(al);
-                    // Buscamos el contador: es el valor numérico en la posición 16 o similar del Aggregator
-                    const sesiones = v[16] || 0;
-                    tbody.innerHTML += `<tr>
-                        <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
-                        <td style="text-align:center;"><b>${sesiones} / 8</b></td>
-                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${data.indexOf(al)+2}" data-folio="${v[0]}"></td>
-                    </tr>`;
-                });
-            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin alumnos.</td></tr>'; document.getElementById('btn-guardar-lista').style.display = 'none'; }
-        }
+async function cargarAlumnosAsistencia() {
+    const tallerNombre = document.getElementById('asis-taller-filtro').value;
+    const tbody = document.getElementById('body-asistencias');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
+
+    // Agregamos el timestamp para asegurar que no lea datos viejos
+    const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+    const data = await res.json();
+    inscritosGlobal = data;
+    
+    // Filtramos por taller (asumimos que el taller sigue en el índice 7 del objeto)
+    const filtrados = data.filter(al => {
+        const valores = Object.values(al);
+        return valores.includes(tallerNombre);
+    });
+    
+    tbody.innerHTML = '';
+    
+    if (filtrados.length > 0) {
+        document.getElementById('btn-guardar-lista').style.display = 'block';
+        filtrados.forEach((al) => {
+            const v = Object.values(al);
+            const filaIdx = data.indexOf(al) + 2;
+            
+            // BUSQUEDA INTELIGENTE DEL CONTADOR:
+            // Buscamos el último valor numérico en el registro del alumno
+            // Esto evita el error si Make mueve las columnas
+            let sesiones = 0;
+            for (let i = v.length - 1; i >= 0; i--) {
+                if (typeof v[i] === 'number') {
+                    sesiones = v[i];
+                    break;
+                }
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${v[3] || "Beneficiario"} ${v[4] || ""}</strong><br><small>Folio: ${v[0]}</small></td>
+                <td style="text-align:center;"><b>${sesiones} / 8</b></td>
+                <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${filaIdx}" data-folio="${v[0]}"></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos para este taller.</td></tr>';
+        document.getElementById('btn-guardar-lista').style.display = 'none';
+    }
+}
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
