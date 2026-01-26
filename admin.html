@@ -39,11 +39,10 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso Administrativo</h2>
+            <h2>Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
-            <p id="error-msg" style="color:red; display:none; margin-top:15px;">Credenciales incorrectas</p>
         </div>
     </div>
 
@@ -62,18 +61,35 @@
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card"><table><tbody id="body-inscritos"></tbody></table></div>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Nombre</th>
+                                <th>Taller</th>
+                                <th style="text-align:center;">Validado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-inscritos"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>Gestión de Talleres</h1>
-                <div class="table-card"><table><tbody id="body-catalogos"></tbody></table></div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead>
+                        <tbody id="body-catalogos"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
-                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
-                    <label style="font-weight:bold;">Taller:</label>
+                <div id="contenedor-filtro-taller" style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
+                    <label style="font-weight:bold;">Taller Asignado:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
 
@@ -113,12 +129,14 @@
             });
             const user = await res.json();
             if (user.autorizado) {
-                usuarioLogueado = user;
+                // Guardamos los datos del usuario, incluyendo su T-ID
+                usuarioLogueado = user; 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
 
+                // Restricción de Menú por Rol
                 if (user.rol === 'Tallerista') {
                     document.getElementById('tab-inscritos').style.display = 'none';
                     document.getElementById('tab-catalogos').style.display = 'none';
@@ -126,7 +144,7 @@
                 } else {
                     cambiarSeccion('inscritos');
                 }
-            } else { document.getElementById('error-msg').style.display = 'block'; }
+            } else { alert("Acceso denegado"); }
         }
 
         function cambiarSeccion(sec) {
@@ -139,6 +157,7 @@
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
             
             if(sec === 'inscritos') cargarInscritos();
+            if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
@@ -150,7 +169,6 @@
             tbody.innerHTML = '';
             
             inscritosGlobal.forEach((item) => {
-                // Buscamos los datos por el nombre del campo que manda Make
                 const folio = item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
                 const nombre = (item["Nombre_s (D)"] || item["3"] || "") + " " + (item["Apellido_Paterno (E)"] || item["4"] || "");
                 const taller = item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
@@ -165,23 +183,59 @@
             });
         }
 
+        async function obtenerDatosCatalogos() {
+            const tbody = document.getElementById('body-catalogos');
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
+            const data = await res.json();
+            tbody.innerHTML = '';
+            data.forEach((item, idx) => {
+                const v = Object.values(item);
+                const est = String(v[2]).toUpperCase();
+                tbody.innerHTML += `<tr>
+                    <td><b>${v[0]}</b></td>
+                    <td>${v[1]}</td>
+                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
+                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
+                </tr>`;
+            });
+        }
+
+        async function toggleEstatus(f, a) {
+            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
+            obtenerDatosCatalogos();
+        }
+
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar --</option>' : '';
-            talleres.forEach(t => {
-                const nombreT = t["Nombre_Taller"] || Object.values(t)[1];
-                select.innerHTML += `<option value="${nombreT}">${nombreT}</option>`;
-            });
-            if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
+            select.innerHTML = '';
+
+            // Lógica de Filtrado de Taller por Usuario
+            if (usuarioLogueado.rol === 'Administrador') {
+                select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
+                talleres.forEach(t => {
+                    const nombreT = t["Nombre_Taller"] || Object.values(t)[1];
+                    select.innerHTML += `<option value="${nombreT}">${nombreT}</option>`;
+                });
+                select.disabled = false;
+            } else {
+                // Tallerista: Buscamos solo SU taller usando el ID que viene del login (taller_id)
+                const miTallerObj = talleres.find(t => (t["ID_Taller"] || Object.values(t)[0]) === usuarioLogueado.taller_id);
+                const nombreT = miTallerObj ? (miTallerObj["Nombre_Taller"] || Object.values(miTallerObj)[1]) : "Sin asignar";
+                
+                select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
+                select.disabled = true; // El tallerista no puede cambiar de taller
+                cargarAlumnosAsistencia();
+            }
         }
 
         async function cargarAlumnosAsistencia() {
             const taller = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
-            if(!taller) return;
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
+            if(!taller || taller === "Sin asignar") return;
+            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
             
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
@@ -193,8 +247,6 @@
                 filtrados.forEach(al => {
                     const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
                     const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
-                    
-                    // CORRECCIÓN FINAL: Leemos el campo AA tal como viene en el Webhook de Make
                     const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
                     
                     tbody.innerHTML += `<tr>
@@ -203,7 +255,9 @@
                         <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
                     </tr>`;
                 });
-            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin alumnos registrados.</td></tr>'; }
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados en este taller.</td></tr>';
+            }
         }
 
         async function guardarAsistenciasMasivas() {
@@ -219,10 +273,10 @@
             });
             
             if(res.ok) {
-                alert("¡Listo! Actualizando...");
-                await new Promise(r => setTimeout(r, 2500));
+                alert("¡Asistencias guardadas!");
+                await new Promise(r => setTimeout(r, 2000));
                 await cargarAlumnosAsistencia();
-            } else { alert("Error al conectar"); }
+            } else { alert("Error al guardar."); }
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
     </script>
