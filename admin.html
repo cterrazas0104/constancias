@@ -39,7 +39,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2>Acceso Administrativo</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
@@ -62,7 +62,12 @@
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th style="text-align:center;">Validado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
+                <div class="table-card"><table><tbody id="body-inscritos"></tbody></table></div>
+            </div>
+
+            <div id="sec-catalogos" class="content-section" style="display:none;">
+                <h1>Gestión de Talleres</h1>
+                <div class="table-card"><table><tbody id="body-catalogos"></tbody></table></div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
@@ -71,13 +76,22 @@
                     <label style="font-weight:bold;">Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
+
                 <div class="table-card">
                     <table>
-                        <thead><tr><th>Beneficiario</th><th style="text-align:center;">Sesiones</th><th style="text-align:center;">Asistencia Hoy</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Nombre del Beneficiario</th>
+                                <th style="text-align:center;">Sesiones</th>
+                                <th style="text-align:center;">Asistencia Hoy</th>
+                            </tr>
+                        </thead>
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR ASISTENCIAS SELECCIONADAS</button>
+                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
+                    💾 GUARDAR ASISTENCIAS SELECCIONADAS
+                </button>
             </div>
         </div>
     </div>
@@ -86,12 +100,17 @@
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
+        let inscritosGlobal = [];
         let usuarioLogueado = {};
 
         async function ejecutarLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
-            const res = await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass }) });
+            const res = await fetch(WEBHOOK_LOGIN, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
+            });
             const user = await res.json();
             if (user.autorizado) {
                 usuarioLogueado = user;
@@ -99,18 +118,26 @@
                 document.getElementById('admin-panel').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
-                user.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
+
+                if (user.rol === 'Tallerista') {
+                    document.getElementById('tab-inscritos').style.display = 'none';
+                    document.getElementById('tab-catalogos').style.display = 'none';
+                    cambiarSeccion('asistencias');
+                } else {
+                    cambiarSeccion('inscritos');
+                }
             } else { document.getElementById('error-msg').style.display = 'block'; }
         }
 
         function cambiarSeccion(sec) {
-            ['inscritos', 'asistencias'].forEach(s => {
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
                 const el = document.getElementById('sec-' + s);
                 if(el) el.style.display = s === sec ? 'block' : 'none';
             });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
@@ -119,14 +146,22 @@
             const tbody = document.getElementById('body-inscritos');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
+            inscritosGlobal = await res.json();
             tbody.innerHTML = '';
-            data.forEach((item) => {
-                const v = Object.values(item);
-                const status = (v[16] || "").toString().trim().toLowerCase();
-                const esSi = (status === 'sí' || status === 'si');
-                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
-                    <td style="text-align:center;"><span class="status-pill ${esSi ? 'val-si' : 'val-no'}">${esSi ? 'VALIDADO' : 'PENDIENTE'}</span></td></tr>`;
+            
+            inscritosGlobal.forEach((item) => {
+                // Buscamos los datos por el nombre del campo que manda Make
+                const folio = item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
+                const nombre = (item["Nombre_s (D)"] || item["3"] || "") + " " + (item["Apellido_Paterno (E)"] || item["4"] || "");
+                const taller = item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
+                const validado = (item["Validado (Q)"] || item["16"] || "").toString().toLowerCase().includes('sí');
+                
+                tbody.innerHTML += `<tr>
+                    <td><b>${folio}</b></td>
+                    <td>${nombre}</td>
+                    <td>${taller}</td>
+                    <td style="text-align:center;"><span class="status-pill ${validado ? 'val-si' : 'val-no'}">${validado ? 'VALIDADO' : 'PENDIENTE'}</span></td>
+                </tr>`;
             });
         }
 
@@ -134,10 +169,10 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Taller --</option>' : '';
+            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar --</option>' : '';
             talleres.forEach(t => {
-                const v = Object.values(t);
-                if(usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.tallerID) select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
+                const nombreT = t["Nombre_Taller"] || Object.values(t)[1];
+                select.innerHTML += `<option value="${nombreT}">${nombreT}</option>`;
             });
             if(usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
@@ -146,43 +181,48 @@
             const taller = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
             if(!taller) return;
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Consultando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
             
-            // EL TRUCO FINAL: Usamos un timestamp aleatorio para que no lea datos viejos
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
             
-            const filtrados = data.filter(al => Object.values(al)[7] === taller);
+            const filtrados = data.filter(al => (al["Taller_Seleccionado (H)"] || al["7"]) === taller);
             if(filtrados.length) {
                 document.getElementById('btn-guardar-lista').style.display = 'block';
                 filtrados.forEach(al => {
-                    const v = Object.values(al);
-                    // LECTURA DIRECTA BASADA EN TU IMAGEN Webhooks: ÍNDICE 26
-                    const count = v[26] || 0;
+                    const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
+                    const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
+                    
+                    // CORRECCIÓN FINAL: Leemos el campo AA tal como viene en el Webhook de Make
+                    const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
+                    
                     tbody.innerHTML += `<tr>
-                        <td><strong>${v[3]} ${v[4]}</strong><br><small>Folio: ${v[0]}</small></td>
-                        <td style="text-align:center;"><b style="color:var(--primary); font-size:1.2em;">${count} / 8</b></td>
-                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-fila="${data.indexOf(al)+2}" data-folio="${v[0]}"></td>
+                        <td><strong>${nombre}</strong><br><small>${folio}</small></td>
+                        <td style="text-align:center;"><b>${sesiones} / 8</b></td>
+                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
                     </tr>`;
                 });
-            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>'; }
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin alumnos registrados.</td></tr>'; }
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona beneficiarios.");
-            const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
+            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
             
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            const res = await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asistencias: lista }) });
+            const res = await fetch(WEBHOOK_ASISTENCIA, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ asistencias: lista }) 
+            });
             
             if(res.ok) {
-                alert("¡Asistencias guardadas!");
-                // Pausa de 3 segundos para que Google Sheets termine de sumar en la columna AA
-                await new Promise(r => setTimeout(r, 3000));
+                alert("¡Listo! Actualizando...");
+                await new Promise(r => setTimeout(r, 2500));
                 await cargarAlumnosAsistencia();
-            } else { alert("Error al guardar."); }
+            } else { alert("Error al conectar"); }
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
         }
     </script>
