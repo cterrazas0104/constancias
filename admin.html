@@ -425,28 +425,53 @@
             }
         }
 
-        async function cargarAlumnosAsistencia() {
+async function cargarAlumnosAsistencia() {
             const taller = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
+            
             if(!taller || taller === "Sin asignar") return;
+            
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
+            
+            // 1. Traemos TODOS los datos (Igual que antes)
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
+            
             tbody.innerHTML = '';
-            const filtrados = data.filter(al => (al["Taller_Seleccionado (H)"] || al["7"]) === taller);
+            
+            // 2. AQUI ESTA LA MAGIA: Filtramos por Taller Y por estatus de Validación
+            const filtrados = data.filter(al => {
+                // Obtenemos el nombre del taller de la fila
+                const tallerFila = (al["Taller_Seleccionado (H)"] || al["7"]);
+                
+                // Obtenemos si está validado (Columna Q / 16)
+                // Convertimos a string por si acaso viene null o undefined
+                const estaValidado = (al["Validado (Q)"] || al["16"] || "").toString();
+
+                // CONDICIÓN DOBLE:
+                // 1. Que sea del taller seleccionado
+                // 2. Y QUE la columna validado contenga la palabra "Sí" (o "Si", "SI")
+                return tallerFila === taller && estaValidado.includes("Sí");
+            });
+
             if(filtrados.length) {
                 document.getElementById('btn-guardar-lista').style.display = 'block';
                 filtrados.forEach(al => {
                     const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
                     const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
                     const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
+                    
                     tbody.innerHTML += `<tr>
                         <td><strong>${nombre}</strong><br><small>${folio}</small></td>
                         <td style="text-align:center;"><b>${sesiones} / 8</b></td>
                         <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
                     </tr>`;
                 });
-            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados.</td></tr>'; }
+            } else { 
+                // Mensaje más claro si no hay alumnos validados aún
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos validados en este taller aún.</td></tr>'; 
+                document.getElementById('btn-guardar-lista').style.display = 'none';
+            }
         }
 
         async function guardarAsistenciasMasivas() {
