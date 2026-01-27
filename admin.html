@@ -56,7 +56,7 @@
             
             <form id="form-validar">
                 <input type="hidden" id="val-folio">
-                <label>Sede (Cargando de Excel...):</label>
+                <label>Sede:</label>
                 <select id="val-sede" required></select>
                 
                 <label>Sala:</label>
@@ -88,6 +88,7 @@
                 <small id="role-display" style="color:gray;">Rol</small>
             </div>
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
+            <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Gestión de Talleres</div>
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pasar Asistencia</div>
             <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Salir</div>
         </div>
@@ -111,6 +112,23 @@
                 </div>
             </div>
 
+            <div id="sec-catalogos" class="content-section" style="display:none;">
+                <h1>Gestión de Talleres</h1>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Taller</th>
+                                <th>Estatus</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-catalogos"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
                 <div id="contenedor-filtro-taller" style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
@@ -129,7 +147,7 @@
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" onclick="guardarAsistenciasMasivas()" class="btn-save" style="display:none;">💾 GUARDAR ASISTENCIAS</button>
+                <button id="btn-guardar-lista" onclick="guardarAsistenciasMasivas()" class="btn-save" style="display:none; background:var(--secondary); color:white; border:none; padding:15px; border-radius:8px; width:100%; cursor:pointer; font-weight:bold; margin-top:15px;">💾 GUARDAR ASISTENCIAS</button>
             </div>
         </div>
     </div>
@@ -157,7 +175,14 @@
                 document.getElementById('admin-panel').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
-                user.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
+                
+                if (user.rol === 'Tallerista') {
+                    document.getElementById('tab-inscritos').style.display = 'none';
+                    document.getElementById('tab-catalogos').style.display = 'none';
+                    cambiarSeccion('asistencias');
+                } else {
+                    cambiarSeccion('inscritos');
+                }
                 cargarSedesDinamicas();
             } else { alert("Acceso denegado"); }
         }
@@ -170,11 +195,17 @@
         }
 
         function cambiarSeccion(sec) {
-            ['inscritos', 'asistencias'].forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if(el) el.style.display = s === sec ? 'block' : 'none';
+            });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
-            sec === 'inscritos' ? cargarInscritos() : cargarCatalogosAsis();
+            
+            if(sec === 'inscritos') cargarInscritos();
+            if(sec === 'catalogos') obtenerDatosCatalogos();
+            if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
         async function cargarInscritos() {
@@ -185,19 +216,18 @@
             tbody.innerHTML = '';
             
             inscritosGlobal.forEach((item) => {
-                const folio = item["Folio_Inscripcion (A)"] || item["0"];
-                const nombre = `${item["Nombre_s (D)"] || item["3"]} ${item["Apellido_Paterno (E)"] || item["4"]}`;
-                const taller = item["Taller_Seleccionado (H)"] || item["7"];
-                const valStr = (item["Validado (Q)"] || item["16"] || "").toString().toLowerCase();
-                const esValido = valStr.includes('sí');
-                
-                tbody.innerHTML += `<tr>
-                    <td><b>${folio}</b></td>
-                    <td>${nombre}</td>
-                    <td>${taller}</td>
-                    <td style="text-align:center;"><span class="status-pill ${esValido ? 'val-si' : 'val-no'}">${esValido ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                    <td>${!esValido ? `<button class="btn-validar" onclick="abrirModal('${folio}', '${nombre}')">Validar / Rechazar</button>` : '---'}</td>
-                </tr>`;
+                const v = Object.values(item);
+                if(v[3] && String(v[3]) !== 'null') {
+                    // Mapeo inteligente para validado (busca "Sí" en la fila)
+                    const esValido = v.some(val => String(val).toLowerCase().trim() === 'sí');
+                    tbody.innerHTML += `<tr>
+                        <td><b>${v[0]}</b></td>
+                        <td>${v[3]} ${v[4]}</td>
+                        <td>${v[7]}</td>
+                        <td style="text-align:center;"><span class="status-pill ${esValido ? 'val-si' : 'val-no'}">${esValido ? 'VALIDADO' : 'PENDIENTE'}</span></td>
+                        <td>${!esValido ? `<button class="btn-validar" onclick="abrirModal('${v[0]}', '${v[3]} ${v[4]}')">Validar / Rechazar</button>` : '---'}</td>
+                    </tr>`;
+                }
             });
         }
 
@@ -212,7 +242,6 @@
 
         async function enviarValidacion(estado) {
             const btn = document.querySelector(estado === 'Sí' ? '.btn-primary' : '.btn-rechazar');
-            const originalText = btn.innerText;
             btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
             const datos = {
@@ -222,36 +251,50 @@
                 sala: document.getElementById('val-sala').value,
                 dia: document.getElementById('val-dia').value,
                 horario: document.getElementById('val-horario').value,
-                validado: estado // Enviamos 'Sí' o 'No' tal como pide el AppScript
+                validado: estado
             };
 
-            const res = await fetch(WEBHOOK_LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-
-            if (res.ok) {
-                alert(estado === 'Sí' ? "✅ Validado y Constancia enviada." : "❌ Solicitud rechazada y notificada.");
-                cerrarModal();
-                cargarInscritos();
-            } else { alert("Error en la comunicación con Make."); }
-            btn.innerText = originalText; btn.disabled = false;
+            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+            alert(estado === 'Sí' ? "✅ Validado." : "❌ Rechazado.");
+            cerrarModal();
+            cargarInscritos();
         }
 
         document.getElementById('form-validar').onsubmit = (e) => { e.preventDefault(); enviarValidacion('Sí'); };
-        function procesarRechazo() { if(confirm("¿Seguro que quieres RECHAZAR este registro? Se enviará correo de notificación.")) enviarValidacion('No'); }
+        function procesarRechazo() { if(confirm("¿Rechazar solicitud?")) enviarValidacion('No'); }
 
+        // --- GESTIÓN DE TALLERES (RESTAURADA) ---
+        async function obtenerDatosCatalogos() {
+            const tbody = document.getElementById('body-catalogos');
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
+            const data = await res.json();
+            tbody.innerHTML = '';
+            data.forEach((item, idx) => {
+                const v = Object.values(item);
+                const est = String(v[2]).toUpperCase();
+                tbody.innerHTML += `<tr>
+                    <td><b>${v[0]}</b></td><td>${v[1]}</td>
+                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
+                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
+                </tr>`;
+            });
+        }
+
+        async function toggleEstatus(f, a) {
+            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
+            obtenerDatosCatalogos();
+        }
+
+        // --- ASISTENCIAS ---
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = usuarioLogueado.rol === 'Administrador' ? '<option value="">-- Taller --</option>' : '';
+            select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar --</option>' : '';
             talleres.forEach(t => {
-                const idT = t["ID_Taller"] || Object.values(t)[0];
-                const nomT = t["Nombre_Taller"] || Object.values(t)[1];
-                if (usuarioLogueado.rol === 'Administrador' || idT === usuarioLogueado.taller_id) {
-                    select.innerHTML += `<option value="${nomT}">${nomT}</option>`;
+                const v = Object.values(t);
+                if (usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.taller_id) {
+                    select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
                 }
             });
             if (usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
@@ -265,27 +308,28 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
-            const filtrados = data.filter(al => (al["Taller_Seleccionado (H)"] || al["7"]) === taller);
-            filtrados.forEach(al => {
-                const folio = al["Folio_Inscripcion (A)"] || al["0"];
-                const nombre = `${al["Nombre_s (D)"] || al["3"]} ${al["Apellido_Paterno (E)"] || al["4"]}`;
-                const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
+            data.filter(al => Object.values(al)[7] === taller).forEach(al => {
+                const v = Object.values(al);
+                // BUSQUEDA DINÁMICA DE CONTADOR: Toma el último valor numérico de la fila
+                let sesiones = 0;
+                for (let i = v.length - 1; i >= 0; i--) { if (typeof v[i] === 'number') { sesiones = v[i]; break; } }
+                
                 tbody.innerHTML += `<tr>
-                    <td><strong>${nombre}</strong><br><small>${folio}</small></td>
+                    <td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td>
                     <td style="text-align:center;"><b>${sesiones} / 8</b></td>
-                    <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
+                    <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td>
                 </tr>`;
             });
-            document.getElementById('btn-guardar-lista').style.display = filtrados.length ? 'block' : 'none';
+            document.getElementById('btn-guardar-lista').style.display = 'block';
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona beneficiarios.");
-            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
+            const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "GUARDANDO...";
             await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
-            alert("Asistencias registradas correctamente.");
+            alert("Listo.");
             setTimeout(cargarAlumnosAsistencia, 3000);
             document.getElementById('btn-guardar-lista').innerText = "GUARDAR ASISTENCIAS";
         }
