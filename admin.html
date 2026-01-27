@@ -471,20 +471,46 @@ async function cargarAlumnosAsistencia() {
             }
         }
 
-        async function guardarAsistenciasMasivas() {
+async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona beneficiarios.");
+            
+            const btn = document.getElementById('btn-guardar-lista');
+            const textoOriginal = btn.innerText;
+            
+            // UX: Indicamos que puede tardar
+            btn.innerText = "⏳ PROCESANDO... (Esto puede tardar unos segundos)";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#95a5a6"; // Gris para indicar espera
+
             const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-            document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            const res = await fetch(WEBHOOK_ASISTENCIA, { 
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asistencias: lista }) 
-            });
-            if(res.ok) {
-                alert("¡Asistencias guardadas!");
-                await new Promise(r => setTimeout(r, 2000));
-                await cargarAlumnosAsistencia();
-            } else { alert("Error al guardar."); }
-            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS";
+            
+            try {
+                const res = await fetch(WEBHOOK_ASISTENCIA, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ asistencias: lista }) 
+                });
+
+                if(res.ok) {
+                    alert("✅ Asistencias registradas.\nSi alguien completó 8 sesiones, su constancia se está enviando en segundo plano.");
+                    
+                    // UX: Damos un poco más de tiempo (4s) para asegurar que el Sheet calculó
+                    // antes de pedir la lista nueva.
+                    await new Promise(r => setTimeout(r, 4000));
+                    await cargarAlumnosAsistencia();
+                } else { 
+                    alert("Error al guardar en el servidor."); 
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Error de conexión.");
+            } finally {
+                // Restaurar botón
+                btn.innerText = textoOriginal;
+                btn.disabled = false;
+                btn.style.backgroundColor = ""; // Regresa al color original (CSS)
+            }
         }
     </script>
 </body>
