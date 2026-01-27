@@ -439,19 +439,16 @@ async function cargarAlumnosAsistencia() {
             
             tbody.innerHTML = '';
             
-            // 2. AQUI ESTA LA MAGIA: Filtramos por Taller Y por estatus de Validación
+// 2. FILTRO MEJORADO: Taller + Validado + NO Graduado
             const filtrados = data.filter(al => {
-                // Obtenemos el nombre del taller de la fila
                 const tallerFila = (al["Taller_Seleccionado (H)"] || al["7"]);
-                
-                // Obtenemos si está validado (Columna Q / 16)
-                // Convertimos a string por si acaso viene null o undefined
                 const estaValidado = (al["Validado (Q)"] || al["16"] || "").toString();
+                // Convertimos asistencias a número. Si está vacío es 0.
+                const numAsistencias = parseInt(al["Total_Asistencias (AA)"] || al["26"] || 0);
 
-                // CONDICIÓN DOBLE:
-                // 1. Que sea del taller seleccionado
-                // 2. Y QUE la columna validado contenga la palabra "Sí" (o "Si", "SI")
-                return tallerFila === taller && estaValidado.includes("Sí");
+                return tallerFila === taller &&         // Es mi taller
+                       estaValidado.includes("Sí") &&   // Está validado
+                       numAsistencias < 8;              // Aún no se gradúa (menos de 8)
             });
 
             if(filtrados.length) {
