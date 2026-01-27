@@ -6,50 +6,70 @@
     <title>Panel Administrativo - SEDIF EFDH</title>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
         
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
+        .login-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 85%; max-width: 350px; text-align: center; }
         
-        #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
-        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; }
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; }
+        #admin-panel { display: none; min-height: 100vh; width: 100%; flex-direction: column; }
+
+        /* --- SIDEBAR RESPONSIVA --- */
+        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 1000; transition: transform 0.3s ease; }
+        .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); box-sizing: border-box; min-height: 100vh; }
+
+        /* Botón Menú Móvil */
+        .mobile-header { display: none; background: white; padding: 15px 20px; border-bottom: 1px solid #eee; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1100; }
+        .menu-toggle { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .mobile-header { display: flex; }
+            .sidebar { transform: translateX(-100%); width: 240px; }
+            .sidebar.open { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+            .main-content { margin-left: 0; width: 100%; padding: 15px; }
+            h1 { font-size: 1.5rem; }
+        }
         
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
         
-        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; }
+        /* --- TABLAS RESPONSIVAS --- */
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; } /* Evita que se amontone el texto */
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
 
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-save { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; font-size: 1.1em; width: 100%; }
+        .btn-save { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; font-size: 1.1em; border-radius: 8px; }
 
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; display: inline-block; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
-        .check-asis { transform: scale(1.8); cursor: pointer; }
+        .check-asis { transform: scale(1.6); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2 style="color:var(--primary); margin-top:0;">Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
         </div>
     </div>
 
+    <div class="mobile-header" id="mob-header" style="display:none;">
+        <span style="font-weight:bold; color:var(--primary);">EFDH Admin</span>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰ Menú</button>
+    </div>
+
     <div id="admin-panel">
-        <div class="sidebar">
+        <div class="sidebar" id="mainSidebar">
             <div class="user-box">
-                <h3 id="user-display">Usuario</h3>
+                <h3 id="user-display" style="margin:0; font-size:1.1rem;">Usuario</h3>
                 <small id="role-display" style="color:gray;">Rol</small>
             </div>
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
@@ -60,7 +80,7 @@
 
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
-                <h1>Validación de Inscripciones</h1>
+                <h1>Inscripciones</h1>
                 <div class="table-card">
                     <table>
                         <thead>
@@ -88,8 +108,8 @@
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
-                <div id="contenedor-filtro-taller" style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
-                    <label style="font-weight:bold;">Taller Asignado:</label>
+                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
+                    <label style="font-weight:bold;">Seleccionar Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
 
@@ -97,16 +117,16 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Nombre del Beneficiario</th>
+                                <th>Beneficiario</th>
                                 <th style="text-align:center;">Sesiones</th>
-                                <th style="text-align:center;">Asistencia Hoy</th>
+                                <th style="text-align:center;">Asistencia</th>
                             </tr>
                         </thead>
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
                 <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
-                    💾 GUARDAR ASISTENCIAS SELECCIONADAS
+                    💾 GUARDAR ASISTENCIAS
                 </button>
             </div>
         </div>
@@ -119,6 +139,11 @@
         let inscritosGlobal = [];
         let usuarioLogueado = {};
 
+        // Control del menú móvil
+        function toggleSidebar() {
+            document.getElementById('mainSidebar').classList.toggle('open');
+        }
+
         async function ejecutarLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
@@ -129,14 +154,13 @@
             });
             const user = await res.json();
             if (user.autorizado) {
-                // Guardamos los datos del usuario, incluyendo su T-ID
                 usuarioLogueado = user; 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'flex';
+                document.getElementById('mob-header').style.display = 'flex'; // Mostrar header en móvil
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
 
-                // Restricción de Menú por Rol
                 if (user.rol === 'Tallerista') {
                     document.getElementById('tab-inscritos').style.display = 'none';
                     document.getElementById('tab-catalogos').style.display = 'none';
@@ -156,6 +180,9 @@
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
             
+            // Cerrar sidebar en móvil tras click
+            if (window.innerWidth <= 768) toggleSidebar();
+
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
@@ -211,7 +238,6 @@
             const select = document.getElementById('asis-taller-filtro');
             select.innerHTML = '';
 
-            // Lógica de Filtrado de Taller por Usuario
             if (usuarioLogueado.rol === 'Administrador') {
                 select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
                 talleres.forEach(t => {
@@ -220,12 +246,10 @@
                 });
                 select.disabled = false;
             } else {
-                // Tallerista: Buscamos solo SU taller usando el ID que viene del login (taller_id)
                 const miTallerObj = talleres.find(t => (t["ID_Taller"] || Object.values(t)[0]) === usuarioLogueado.taller_id);
                 const nombreT = miTallerObj ? (miTallerObj["Nombre_Taller"] || Object.values(miTallerObj)[1]) : "Sin asignar";
-                
                 select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
-                select.disabled = true; // El tallerista no puede cambiar de taller
+                select.disabled = true;
                 cargarAlumnosAsistencia();
             }
         }
@@ -234,13 +258,10 @@
             const taller = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
             if(!taller || taller === "Sin asignar") return;
-            
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
-            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
-            
             const filtrados = data.filter(al => (al["Taller_Seleccionado (H)"] || al["7"]) === taller);
             if(filtrados.length) {
                 document.getElementById('btn-guardar-lista').style.display = 'block';
@@ -248,30 +269,25 @@
                     const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
                     const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
                     const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
-                    
                     tbody.innerHTML += `<tr>
                         <td><strong>${nombre}</strong><br><small>${folio}</small></td>
                         <td style="text-align:center;"><b>${sesiones} / 8</b></td>
                         <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
                     </tr>`;
                 });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados en este taller.</td></tr>';
-            }
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos.</td></tr>'; }
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona beneficiarios.");
             const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-            
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
             const res = await fetch(WEBHOOK_ASISTENCIA, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ asistencias: lista }) 
             });
-            
             if(res.ok) {
                 alert("¡Asistencias guardadas!");
                 await new Promise(r => setTimeout(r, 2000));
