@@ -7,41 +7,33 @@
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
-        
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
-        
         #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
         .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; }
         .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; }
-        
+        .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
-        
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
-
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-validar { background: var(--secondary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
-        .btn-rechazar { background: #e74c3c; color: white; border: none; font-weight: bold; cursor: pointer; padding: 12px; margin-top: 10px; border-radius: 8px; }
-
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
-
         #modal-validar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 20000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; }
     </style>
 </head>
 <body>
-
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2 style="color:var(--primary)">Acceso Administrativo</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
@@ -51,32 +43,20 @@
     <div id="modal-validar">
         <div class="modal-content">
             <h3>Gestión de Inscripción</h3>
-            <p id="modal-beneficiario" style="font-weight: bold; color: var(--primary); margin-bottom: 5px;"></p>
-            <p id="modal-folio-display" style="font-size: 0.85em; color: gray; margin-bottom: 20px;"></p>
-            
+            <p id="modal-beneficiario" style="font-weight: bold; color: var(--primary);"></p>
             <form id="form-validar">
                 <input type="hidden" id="val-folio">
-                <label>Sede:</label>
-                <select id="val-sede" required></select>
-                
-                <label>Sala:</label>
-                <input type="text" id="val-sala" placeholder="Ej: Aula A11" required>
-                
-                <label>Día:</label>
-                <select id="val-dia" required>
-                    <option value="Lunes">Lunes</option>
-                    <option value="Martes">Martes</option>
-                    <option value="Miércoles">Miércoles</option>
-                    <option value="Jueves">Jueves</option>
-                    <option value="Viernes">Viernes</option>
+                <label>1. ¿Es válido el registro?</label>
+                <select id="val-decision-final" onchange="document.getElementById('area-sede-din').style.display = (this.value === 'Sí') ? 'block' : 'none';">
+                    <option value="Sí">SÍ - Validar y enviar PDF</option>
+                    <option value="No">NO - Rechazar</option>
                 </select>
-                
-                <label>Horario:</label>
-                <input type="text" id="val-horario" placeholder="Ej: 09:00 - 11:30" required>
-                
-                <button type="submit" class="btn-primary" style="margin-top:20px;">✅ CONFIRMAR Y ENVIAR PDF</button>
-                <button type="button" class="btn-rechazar" onclick="procesarRechazo()">❌ RECHAZAR SOLICITUD</button>
-                <button type="button" onclick="cerrarModal()" style="background:none; color:gray; border:none; margin-top:10px; cursor:pointer;">Cerrar sin cambios</button>
+                <div id="area-sede-din" style="margin-top:15px;">
+                    <label>2. Asignar Sede:</label>
+                    <select id="val-sede-select-din"></select>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:20px;">✅ EJECUTAR ACCIÓN</button>
+                <button type="button" onclick="cerrarModal()" style="background:none; color:gray; border:none; margin-top:10px; cursor:pointer;">Cancelar</button>
             </form>
         </div>
     </div>
@@ -92,61 +72,22 @@
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pasar Asistencia</div>
             <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Salir</div>
         </div>
-
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Folio</th>
-                                <th>Nombre</th>
-                                <th>Taller</th>
-                                <th style="text-align:center;">Estado</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-inscritos"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
             </div>
-
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>Gestión de Talleres</h1>
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Taller</th>
-                                <th>Estatus</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-catalogos"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
             </div>
-
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
-                <div id="contenedor-filtro-taller" style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
+                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
                     <label style="font-weight:bold;">Taller Asignado:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th style="text-align:center;">Sesiones</th>
-                                <th style="text-align:center;">Hoy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-asistencias"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>Beneficiario</th><th style="text-align:center;">Sesiones</th><th style="text-align:center;">Asistencia Hoy</th></tr></thead><tbody id="body-asistencias"></tbody></table></div>
                 <button id="btn-guardar-lista" onclick="guardarAsistenciasMasivas()" class="btn-save" style="display:none; background:var(--secondary); color:white; border:none; padding:15px; border-radius:8px; width:100%; cursor:pointer; font-weight:bold; margin-top:15px;">💾 GUARDAR ASISTENCIAS</button>
             </div>
         </div>
@@ -155,19 +96,11 @@
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
-
-        let inscritosGlobal = [];
-        let sedesGlobal = [];
-        let usuarioLogueado = {};
+        let inscritosGlobal = [], sedesGlobal = [], usuarioLogueado = {}, itemSelValidacion = {};
 
         async function ejecutarLogin() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-            const res = await fetch(WEBHOOK_LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-            });
+            const email = document.getElementById('email').value, pass = document.getElementById('pass').value;
+            const res = await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass }) });
             const user = await res.json();
             if (user.autorizado) {
                 usuarioLogueado = user;
@@ -175,163 +108,109 @@
                 document.getElementById('admin-panel').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
-                
-                if (user.rol === 'Tallerista') {
-                    document.getElementById('tab-inscritos').style.display = 'none';
-                    document.getElementById('tab-catalogos').style.display = 'none';
-                    cambiarSeccion('asistencias');
-                } else {
-                    cambiarSeccion('inscritos');
-                }
+                if (user.rol === 'Tallerista') { document.getElementById('tab-inscritos').style.display = 'none'; document.getElementById('tab-catalogos').style.display = 'none'; cambiarSeccion('asistencias'); } 
+                else { cambiarSeccion('inscritos'); }
                 cargarSedesDinamicas();
-            } else { alert("Acceso denegado"); }
+            } else { alert("Error de acceso"); }
         }
 
         async function cargarSedesDinamicas() {
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_sedes`);
+            const res = await fetch(`${WEBHOOK_LOGIN}?catalogo_pedir=sedes`);
             sedesGlobal = await res.json();
-            const select = document.getElementById('val-sede');
-            select.innerHTML = sedesGlobal.map(s => `<option value="${Object.values(s)[0]}">${Object.values(s)[0]}</option>`).join('');
+            const select = document.getElementById('val-sede-select-din');
+            select.innerHTML = '<option value="">-- Selecciona --</option>' + sedesGlobal.map((s, idx) => { const v = Object.values(s); return `<option value="${idx}">${v[2]} | ${v[3]} - ${v[0]}</option>`; }).join('');
         }
 
         function cambiarSeccion(sec) {
-            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
-                const el = document.getElementById('sec-' + s);
-                if(el) el.style.display = s === sec ? 'block' : 'none';
-            });
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
-            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
         async function cargarInscritos() {
-            const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Actualizando...</td></tr>';
+            const tbody = document.getElementById('body-inscritos'); tbody.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            inscritosGlobal = await res.json();
-            tbody.innerHTML = '';
-            
-            inscritosGlobal.forEach((item) => {
+            inscritosGlobal = await res.json(); tbody.innerHTML = '';
+            inscritosGlobal.forEach((item, index) => {
                 const v = Object.values(item);
                 if(v[3] && String(v[3]) !== 'null') {
-                    // Mapeo inteligente para validado (busca "Sí" en la fila)
                     const esValido = v.some(val => String(val).toLowerCase().trim() === 'sí');
-                    tbody.innerHTML += `<tr>
-                        <td><b>${v[0]}</b></td>
-                        <td>${v[3]} ${v[4]}</td>
-                        <td>${v[7]}</td>
+                    tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td>
                         <td style="text-align:center;"><span class="status-pill ${esValido ? 'val-si' : 'val-no'}">${esValido ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                        <td>${!esValido ? `<button class="btn-validar" onclick="abrirModal('${v[0]}', '${v[3]} ${v[4]}')">Validar / Rechazar</button>` : '---'}</td>
-                    </tr>`;
+                        <td>${!esValido ? `<button class="btn-validar" onclick="abrirModalValidar(${index + 2}, ${JSON.stringify(v).replace(/"/g, '&quot;')})">Gestionar</button>` : '---'}</td></tr>`;
                 }
             });
         }
 
-        function abrirModal(folio, nombre) {
-            document.getElementById('val-folio').value = folio;
-            document.getElementById('modal-beneficiario').innerText = nombre;
-            document.getElementById('modal-folio-display').innerText = "Folio: " + folio;
+        function abrirModalValidar(fila, datos) {
+            itemSelValidacion = { fila, correo: datos[2], nombre: datos[3] + " " + datos[4], taller: datos[7] };
+            document.getElementById('modal-beneficiario').innerText = itemSelValidacion.nombre;
             document.getElementById('modal-validar').style.display = 'flex';
         }
-
         function cerrarModal() { document.getElementById('modal-validar').style.display = 'none'; }
 
-        async function enviarValidacion(estado) {
-            const btn = document.querySelector(estado === 'Sí' ? '.btn-primary' : '.btn-rechazar');
-            btn.innerText = "PROCESANDO..."; btn.disabled = true;
+        document.getElementById('form-validar').onsubmit = async (e) => {
+            e.preventDefault();
+            const decision = document.getElementById('val-decision-final').value, sedeIdx = document.getElementById('val-sede-select-din').value;
+            const sede = sedesGlobal[sedeIdx] ? Object.values(sedesGlobal[sedeIdx]) : ["N/A","N/A","N/A","N/A"];
+            const payload = { metodo: 'validar_inscrito', fila: itemSelValidacion.fila, correo: itemSelValidacion.correo, decision, lugar: sede[0], sala: sede[1], dia: sede[2], horario: sede[3], nombre_p: itemSelValidacion.nombre, taller_p: itemSelValidacion.taller };
+            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            alert("Acción realizada"); cerrarModal(); cargarInscritos();
+        };
 
-            const datos = {
-                metodo: 'admin_validar_inscripcion',
-                folio: document.getElementById('val-folio').value,
-                sede: document.getElementById('val-sede').value,
-                sala: document.getElementById('val-sala').value,
-                dia: document.getElementById('val-dia').value,
-                horario: document.getElementById('val-horario').value,
-                validado: estado
-            };
-
-            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-            alert(estado === 'Sí' ? "✅ Validado." : "❌ Rechazado.");
-            cerrarModal();
-            cargarInscritos();
-        }
-
-        document.getElementById('form-validar').onsubmit = (e) => { e.preventDefault(); enviarValidacion('Sí'); };
-        function procesarRechazo() { if(confirm("¿Rechazar solicitud?")) enviarValidacion('No'); }
-
-        // --- GESTIÓN DE TALLERES (RESTAURADA) ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
+            const data = await res.json(); tbody.innerHTML = '';
             data.forEach((item, idx) => {
-                const v = Object.values(item);
-                const est = String(v[2]).toUpperCase();
-                tbody.innerHTML += `<tr>
-                    <td><b>${v[0]}</b></td><td>${v[1]}</td>
-                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
-                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
-                </tr>`;
+                const v = Object.values(item), est = String(v[2]).toUpperCase();
+                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
+                <td><button onclick="toggleEstatus(${idx+2}, '${est}')">Alternar</button></td></tr>`;
             });
         }
 
-        async function toggleEstatus(f, a) {
-            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
-            obtenerDatosCatalogos();
-        }
+        async function toggleEstatus(f, a) { await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) }); obtenerDatosCatalogos(); }
 
-        // --- ASISTENCIAS ---
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
-            const talleres = await res.json();
-            const select = document.getElementById('asis-taller-filtro');
+            const talleres = await res.json(), select = document.getElementById('asis-taller-filtro');
             select.innerHTML = (usuarioLogueado.rol === 'Administrador') ? '<option value="">-- Seleccionar --</option>' : '';
-            talleres.forEach(t => {
-                const v = Object.values(t);
-                if (usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.taller_id) {
-                    select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`;
-                }
-            });
+            talleres.forEach(t => { const v = Object.values(t); if (usuarioLogueado.rol === 'Administrador' || v[0] === usuarioLogueado.taller_id) select.innerHTML += `<option value="${v[1]}">${v[1]}</option>`; });
             if (usuarioLogueado.rol !== 'Administrador') cargarAlumnosAsistencia();
         }
 
         async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const tbody = document.getElementById('body-asistencias');
-            if(!taller) return;
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
+            const taller = document.getElementById('asis-taller-filtro').value, tbody = document.getElementById('body-asistencias');
+            if(!taller) return; tbody.innerHTML = '<tr><td colspan="3">Actualizando lista...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
+            const data = await res.json(); tbody.innerHTML = '';
             data.filter(al => Object.values(al)[7] === taller).forEach(al => {
                 const v = Object.values(al);
-                // BUSQUEDA DINÁMICA DE CONTADOR: Toma el último valor numérico de la fila
+                // LÓGICA DE ESCANEO DE ASISTENCIAS (AA): Busca el último número real
                 let sesiones = 0;
-                for (let i = v.length - 1; i >= 0; i--) { if (typeof v[i] === 'number') { sesiones = v[i]; break; } }
-                
-                tbody.innerHTML += `<tr>
-                    <td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td>
-                    <td style="text-align:center;"><b>${sesiones} / 8</b></td>
-                    <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td>
-                </tr>`;
+                for (let i = v.length - 1; i >= 0; i--) { 
+                    if (v[i] !== null && v[i] !== "" && !isNaN(v[i]) && typeof v[i] === 'number') { 
+                        sesiones = v[i]; break; 
+                    } 
+                }
+                tbody.innerHTML += `<tr><td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b style="color:var(--primary); font-size:1.1em;">${sesiones} / 8</b></td>
+                    <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
             });
             document.getElementById('btn-guardar-lista').style.display = 'block';
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
-            if(!checks.length) return alert("Selecciona beneficiarios.");
+            if(!checks.length) return alert("Selecciona beneficiarios");
             const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "GUARDANDO...";
             await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
-            alert("Listo.");
-            setTimeout(cargarAlumnosAsistencia, 3000);
-            document.getElementById('btn-guardar-lista').innerText = "GUARDAR ASISTENCIAS";
+            alert("Asistencias guardadas"); setTimeout(cargarAlumnosAsistencia, 3000);
+            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS";
         }
     </script>
 </body>
