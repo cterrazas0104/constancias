@@ -6,46 +6,27 @@
     <title>Panel Administrativo - SEDIF EFDH</title>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 70px; }
-        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 80px; }
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 30px; border-radius: 16px; width: 85%; max-width: 320px; text-align: center; }
-        
         #admin-panel { display: none; }
-
-        /* --- SIDEBAR PC --- */
         .sidebar { width: 260px; background: white; height: 100vh; padding: 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; z-index: 1000; }
         .main-content { margin-left: 260px; padding: 30px; box-sizing: border-box; }
-
-        /* --- MENÚ INFERIOR MÓVIL --- */
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #ddd; justify-content: space-around; padding: 10px 0; z-index: 2000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #ddd; justify-content: space-around; padding: 12px 0; z-index: 2000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #888; cursor: pointer; flex: 1; border: none; background: none; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-item span { font-size: 20px; margin-bottom: 2px; }
-
-        @media (max-width: 768px) {
-            .sidebar { display: none !important; }
-            .mobile-nav { display: flex; }
-            .main-content { margin-left: 0; padding: 15px; width: 100%; }
-            h1 { font-size: 1.5rem; }
-        }
-
-        .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
-        .nav-btn.active { background: var(--primary); color: white; }
-
+        .nav-item span { font-size: 22px; margin-bottom: 3px; }
+        @media (max-width: 768px) { .sidebar { display: none !important; } .mobile-nav { display: flex; } .main-content { margin-left: 0; padding: 15px; width: 100%; } }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 12px 15px; text-align: left; }
-        td { padding: 12px 15px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
-
-        .check-asis { width: 28px; height: 28px; cursor: pointer; accent-color: var(--secondary); transform: scale(1.2); }
-        .btn-save { background: var(--secondary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; cursor: pointer; }
-        
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f0f2f5; font-size: 0.95em; }
+        .check-asis { width: 30px; height: 30px; cursor: pointer; accent-color: var(--secondary); }
+        .btn-save { background: var(--secondary); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
-
-        input, select { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        input, select { width: 100%; padding: 14px; margin-top: 8px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -75,18 +56,18 @@
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
             <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Gestión de Talleres</div>
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pasar Asistencia</div>
-            <button onclick="location.reload()" style="margin-top:auto; color:red; border:none; background:none; text-align:left; cursor:pointer; padding:10px;">🚪 Cerrar Sesión</button>
+            <button onclick="location.reload()" style="margin-top:auto; color:red; border:none; background:none; text-align:left; cursor:pointer;">🚪 Cerrar Sesión</button>
         </div>
 
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación</h1>
-                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th style="text-align:center;">Validado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
+                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>Gestión de Talleres</h1>
-                <div class="table-card"><table><thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
+                <div class="table-card"><table><thead><tr><th>ID</th><th>Taller</th><th>Estatus</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
@@ -95,10 +76,9 @@
                     <label style="font-weight:bold;">Taller Asignado:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
-
                 <div class="table-card">
                     <table>
-                        <thead><tr><th>Nombre</th><th style="text-align:center;">Asis.</th><th style="text-align:center;">Hoy</th></tr></thead>
+                        <thead><tr><th>Beneficiario</th><th style="text-align:center;">Asis.</th><th style="text-align:center;">Hoy</th></tr></thead>
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
@@ -137,7 +117,6 @@
             document.querySelectorAll('.nav-btn, .nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + sec)?.classList.add('active');
             document.getElementById('m-tab-' + sec)?.classList.add('active');
-            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
@@ -148,8 +127,8 @@
             const data = await res.json();
             document.getElementById('body-inscritos').innerHTML = data.map(item => {
                 const v = Object.values(item);
-                const esValido = (v[16] || "").toString().toLowerCase().includes('sí');
-                return `<tr><td><small>${v[0]}</small></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td style="text-align:center;"><span class="status-pill ${esValido?'val-si':'val-no'}">${esValido?'SÍ':'NO'}</span></td></tr>`;
+                const esValido = v.some(val => String(val).toLowerCase().includes('sí'));
+                return `<tr><td><small>${v[0]}</small></td><td>${v[3]} ${v[4]}</td><td style="text-align:center;"><span class="status-pill ${esValido?'val-si':'val-no'}">${esValido?'SÍ':'NO'}</span></td></tr>`;
             }).join('');
         }
 
@@ -158,13 +137,8 @@
             const data = await res.json();
             document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => {
                 const v = Object.values(item), est = String(v[2]).toUpperCase();
-                return `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est==='ACTIVO'?'val-si':'val-no'}">${est}</span></td><td><button onclick="toggleEstatus(${idx+2},'${est}')" style="width:auto;padding:5px">🔃</button></td></tr>`;
+                return `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est==='ACTIVO'?'val-si':'val-no'}">${est}</span></td></tr>`;
             }).join('');
-        }
-
-        async function toggleEstatus(f, a) {
-            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
-            obtenerDatosCatalogos();
         }
 
         async function cargarCatalogosAsis() {
@@ -184,27 +158,22 @@
         async function cargarAlumnosAsistencia() {
             const taller = document.getElementById('asis-taller-filtro').value; if(!taller) return;
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            const tbody = document.getElementById('body-asistencias');
+            const data = await res.json(); const tbody = document.getElementById('body-asistencias');
             tbody.innerHTML = data.filter(al => Object.values(al)[7] === taller).map(al => {
+                // CORRECCIÓN FINAL DE DATOS: Buscamos el total en la columna AA (Índice 26) o por nombre
                 const v = Object.values(al);
-                // ESTA ES LA LÓGICA QUE SÍ FUNCIONA (ÍNDICE 26)
-                const sesiones = v[26] || 0; 
-                return `<tr><td><strong>${v[3]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b>${sesiones}/8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
+                const sesiones = al["Total_Asistencias (AA)"] || v[26] || 0; 
+                return `<tr><td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b>${sesiones}/8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
             }).join('');
             document.getElementById('btn-guardar-lista').style.display = 'block';
         }
 
         async function guardarAsistenciasMasivas() {
-            const checks = document.querySelectorAll('.check-asis:checked');
+            const checks = document.querySelectorAll('.check-asis:checked'); if(!checks.length) return alert("Selecciona beneficiarios");
             const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            const res = await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
-            if(res.ok) { 
-                alert("¡Lista Guardada!"); 
-                await new Promise(r => setTimeout(r, 2500)); 
-                cargarAlumnosAsistencia(); 
-            }
+            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
+            alert("Asistencias guardadas"); await new Promise(r => setTimeout(r, 2000)); cargarAlumnosAsistencia();
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS";
         }
     </script>
