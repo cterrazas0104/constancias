@@ -6,16 +6,25 @@
     <title>Panel Administrativo - SEDIF EFDH</title>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
         
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
         
-        #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
-        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; }
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; }
+        #admin-panel { display: none; min-height: 100vh; flex-direction: column; }
         
-        .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        /* Sidebar Responsiva */
+        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; z-index: 100; transition: 0.3s; }
+        .main-content { margin-left: 260px; padding: 20px; width: calc(100% - 260px); box-sizing: border-box; min-height: 100vh; }
+        
+        /* Ajustes para Móvil */
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid #eee; padding: 15px; }
+            .main-content { margin-left: 0; width: 100%; padding: 10px; }
+            table { display: block; overflow-x: auto; white-space: nowrap; }
+        }
+
+        .user-box { padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
@@ -32,14 +41,14 @@
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
-        .check-asis { transform: scale(1.8); cursor: pointer; }
+        .check-asis { transform: scale(1.5); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>Acceso EFDH</h2>
+            <h2 style="color:var(--primary)">Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
             <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
@@ -49,7 +58,7 @@
     <div id="admin-panel">
         <div class="sidebar">
             <div class="user-box">
-                <h3 id="user-display">Usuario</h3>
+                <h3 id="user-display" style="margin:0">Usuario</h3>
                 <small id="role-display" style="color:gray;">Rol</small>
             </div>
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
@@ -61,53 +70,22 @@
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
                 <h1>Validación de Inscripciones</h1>
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Folio</th>
-                                <th>Nombre</th>
-                                <th>Taller</th>
-                                <th style="text-align:center;">Validado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-inscritos"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th style="text-align:center;">Estado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>Gestión de Talleres</h1>
-                <div class="table-card">
-                    <table>
-                        <thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead>
-                        <tbody id="body-catalogos"></tbody>
-                    </table>
-                </div>
+                <div class="table-card"><table><thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
             </div>
 
             <div id="sec-asistencias" class="content-section" style="display:none;">
                 <h1>Pase de Lista</h1>
-                <div id="contenedor-filtro-taller" style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
+                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--secondary);">
                     <label style="font-weight:bold;">Taller Asignado:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
-
-                <div class="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre del Beneficiario</th>
-                                <th style="text-align:center;">Sesiones</th>
-                                <th style="text-align:center;">Asistencia Hoy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-asistencias"></tbody>
-                    </table>
-                </div>
-                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
-                    💾 GUARDAR ASISTENCIAS SELECCIONADAS
-                </button>
+                <div class="table-card"><table><thead><tr><th>Beneficiario</th><th style="text-align:center;">Sesiones</th><th style="text-align:center;">Asistencia</th></tr></thead><tbody id="body-asistencias"></tbody></table></div>
+                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR LISTA DE HOY</button>
             </div>
         </div>
     </div>
@@ -115,88 +93,54 @@
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
-
-        let inscritosGlobal = [];
-        let usuarioLogueado = {};
+        let inscritosGlobal = [], usuarioLogueado = {};
 
         async function ejecutarLogin() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-            const res = await fetch(WEBHOOK_LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-            });
+            const email = document.getElementById('email').value, pass = document.getElementById('pass').value;
+            const res = await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass }) });
             const user = await res.json();
             if (user.autorizado) {
-                // Guardamos los datos del usuario, incluyendo su T-ID
-                usuarioLogueado = user; 
+                usuarioLogueado = user;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
-
-                // Restricción de Menú por Rol
                 if (user.rol === 'Tallerista') {
                     document.getElementById('tab-inscritos').style.display = 'none';
                     document.getElementById('tab-catalogos').style.display = 'none';
                     cambiarSeccion('asistencias');
-                } else {
-                    cambiarSeccion('inscritos');
-                }
-            } else { alert("Acceso denegado"); }
+                } else { cambiarSeccion('inscritos'); }
+            } else { alert("Error de acceso"); }
         }
 
         function cambiarSeccion(sec) {
-            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
-                const el = document.getElementById('sec-' + s);
-                if(el) el.style.display = s === sec ? 'block' : 'none';
-            });
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
             if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
-            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
         async function cargarInscritos() {
-            const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            const tbody = document.getElementById('body-inscritos'); tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            inscritosGlobal = await res.json();
-            tbody.innerHTML = '';
-            
-            inscritosGlobal.forEach((item) => {
-                const folio = item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
-                const nombre = (item["Nombre_s (D)"] || item["3"] || "") + " " + (item["Apellido_Paterno (E)"] || item["4"] || "");
-                const taller = item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
-                const validado = (item["Validado (Q)"] || item["16"] || "").toString().toLowerCase().includes('sí');
-                
-                tbody.innerHTML += `<tr>
-                    <td><b>${folio}</b></td>
-                    <td>${nombre}</td>
-                    <td>${taller}</td>
-                    <td style="text-align:center;"><span class="status-pill ${validado ? 'val-si' : 'val-no'}">${validado ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                </tr>`;
+            const data = await res.json(); tbody.innerHTML = '';
+            data.forEach(item => {
+                const v = Object.values(item);
+                const esValido = v.some(val => String(val).toLowerCase().trim() === 'sí');
+                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td style="text-align:center;"><span class="status-pill ${esValido?'val-si':'val-no'}">${esValido?'VALIDADO':'PENDIENTE'}</span></td></tr>`;
             });
         }
 
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
+            const data = await res.json(); tbody.innerHTML = '';
             data.forEach((item, idx) => {
-                const v = Object.values(item);
-                const est = String(v[2]).toUpperCase();
-                tbody.innerHTML += `<tr>
-                    <td><b>${v[0]}</b></td>
-                    <td>${v[1]}</td>
-                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
-                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
-                </tr>`;
+                const v = Object.values(item), est = String(v[2]).toUpperCase();
+                tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est==='ACTIVO'?'val-si':'val-no'}">${est}</span></td><td><button onclick="toggleEstatus(${idx+2},'${est}')" style="width:auto;padding:5px 10px">Alternar</button></td></tr>`;
             });
         }
 
@@ -206,78 +150,41 @@
         }
 
         async function cargarCatalogosAsis() {
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            const talleres = await res.json();
-            const select = document.getElementById('asis-taller-filtro');
-            select.innerHTML = '';
-
-            // Lógica de Filtrado de Taller por Usuario
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
+            const talleres = await res.json(), select = document.getElementById('asis-taller-filtro');
             if (usuarioLogueado.rol === 'Administrador') {
                 select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
-                talleres.forEach(t => {
-                    const nombreT = t["Nombre_Taller"] || Object.values(t)[1];
-                    select.innerHTML += `<option value="${nombreT}">${nombreT}</option>`;
-                });
-                select.disabled = false;
+                talleres.forEach(t => select.innerHTML += `<option value="${Object.values(t)[1]}">${Object.values(t)[1]}</option>`);
             } else {
-                // Tallerista: Buscamos solo SU taller usando el ID que viene del login (taller_id)
-                const miTallerObj = talleres.find(t => (t["ID_Taller"] || Object.values(t)[0]) === usuarioLogueado.taller_id);
-                const nombreT = miTallerObj ? (miTallerObj["Nombre_Taller"] || Object.values(miTallerObj)[1]) : "Sin asignar";
-                
-                select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
-                select.disabled = true; // El tallerista no puede cambiar de taller
+                const miT = talleres.find(t => Object.values(t)[0] === usuarioLogueado.taller_id);
+                const n = miT ? Object.values(miT)[1] : "Sin asignar";
+                select.innerHTML = `<option value="${n}">${n}</option>`; select.disabled = true;
                 cargarAlumnosAsistencia();
             }
         }
 
         async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const tbody = document.getElementById('body-asistencias');
-            if(!taller || taller === "Sin asignar") return;
-            
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
-            
+            const taller = document.getElementById('asis-taller-filtro').value, tbody = document.getElementById('body-asistencias');
+            if(!taller) return; tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
-            
-            const filtrados = data.filter(al => (al["Taller_Seleccionado (H)"] || al["7"]) === taller);
-            if(filtrados.length) {
-                document.getElementById('btn-guardar-lista').style.display = 'block';
-                filtrados.forEach(al => {
-                    const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
-                    const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
-                    const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
-                    
-                    tbody.innerHTML += `<tr>
-                        <td><strong>${nombre}</strong><br><small>${folio}</small></td>
-                        <td style="text-align:center;"><b>${sesiones} / 8</b></td>
-                        <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
-                    </tr>`;
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados en este taller.</td></tr>';
-            }
+            const data = await res.json(); tbody.innerHTML = '';
+            data.filter(al => Object.values(al)[7] === taller).forEach(al => {
+                const v = Object.values(al);
+                let sesiones = 0;
+                for (let i = v.length - 1; i >= 0; i--) { if (typeof v[i] === 'number') { sesiones = v[i]; break; } }
+                tbody.innerHTML += `<tr><td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b>${sesiones}/8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
+            });
+            document.getElementById('btn-guardar-lista').style.display = 'block';
         }
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
-            if(!checks.length) return alert("Selecciona beneficiarios.");
-            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-            
+            if(!checks.length) return alert("Selecciona beneficiarios");
+            const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            const res = await fetch(WEBHOOK_ASISTENCIA, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ asistencias: lista }) 
-            });
-            
-            if(res.ok) {
-                alert("¡Asistencias guardadas!");
-                await new Promise(r => setTimeout(r, 2000));
-                await cargarAlumnosAsistencia();
-            } else { alert("Error al guardar."); }
-            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR ASISTENCIAS SELECCIONADAS";
+            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
+            alert("Asistencias guardadas"); setTimeout(cargarAlumnosAsistencia, 3000);
+            document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR LISTA DE HOY";
         }
     </script>
 </body>
