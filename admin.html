@@ -26,15 +26,15 @@
 
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 14px; }
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-validar { background: var(--secondary); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; }
+        .btn-validar { background: var(--secondary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .btn-rechazar { background: #e74c3c; color: white; border: none; font-weight: bold; cursor: pointer; padding: 12px; margin-top: 10px; border-radius: 8px; }
 
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
 
-        /* Estilos del Modal */
-        #modal-validar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; }
+        #modal-validar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 20000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -50,17 +50,18 @@
 
     <div id="modal-validar">
         <div class="modal-content">
-            <h3>Validar Inscripción</h3>
-            <p id="modal-beneficiario" style="font-weight: bold; color: var(--primary);"></p>
+            <h3>Gestión de Inscripción</h3>
+            <p id="modal-beneficiario" style="font-weight: bold; color: var(--primary); margin-bottom: 5px;"></p>
+            <p id="modal-folio-display" style="font-size: 0.85em; color: gray; margin-bottom: 20px;"></p>
+            
             <form id="form-validar">
                 <input type="hidden" id="val-folio">
-                <label>Sede:</label>
-                <select id="val-sede" required>
-                    <option value="Centro Cultural del Estado de Querétaro “Manuel Gómez Morín”">Gómez Morín</option>
-                    <option value="Sede Regional SEDIF">Sede Regional</option>
-                </select>
+                <label>Sede (Cargando de Excel...):</label>
+                <select id="val-sede" required></select>
+                
                 <label>Sala:</label>
                 <input type="text" id="val-sala" placeholder="Ej: Aula A11" required>
+                
                 <label>Día:</label>
                 <select id="val-dia" required>
                     <option value="Lunes">Lunes</option>
@@ -69,10 +70,13 @@
                     <option value="Jueves">Jueves</option>
                     <option value="Viernes">Viernes</option>
                 </select>
+                
                 <label>Horario:</label>
                 <input type="text" id="val-horario" placeholder="Ej: 09:00 - 11:30" required>
-                <button type="submit" class="btn-primary" style="margin-top:20px;">CONFIRMAR Y ENVIAR CONSTANCIA</button>
-                <button type="button" onclick="cerrarModal()" style="background:#eee; color:#333; border:none; margin-top:10px;">Cancelar</button>
+                
+                <button type="submit" class="btn-primary" style="margin-top:20px;">✅ CONFIRMAR Y ENVIAR PDF</button>
+                <button type="button" class="btn-rechazar" onclick="procesarRechazo()">❌ RECHAZAR SOLICITUD</button>
+                <button type="button" onclick="cerrarModal()" style="background:none; color:gray; border:none; margin-top:10px; cursor:pointer;">Cerrar sin cambios</button>
             </form>
         </div>
     </div>
@@ -98,7 +102,7 @@
                                 <th>Folio</th>
                                 <th>Nombre</th>
                                 <th>Taller</th>
-                                <th style="text-align:center;">Validado</th>
+                                <th style="text-align:center;">Estado</th>
                                 <th>Acción</th>
                             </tr>
                         </thead>
@@ -125,7 +129,7 @@
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" onclick="guardarAsistenciasMasivas()" class="btn-save" style="display:none;">GUARDAR ASISTENCIAS</button>
+                <button id="btn-guardar-lista" onclick="guardarAsistenciasMasivas()" class="btn-save" style="display:none;">💾 GUARDAR ASISTENCIAS</button>
             </div>
         </div>
     </div>
@@ -135,6 +139,7 @@
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
         let inscritosGlobal = [];
+        let sedesGlobal = [];
         let usuarioLogueado = {};
 
         async function ejecutarLogin() {
@@ -153,7 +158,15 @@
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
                 user.rol === 'Tallerista' ? cambiarSeccion('asistencias') : cambiarSeccion('inscritos');
+                cargarSedesDinamicas();
             } else { alert("Acceso denegado"); }
+        }
+
+        async function cargarSedesDinamicas() {
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_sedes`);
+            sedesGlobal = await res.json();
+            const select = document.getElementById('val-sede');
+            select.innerHTML = sedesGlobal.map(s => `<option value="${Object.values(s)[0]}">${Object.values(s)[0]}</option>`).join('');
         }
 
         function cambiarSeccion(sec) {
@@ -166,7 +179,7 @@
 
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Actualizando...</td></tr>';
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             tbody.innerHTML = '';
@@ -183,33 +196,33 @@
                     <td>${nombre}</td>
                     <td>${taller}</td>
                     <td style="text-align:center;"><span class="status-pill ${esValido ? 'val-si' : 'val-no'}">${esValido ? 'VALIDADO' : 'PENDIENTE'}</span></td>
-                    <td>${!esValido ? `<button class="btn-validar" onclick="abrirModal('${folio}', '${nombre}')">Validar</button>` : '---'}</td>
+                    <td>${!esValido ? `<button class="btn-validar" onclick="abrirModal('${folio}', '${nombre}')">Validar / Rechazar</button>` : '---'}</td>
                 </tr>`;
             });
         }
 
-        // --- LÓGICA DE VALIDACIÓN ---
         function abrirModal(folio, nombre) {
             document.getElementById('val-folio').value = folio;
             document.getElementById('modal-beneficiario').innerText = nombre;
+            document.getElementById('modal-folio-display').innerText = "Folio: " + folio;
             document.getElementById('modal-validar').style.display = 'flex';
         }
 
         function cerrarModal() { document.getElementById('modal-validar').style.display = 'none'; }
 
-        document.getElementById('form-validar').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
+        async function enviarValidacion(estado) {
+            const btn = document.querySelector(estado === 'Sí' ? '.btn-primary' : '.btn-rechazar');
+            const originalText = btn.innerText;
             btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
             const datos = {
-                metodo: 'admin_validar_inscripcion', // Asegúrate que Make busque este valor
+                metodo: 'admin_validar_inscripcion',
                 folio: document.getElementById('val-folio').value,
                 sede: document.getElementById('val-sede').value,
                 sala: document.getElementById('val-sala').value,
                 dia: document.getElementById('val-dia').value,
                 horario: document.getElementById('val-horario').value,
-                validado: 'Sí'
+                validado: estado // Enviamos 'Sí' o 'No' tal como pide el AppScript
             };
 
             const res = await fetch(WEBHOOK_LOGIN, {
@@ -219,14 +232,16 @@
             });
 
             if (res.ok) {
-                alert("Inscripción validada y correo enviado.");
+                alert(estado === 'Sí' ? "✅ Validado y Constancia enviada." : "❌ Solicitud rechazada y notificada.");
                 cerrarModal();
                 cargarInscritos();
-            } else { alert("Error al validar."); }
-            btn.innerText = "CONFIRMAR Y ENVIAR CONSTANCIA"; btn.disabled = false;
-        };
+            } else { alert("Error en la comunicación con Make."); }
+            btn.innerText = originalText; btn.disabled = false;
+        }
 
-        // --- LÓGICA DE ASISTENCIA ---
+        document.getElementById('form-validar').onsubmit = (e) => { e.preventDefault(); enviarValidacion('Sí'); };
+        function procesarRechazo() { if(confirm("¿Seguro que quieres RECHAZAR este registro? Se enviará correo de notificación.")) enviarValidacion('No'); }
+
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar`);
             const talleres = await res.json();
@@ -269,9 +284,10 @@
             if(!checks.length) return alert("Selecciona beneficiarios.");
             const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "GUARDANDO...";
-            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', body: JSON.stringify({ asistencias: lista }) });
-            alert("¡Listo!");
-            setTimeout(cargarAlumnosAsistencia, 2000);
+            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
+            alert("Asistencias registradas correctamente.");
+            setTimeout(cargarAlumnosAsistencia, 3000);
+            document.getElementById('btn-guardar-lista').innerText = "GUARDAR ASISTENCIAS";
         }
     </script>
 </body>
