@@ -347,29 +347,63 @@
             } else { alert("Error al guardar."); }
         }
 
-        // --- RESTO DE FUNCIONES (CATALOGOS Y ASISTENCIA) ---
+        // --- 6. GESTION DE TALLERES (ACTUALIZADO) ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
-            data.forEach((item, idx) => {
-                const v = Object.values(item);
-                const est = String(v[2]).toUpperCase();
-                tbody.innerHTML += `<tr>
-                    <td><b>${v[0]}</b></td>
-                    <td>${v[1]}</td>
-                    <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
-                    <td><button onclick="toggleEstatus(${idx+2}, '${est}')" style="width:auto; padding:5px 10px;">Alternar</button></td>
-                </tr>`;
-            });
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            
+            try {
+                const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
+                const data = await res.json();
+                tbody.innerHTML = '';
+                
+                data.forEach((item, idx) => {
+                    const v = Object.values(item);
+                    // Aseguramos que 'est' tenga valor string
+                    const est = String(v[2] || "").toUpperCase();
+                    // idx 0 es fila 2
+                    const fila = idx + 2;
+
+                    tbody.innerHTML += `<tr>
+                        <td><b>${v[0]}</b></td>
+                        <td>${v[1]}</td>
+                        <td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-action" onclick="toggleEstatus(${fila}, '${est}', this)">
+                                ${est === 'ACTIVO' ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
+            }
         }
 
-        async function toggleEstatus(f, a) {
-            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion_admin: 'actualizar', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
-            obtenerDatosCatalogos();
+        async function toggleEstatus(f, estActual, btnElement) {
+            if(!confirm(`¿Deseas cambiar el estatus a ${estActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO'}?`)) return;
+
+            const txtOriginal = btnElement.innerText;
+            btnElement.innerText = "...";
+            btnElement.disabled = true;
+
+            try {
+                const nuevoEst = estActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+                await fetch(WEBHOOK_LOGIN, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ accion_admin: 'actualizar', fila: f, estatus: nuevoEst }) 
+                });
+                // Recargar lista para reflejar cambios
+                obtenerDatosCatalogos();
+            } catch(e) {
+                alert("Error al conectar con el servidor.");
+                btnElement.innerText = txtOriginal;
+                btnElement.disabled = false;
+            }
         }
 
+        // --- 7. PASE DE LISTA (ASISTENCIAS) ---
         async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
             const talleres = await res.json();
