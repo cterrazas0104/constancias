@@ -6,47 +6,42 @@
     <title>Panel Administrativo - SEDIF EFDH</title>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 70px; } /* Espacio para menú inferior */
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 75px; }
         
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 30px; border-radius: 16px; width: 85%; max-width: 320px; text-align: center; }
         
         #admin-panel { display: none; }
 
-        /* --- MENÚ LATERAL (ESCRITORIO) --- */
+        /* --- SIDEBAR ESCRITORIO --- */
         .sidebar { width: 260px; background: white; height: 100vh; padding: 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; z-index: 1000; }
         .main-content { margin-left: 260px; padding: 30px; box-sizing: border-box; }
 
-        /* --- MENÚ INFERIOR (MÓVIL) --- */
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #ddd; justify-content: space-around; padding: 10px 0; z-index: 2000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #888; cursor: pointer; text-decoration: none; flex: 1; }
+        /* --- BARRA INFERIOR MÓVIL --- */
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #ddd; justify-content: space-around; padding: 12px 0; z-index: 2000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #888; cursor: pointer; flex: 1; border: none; background: none; }
         .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-item span { font-size: 20px; margin-bottom: 2px; }
+        .nav-item span { font-size: 22px; margin-bottom: 3px; }
 
         @media (max-width: 768px) {
             .sidebar { display: none !important; }
             .mobile-nav { display: flex; }
             .main-content { margin-left: 0; padding: 15px; width: 100%; }
-            h1 { font-size: 1.4rem; margin-top: 10px; }
-            .table-card { margin-top: 10px; border-radius: 8px; }
+            h1 { font-size: 1.5rem; margin-top: 5px; }
         }
 
-        .user-info-mini { padding: 10px; text-align: center; border-bottom: 1px solid #eee; margin-bottom: 15px; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
 
-        /* --- TABLAS Y LISTAS --- */
-        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #fafbfc; color: #8898aa; font-size: 0.7em; text-transform: uppercase; padding: 12px 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
+        th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f0f2f5; font-size: 0.95em; }
 
-        /* Optimización Checkboxes para pasar lista */
-        .check-asis { width: 28px; height: 28px; cursor: pointer; accent-color: var(--secondary); }
+        .check-asis { width: 30px; height: 30px; cursor: pointer; accent-color: var(--secondary); }
+        .btn-save { background: var(--secondary); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; cursor: pointer; }
         
-        .btn-save { background: var(--secondary); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,173,159,0.2); }
-        
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
 
@@ -57,50 +52,48 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color:var(--primary)">Acceso EFDH</h2>
+            <h2 style="color:var(--primary); margin-bottom: 20px;">Acceso EFDH</h2>
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn-save" style="margin-top:15px; padding:12px;" onclick="ejecutarLogin()">ENTRAR</button>
+            <button class="btn-save" style="margin-top:20px; padding:14px;" onclick="ejecutarLogin()">ENTRAR</button>
         </div>
     </div>
 
-    <div class="mobile-nav" id="mob-nav">
-        <div class="nav-item active" id="m-tab-inscritos" onclick="cambiarSeccion('inscritos')"><span>📊</span>Inscritos</div>
-        <div class="nav-item" id="m-tab-catalogos" onclick="cambiarSeccion('catalogos')"><span>🏫</span>Talleres</div>
-        <div class="nav-item" id="m-tab-asistencias" onclick="cambiarSeccion('asistencias')"><span>📝</span>Lista</div>
-        <div class="nav-item" onclick="location.reload()" style="color:#fa5252;"><span>🚪</span>Salir</div>
+    <div class="mobile-nav" id="mob-nav" style="display:none;">
+        <button class="nav-item active" id="m-tab-inscritos" onclick="cambiarSeccion('inscritos')"><span>📊</span>Inscritos</button>
+        <button class="nav-item" id="m-tab-catalogos" onclick="cambiarSeccion('catalogos')"><span>🏫</span>Talleres</button>
+        <button class="nav-item" id="m-tab-asistencias" onclick="cambiarSeccion('asistencias')"><span>📝</span>Lista</button>
+        <button class="nav-item" onclick="location.reload()" style="color:#fa5252;"><span>🚪</span>Salir</button>
     </div>
 
     <div id="admin-panel">
         <div class="sidebar">
-            <div class="user-box">
-                <h3 id="user-display" style="margin:0">Cargando...</h3>
+            <div style="padding-bottom:20px; margin-bottom:20px; border-bottom:1px solid #eee;">
+                <h3 id="user-display" style="margin:0">Usuario</h3>
                 <small id="role-display" style="color:gray;">Rol</small>
             </div>
             <div id="tab-inscritos" class="nav-btn active" onclick="cambiarSeccion('inscritos')">📊 Inscritos Totales</div>
             <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Gestión de Talleres</div>
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pasar Asistencia</div>
-            <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Cerrar Sesión</div>
+            <button class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c; background:none; border:none; width:100%; text-align:left;">🚪 Cerrar Sesión</button>
         </div>
 
         <div class="main-content">
-            <div id="sec-inscritos" class="content-section">
-                <h1>Inscripciones</h1>
-                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Estado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
+            <div id="sec-inscritos">
+                <h1>Validación</h1>
+                <div class="table-card"><table><thead><tr><th>Folio</th><th>Nombre</th><th>Estado</th></tr></thead><tbody id="body-inscritos"></tbody></table></div>
             </div>
 
-            <div id="sec-catalogos" class="content-section" style="display:none;">
+            <div id="sec-catalogos" style="display:none;">
                 <h1>Talleres</h1>
-                <div class="table-card"><table><thead><tr><th>ID</th><th>Nombre</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
+                <div class="table-card"><table><thead><tr><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table></div>
             </div>
 
-            <div id="sec-asistencias" class="content-section" style="display:none;">
+            <div id="sec-asistencias" style="display:none;">
                 <h1>Pase de Lista</h1>
                 <div style="background:white; padding:15px; border-radius:12px; margin-bottom: 15px; border-left: 5px solid var(--secondary);">
-                    <label style="font-weight:bold; font-size: 0.9em;">Taller:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
-
                 <div class="table-card">
                     <table>
                         <thead><tr><th>Beneficiario</th><th style="text-align:center;">Asis.</th><th style="text-align:center;">Hoy</th></tr></thead>
@@ -115,7 +108,7 @@
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
-        let inscritosGlobal = [], usuarioLogueado = {};
+        let usuarioLogueado = {};
 
         async function ejecutarLogin() {
             const email = document.getElementById('email').value, pass = document.getElementById('pass').value;
@@ -125,6 +118,7 @@
                 usuarioLogueado = user;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('mob-nav').style.display = 'flex';
                 document.getElementById('user-display').innerText = user.nombre;
                 document.getElementById('role-display').innerText = user.rol;
                 if (user.rol === 'Tallerista') {
@@ -133,16 +127,14 @@
                     });
                     cambiarSeccion('asistencias');
                 } else { cambiarSeccion('inscritos'); }
-            } else { alert("Datos incorrectos"); }
+            } else { alert("Acceso denegado"); }
         }
 
         function cambiarSeccion(sec) {
             ['inscritos', 'catalogos', 'asistencias'].forEach(s => document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none');
-            // Update Active UI
             document.querySelectorAll('.nav-btn, .nav-item').forEach(el => el.classList.remove('active'));
             const dt = document.getElementById('tab-' + sec), mb = document.getElementById('m-tab-' + sec);
             if(dt) dt.classList.add('active'); if(mb) mb.classList.add('active');
-            
             if(sec === 'inscritos') cargarInscritos();
             if(sec === 'catalogos') obtenerDatosCatalogos();
             if(sec === 'asistencias') cargarCatalogosAsis();
@@ -150,20 +142,20 @@
 
         async function cargarInscritos() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json(); const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = data.map(item => {
+            const data = await res.json();
+            document.getElementById('body-inscritos').innerHTML = data.map(item => {
                 const v = Object.values(item);
                 const val = v.some(x => String(x).toLowerCase().trim() === 'sí');
-                return `<tr><td><b>${v[0]}</b></td><td>${v[3]} ${v[4]}</td><td>${v[7]}</td><td><span class="status-pill ${val?'val-si':'val-no'}">${val?'SÍ':'NO'}</span></td></tr>`;
+                return `<tr><td><small>${v[0]}</small></td><td>${v[3]} ${v[4]}</td><td><span class="status-pill ${val?'val-si':'val-no'}">${val?'SÍ':'NO'}</span></td></tr>`;
             }).join('');
         }
 
         async function obtenerDatosCatalogos() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
-            const data = await res.json(); const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = data.map((item, idx) => {
+            const data = await res.json();
+            document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => {
                 const v = Object.values(item), est = String(v[2]).toUpperCase();
-                return `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="status-pill ${est==='ACTIVO'?'val-si':'val-no'}">${est}</span></td><td><button onclick="toggleEstatus(${idx+2},'${est}')" style="width:auto;padding:5px">🔃</button></td></tr>`;
+                return `<tr><td>${v[1]}</td><td><span class="status-pill ${est==='ACTIVO'?'val-si':'val-no'}">${est}</span></td><td><button onclick="toggleEstatus(${idx+2},'${est}')" style="width:auto;padding:8px">🔃</button></td></tr>`;
             }).join('');
         }
 
@@ -191,9 +183,10 @@
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json(); const tbody = document.getElementById('body-asistencias');
             tbody.innerHTML = data.filter(al => Object.values(al)[7] === taller).map(al => {
-                const v = Object.values(al); let s = 0;
-                for (let i = v.length - 1; i >= 0; i--) { if (typeof v[i] === 'number') { s = v[i]; break; } }
-                return `<tr><td><strong>${v[3]} ${v[4]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b>${s}/8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
+                const v = Object.values(al);
+                // CORRECCIÓN CLAVE: Buscar específicamente el valor de la columna AA (índice 26)
+                const sesiones = v[26] || 0; 
+                return `<tr><td><strong>${v[3]}</strong><br><small>${v[0]}</small></td><td style="text-align:center;"><b>${sesiones}/8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${v[0]}" data-fila="${data.indexOf(al)+2}"></td></tr>`;
             }).join('');
             document.getElementById('btn-guardar-lista').style.display = 'block';
         }
@@ -202,8 +195,8 @@
             const checks = document.querySelectorAll('.check-asis:checked'); if(!checks.length) return alert("Selecciona alumnos");
             const lista = Array.from(checks).map(c => ({ fila: c.dataset.fila, folio: c.dataset.folio }));
             document.getElementById('btn-guardar-lista').innerText = "⏳ GUARDANDO...";
-            await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
-            alert("¡Lista Guardada!"); cargarAlumnosAsistencia();
+            const res = await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ asistencias: lista }) });
+            if(res.ok) { alert("¡Lista Guardada!"); await new Promise(r => setTimeout(r, 2500)); cargarAlumnosAsistencia(); }
             document.getElementById('btn-guardar-lista').innerText = "💾 GUARDAR LISTA";
         }
     </script>
