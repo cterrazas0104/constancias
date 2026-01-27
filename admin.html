@@ -7,45 +7,16 @@
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --bg: #f0f2f5; --text: #2c3e50; }
         
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            color: var(--text); 
-            /* En móvil permitimos scroll natural, en escritorio mantenemos el app-feel */
-            overflow: hidden; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
         
-        /* --- ESTILOS LOGIN --- */
+        /* --- LOGIN --- */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
         
-        /* --- ESTRUCTURA PRINCIPAL --- */
+        /* --- LAYOUT --- */
         #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
-        
-        .sidebar { 
-            width: 260px; 
-            background: white; 
-            height: 100vh; 
-            padding: 30px 20px; 
-            position: fixed; 
-            border-right: 1px solid #e1e8f0; 
-            display: flex; 
-            flex-direction: column; 
-            box-sizing: border-box; 
-            z-index: 100; 
-            overflow-y: auto; /* Scroll si el menú es muy alto */
-        }
-        
-        .main-content { 
-            margin-left: 260px; 
-            padding: 40px; 
-            width: calc(100% - 260px); 
-            box-sizing: border-box; 
-            overflow-y: auto; 
-            height: 100vh; 
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-        }
+        .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; overflow-y: auto; }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; -webkit-overflow-scrolling: touch; }
         
         /* --- COMPONENTES --- */
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -53,65 +24,38 @@
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
         
-        .table-card { 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            margin-top: 20px; 
-            width: 100%;
-            /* Esto permite scroll horizontal en tablas en móviles */
-            overflow-x: auto; 
-        }
-        
-        table { width: 100%; border-collapse: collapse; min-width: 600px; /* Fuerza el ancho para que no se apriete en móvil */ }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
         td { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 0.9em; }
 
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; /* 16px evita zoom automático en iPhone */ }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
         .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; }
         .btn-save { background: var(--secondary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; margin-top: 20px; font-size: 1.1em; width: 100%; position: sticky; bottom: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+        
+        /* Botón pequeño para la tabla */
+        .btn-action { background: var(--primary); color: white; border: none; padding: 8px 12px; font-size: 0.8em; border-radius: 6px; cursor: pointer; width: auto; margin-top: 0; white-space: nowrap; }
 
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; white-space: nowrap; }
         .val-si { background: #e6fcf5; color: #0ca678; }
         .val-no { background: #fff5f5; color: #fa5252; }
-        
-        /* Checkbox más grande para dedos */
         .check-asis { transform: scale(1.8); cursor: pointer; height: 20px; width: 20px; margin: 0 auto; display: block; }
 
-        /* --- MEDIA QUERIES (MÓVIL) --- */
+        /* --- MODAL --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #888; }
+        .modal-info { margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 0.9em; }
+
+        /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
-            body { overflow: auto; /* Permite scroll normal en body */ }
-            
+            body { overflow: auto; }
             #admin-panel { flex-direction: column; }
-            
-            .sidebar { 
-                position: relative; 
-                width: 100%; 
-                height: auto; 
-                padding: 20px; 
-                border-right: none; 
-                border-bottom: 1px solid #ddd;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            }
-
-            .main-content { 
-                margin-left: 0; 
-                width: 100%; 
-                padding: 15px; 
-                height: auto; 
-                overflow: visible; 
-            }
-
+            .sidebar { position: relative; width: 100%; height: auto; padding: 20px; border-right: none; border-bottom: 1px solid #ddd; }
+            .main-content { margin-left: 0; width: 100%; padding: 15px; height: auto; overflow: visible; }
             h1 { font-size: 1.5em; margin-bottom: 15px; }
-            
-            /* Ajustes para la tabla en móvil */
             th, td { padding: 10px; font-size: 0.85em; }
-            
-            /* Ajuste del botón salir para que no quede tan lejos en móvil */
             .nav-btn[onclick="location.reload()"] { margin-top: 10px; border: 1px solid #ffdcdc; }
-            
-            /* Ajuste de botones de acción en tablas */
-            button { padding: 10px; }
         }
     </style>
 </head>
@@ -140,7 +84,7 @@
 
         <div class="main-content">
             <div id="sec-inscritos" class="content-section">
-                <h1>Validación</h1>
+                <h1>Validación y Asignación</h1>
                 <div class="table-card">
                     <table>
                         <thead>
@@ -148,7 +92,8 @@
                                 <th>Folio</th>
                                 <th>Nombre</th>
                                 <th>Taller</th>
-                                <th style="text-align:center;">Validado</th>
+                                <th>Sede Asignada</th>
+                                <th style="text-align:center;">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="body-inscritos"></tbody>
@@ -157,7 +102,7 @@
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
-                <h1>Talleres</h1>
+                <h1>Gestión de Talleres</h1>
                 <div class="table-card">
                     <table>
                         <thead><tr><th>ID</th><th>Taller</th><th>Estatus</th><th>Acción</th></tr></thead>
@@ -172,7 +117,6 @@
                     <label style="font-weight:bold; display:block; margin-bottom:5px;">Taller Asignado:</label>
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
-
                 <div class="table-card">
                     <table>
                         <thead>
@@ -185,51 +129,77 @@
                         <tbody id="body-asistencias"></tbody>
                     </table>
                 </div>
-                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">
-                    💾 GUARDAR ASISTENCIAS
-                </button>
+                <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR ASISTENCIAS</button>
             </div>
         </div>
     </div>
 
+    <div id="modal-sede" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModalSede()">&times;</span>
+            <h2 style="margin-top:0;">Asignar Sede</h2>
+            <div class="modal-info">
+                <p><b>Folio:</b> <span id="modal-folio"></span></p>
+                <p><b>Nombre:</b> <span id="modal-nombre"></span></p>
+            </div>
+            <label style="font-weight:bold;">Selecciona la Sede:</label>
+            <select id="select-sede-modal">
+                <option value="">Cargando sedes...</option>
+            </select>
+            <button class="btn-primary" onclick="guardarAsignacionSede()" style="margin-top:20px;">💾 GUARDAR CAMBIOS</button>
+        </div>
+    </div>
+
     <script>
-        // --- TU CÓDIGO JAVASCRIPT ORIGINAL INTACTO ---
+        // URLs de tus Webhooks (NO CAMBIADAS)
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
         const WEBHOOK_ASISTENCIA = 'https://hook.us2.make.com/p3svethy2bp3omf3pc4l1bdk4jnhqv9b';
 
         let inscritosGlobal = [];
         let usuarioLogueado = {};
+        let filaSeleccionada = null; // Guardaremos la fila de excel aquí
 
+        // 1. LOGIN
         async function ejecutarLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
-            const res = await fetch(WEBHOOK_LOGIN, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-            });
-            const user = await res.json();
-            if (user.autorizado) {
-                usuarioLogueado = user; 
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'flex';
-                document.getElementById('user-display').innerText = user.nombre;
-                document.getElementById('role-display').innerText = user.rol;
+            const btn = document.querySelector('.login-card button');
+            btn.innerText = "Verificando...";
+            
+            try {
+                const res = await fetch(WEBHOOK_LOGIN, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
+                });
+                const user = await res.json();
+                
+                if (user.autorizado) {
+                    usuarioLogueado = user; 
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'flex';
+                    document.getElementById('user-display').innerText = user.nombre;
+                    document.getElementById('role-display').innerText = user.rol;
 
-                if (user.rol === 'Tallerista') {
-                    document.getElementById('tab-inscritos').style.display = 'none';
-                    document.getElementById('tab-catalogos').style.display = 'none';
-                    cambiarSeccion('asistencias');
-                } else {
-                    cambiarSeccion('inscritos');
-                }
-            } else { alert("Acceso denegado"); }
+                    // Cargamos sedes silenciosamente al entrar
+                    obtenerSedes();
+
+                    if (user.rol === 'Tallerista') {
+                        document.getElementById('tab-inscritos').style.display = 'none';
+                        document.getElementById('tab-catalogos').style.display = 'none';
+                        cambiarSeccion('asistencias');
+                    } else {
+                        cambiarSeccion('inscritos');
+                    }
+                } else { alert("Acceso denegado"); }
+            } catch (e) { alert("Error de conexión"); }
+            btn.innerText = "ENTRAR";
         }
 
+        // 2. NAVEGACIÓN
         function cambiarSeccion(sec) {
             ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
-                const el = document.getElementById('sec-' + s);
-                if(el) el.style.display = s === sec ? 'block' : 'none';
+                document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none';
             });
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
@@ -240,28 +210,121 @@
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
+        // 3. OBTENER LISTA DE SEDES (Según tu Blueprint Route 7)
+        async function obtenerSedes() {
+            try {
+                // Tu ruta 7 filtra por catalogo_pedir = 'sedes'
+                const res = await fetch(WEBHOOK_LOGIN, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ catalogo_pedir: 'sedes' }) 
+                });
+                const sedes = await res.json();
+                
+                const select = document.getElementById('select-sede-modal');
+                select.innerHTML = '<option value="">-- Selecciona una Sede --</option>';
+                
+                sedes.forEach(sede => {
+                    // Tu módulo de Make lee A2:D20. 
+                    // Map: 0->Lugar, 1->Sala, 2->Día, 3->Horario
+                    const v = Object.values(sede); 
+                    const lugar = v[0];
+                    const sala = v[1];
+                    const dia = v[2];
+                    const horario = v[3];
+                    
+                    const valorData = JSON.stringify({ lugar, sala, dia, horario });
+                    select.innerHTML += `<option value='${valorData}'>${lugar} (${dia} - ${horario})</option>`;
+                });
+            } catch (e) { console.error("Error cargando sedes", e); }
+        }
+
+        // 4. CARGAR INSCRITOS Y CALCULAR FILA
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+            
+            // Tu ruta 3 lista inscritos
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             tbody.innerHTML = '';
             
-            inscritosGlobal.forEach((item) => {
+            inscritosGlobal.forEach((item, index) => {
                 const folio = item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
                 const nombre = (item["Nombre_s (D)"] || item["3"] || "") + " " + (item["Apellido_Paterno (E)"] || item["4"] || "");
                 const taller = item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
-                const validado = (item["Validado (Q)"] || item["16"] || "").toString().toLowerCase().includes('sí');
+                const sedeActual = item["(M)"] || item["12"] || "Sin asignar"; // Columna M es Lugar (12)
                 
+                // CALCULO DE FILA: Asumimos que la lista viene en orden y empieza en fila 2
+                const filaReal = index + 2; 
+
                 tbody.innerHTML += `<tr>
                     <td><b>${folio}</b></td>
                     <td>${nombre}</td>
                     <td>${taller}</td>
-                    <td style="text-align:center;"><span class="status-pill ${validado ? 'val-si' : 'val-no'}">${validado ? 'VALIDADO' : 'PENDIENTE'}</span></td>
+                    <td style="font-size:0.8em; color:#666;">${sedeActual.substring(0, 30)}...</td>
+                    <td style="text-align:center;">
+                        <button class="btn-action" onclick="abrirModalSede('${folio}', '${nombre}', ${filaReal})">Asignar</button>
+                    </td>
                 </tr>`;
             });
         }
 
+        // 5. MODAL Y GUARDADO (Según Blueprint Route 6)
+        function abrirModalSede(folio, nombre, fila) {
+            filaSeleccionada = fila; // Guardamos la fila calculada
+            document.getElementById('modal-folio').innerText = folio;
+            document.getElementById('modal-nombre').innerText = nombre;
+            document.getElementById('select-sede-modal').value = ""; 
+            document.getElementById('modal-sede').style.display = 'flex';
+        }
+
+        function cerrarModalSede() {
+            document.getElementById('modal-sede').style.display = 'none';
+            filaSeleccionada = null;
+        }
+
+        async function guardarAsignacionSede() {
+            const select = document.getElementById('select-sede-modal');
+            if(!select.value) return alert("Por favor selecciona una sede.");
+            
+            const datosSede = JSON.parse(select.value);
+            const btn = document.querySelector('#modal-sede .btn-primary');
+            const textoOriginal = btn.innerText;
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+
+            try {
+                // PAYLOAD EXACTO PARA TU RUTA 6 (ID 41 -> ID 24)
+                // Requiere: metodo="validar_inscrito", fila={{1.fila}}, decision="Sí" (para columna 16)
+                const payload = {
+                    metodo: 'validar_inscrito',
+                    fila: filaSeleccionada, 
+                    lugar: datosSede.lugar,
+                    sala: datosSede.sala,
+                    dia: datosSede.dia,
+                    horario: datosSede.horario,
+                    decision: 'Sí' // Esto fuerza que se marque como Validado en columna 16
+                };
+
+                const res = await fetch(WEBHOOK_LOGIN, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.ok) {
+                    alert("Sede asignada y validado correctamente.");
+                    cerrarModalSede();
+                    cargarInscritos();
+                } else { alert("Error al guardar."); }
+            } catch(e) { alert("Error de conexión."); }
+            
+            btn.innerText = textoOriginal;
+            btn.disabled = false;
+        }
+
+        // --- FUNCIONES ORIGINALES RESTANTES (Gestión Talleres y Asistencia) ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
@@ -280,7 +343,12 @@
         }
 
         async function toggleEstatus(f, a) {
-            await fetch(WEBHOOK_LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo: 'admin_actualizar_catalogo', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) });
+            // Tu ruta 5 (ID 21) usa 'accion_admin' = 'actualizar'
+            await fetch(WEBHOOK_LOGIN, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ accion_admin: 'actualizar', fila: f, estatus: a === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' }) 
+            });
             obtenerDatosCatalogos();
         }
 
@@ -293,14 +361,13 @@
             if (usuarioLogueado.rol === 'Administrador') {
                 select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
                 talleres.forEach(t => {
-                    const nombreT = t["Nombre_Taller"] || Object.values(t)[1];
+                    const nombreT = t["Nombre_Taller (B)"] || Object.values(t)[1];
                     select.innerHTML += `<option value="${nombreT}">${nombreT}</option>`;
                 });
                 select.disabled = false;
             } else {
-                const miTallerObj = talleres.find(t => (t["ID_Taller"] || Object.values(t)[0]) === usuarioLogueado.taller_id);
-                const nombreT = miTallerObj ? (miTallerObj["Nombre_Taller"] || Object.values(miTallerObj)[1]) : "Sin asignar";
-                
+                const miTallerObj = talleres.find(t => (t["ID_Taller (A)"] || Object.values(t)[0]) === usuarioLogueado.taller_id);
+                const nombreT = miTallerObj ? (miTallerObj["Nombre_Taller (B)"] || Object.values(miTallerObj)[1]) : "Sin asignar";
                 select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
                 select.disabled = true;
                 cargarAlumnosAsistencia();
@@ -313,7 +380,6 @@
             if(!taller || taller === "Sin asignar") return;
             
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
-            
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
@@ -325,16 +391,13 @@
                     const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
                     const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
                     const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
-                    
                     tbody.innerHTML += `<tr>
                         <td><strong>${nombre}</strong><br><small>${folio}</small></td>
                         <td style="text-align:center;"><b>${sesiones} / 8</b></td>
                         <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td>
                     </tr>`;
                 });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados.</td></tr>';
-            }
+            } else { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos registrados.</td></tr>'; }
         }
 
         async function guardarAsistenciasMasivas() {
@@ -348,7 +411,6 @@
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ asistencias: lista }) 
             });
-            
             if(res.ok) {
                 alert("¡Asistencias guardadas!");
                 await new Promise(r => setTimeout(r, 2000));
