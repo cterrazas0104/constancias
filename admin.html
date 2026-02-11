@@ -157,7 +157,7 @@
     <div id="modal-detalle" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Expediente Completo</h2>
+                <h2>Expediente del Beneficiario</h2>
                 <span class="close-modal" onclick="cerrarModal()">&times;</span>
             </div>
             
@@ -165,64 +165,66 @@
                 <div class="data-grid">
                     <div class="data-item highlight">
                         <label>Folio</label>
-                        <span id="m-folio">---</span>
+                        <span id="m-folio">-</span>
                     </div>
                     <div class="data-item">
                         <label>Fecha Registro</label>
-                        <span id="m-fecha">---</span>
+                        <span id="m-fecha">-</span>
                     </div>
-                    
-                    <div class="data-item full-width">
-                        <label>Nombre Completo</label>
-                        <span id="m-nombre">---</span>
-                    </div>
-                    
                     <div class="data-item">
-                        <label>Correo</label>
-                        <span id="m-correo">---</span>
+                        <label>Estatus Actual</label>
+                        <span id="m-estatus">-</span>
+                    </div>
+
+                    <div class="data-item span-2">
+                        <label>Nombre Completo</label>
+                        <span id="m-nombre" style="font-size:1em;">-</span>
                     </div>
                     <div class="data-item">
                         <label>Teléfono</label>
-                        <span id="m-telefono">---</span>
+                        <span id="m-telefono">-</span>
                     </div>
 
-                    <div class="data-item full-width highlight">
-                        <label>Taller Seleccionado</label>
-                        <span id="m-taller">---</span>
+                    <div class="data-item span-2">
+                        <label>Correo Electrónico</label>
+                        <span id="m-correo">-</span>
                     </div>
-
                     <div class="data-item">
                         <label>Canalizado Por</label>
-                        <span id="m-canaliza">---</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Nº Expediente</label>
-                        <span id="m-expediente">---</span>
-                    </div>
-                    
-                    <div class="data-item full-width">
-                        <label>Juzgado / Entidad</label>
-                        <span id="m-juzgado">---</span>
+                        <span id="m-canaliza">-</span>
                     </div>
 
-                    <div class="data-item">
-                        <label>Estatus Actual</label>
-                        <span id="m-estatus">---</span>
+                    <div class="data-item span-3 highlight">
+                        <label>Taller Seleccionado</label>
+                        <span id="m-taller">-</span>
                     </div>
-                    <div class="data-item">
+
+                    <div class="data-item span-2">
                         <label>Sede Asignada</label>
-                        <span id="m-lugar">---</span>
-                    </div>
-                    <div class="data-item">
-                        <label>Día / Horario</label>
-                        <span id="m-horario">---</span>
+                        <span id="m-lugar" style="color:#2c3e50;">-</span>
                     </div>
                     <div class="data-item">
                         <label>Sala</label>
-                        <span id="m-sala">---</span>
+                        <span id="m-sala">-</span>
+                    </div>
+
+                    <div class="data-item span-2">
+                        <label>Día y Horario</label>
+                        <span id="m-horario" style="color:#d35400;">-</span>
+                    </div>
+                    <div class="data-item">
+                        <label>Expediente / Juzgado</label>
+                        <span id="m-extra">-</span>
                     </div>
                 </div>
             </div>
+
+            <div class="modal-footer">
+                <button class="btn-danger" onclick="rechazarInscripcion()">🚫 Rechazar</button>
+                <button class="btn-primary" onclick="validarInscripcion()">✅ Validar Datos</button>
+            </div>
+        </div>
+    </div>
 
             <div class="modal-footer">
                 <button class="btn-primary" onclick="validarInscripcion()">✅ VALIDAR (Datos Correctos)</button>
@@ -320,39 +322,55 @@
             });
         }
 
-        // 4. MODAL DETALLADO (NUEVO)
+        // 4. MODAL DETALLADO (LÓGICA MEJORADA)
         function abrirModalDetalles(index) {
             const data = inscritosGlobal[index];
-            // La fila real en Excel es index + 2 (por encabezados)
             filaSeleccionada = index + 2; 
 
-            // Función auxiliar para limpiar datos vacíos
-            const getVal = (key, altKey) => (data[key] || data[altKey] || "-");
+            // Helper: Busca por llave exacta, luego por llave parcial (ej: contiene "Lugar"), luego por índice
+            const getVal = (keys, idx) => {
+                // 1. Búsqueda exacta
+                for (let k of keys) {
+                    if (data[k] !== undefined) return data[k];
+                }
+                // 2. Búsqueda por índice (backup)
+                if (data[idx] !== undefined) return data[idx];
+                
+                return "-"; // No encontrado
+            };
 
-            // Llenamos el modal con TODOS los datos
-            document.getElementById('m-folio').innerText = getVal("Folio_Inscripcion (A)", "0");
-            document.getElementById('m-fecha').innerText = getVal("Marca_temporal (B)", "1"); // Asumiendo que B es fecha
+            document.getElementById('m-folio').innerText = getVal(["Folio_Inscripcion (A)", "A", "Folio"], "0");
             
-            const nombre = getVal("Nombre_s (D)", "3");
-            const pat = getVal("Apellido_Paterno (E)", "4");
-            const mat = getVal("Apellido_Materno (F)", "5");
-            document.getElementById('m-nombre').innerText = `${nombre} ${pat} ${mat}`;
+            // Fecha: a veces viene larga, cortamos los primeros 10 caracteres (YYYY-MM-DD)
+            let fecha = getVal(["Marca_temporal (B)", "Fecha_Registro", "B"], "1");
+            if(fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
+            document.getElementById('m-fecha').innerText = fecha;
             
-            document.getElementById('m-correo').innerText = getVal("Correo_Electronico (C)", "2");
-            document.getElementById('m-telefono').innerText = getVal("Telefono_Celular (G)", "6"); // Asumiendo G
+            const nombre = getVal(["Nombre_s (D)", "D"], "3");
+            const pat = getVal(["Apellido_Paterno (E)", "E"], "4");
+            const mat = getVal(["Apellido_Materno (F)", "F"], "5");
+            document.getElementById('m-nombre').innerText = `${nombre} ${pat} ${mat}`.toUpperCase();
             
-            document.getElementById('m-taller').innerText = getVal("Taller_Seleccionado (H)", "7");
-            document.getElementById('m-canaliza').innerText = getVal("Quien_Canaliza (I)", "8");
-            document.getElementById('m-expediente').innerText = getVal("Numero_Expediente (J)", "9");
-            document.getElementById('m-juzgado').innerText = getVal("Juzgado_o_Entidad (K)", "10");
+            document.getElementById('m-correo').innerText = getVal(["Correo_Electronico (C)", "C"], "2");
+            document.getElementById('m-telefono').innerText = getVal(["Telefono_Celular (G)", "G"], "6");
+            document.getElementById('m-taller').innerText = getVal(["Taller_Seleccionado (H)", "H"], "7");
+            document.getElementById('m-canaliza').innerText = getVal(["Quien_Canaliza (I)", "I"], "8");
             
-            document.getElementById('m-estatus').innerText = getVal("Estatus_Asistencias (L)", "11");
-            document.getElementById('m-lugar').innerText = getVal("Lugar (M)", "12");
-            document.getElementById('m-sala').innerText = getVal("Sala (N)", "13");
+            // Combinamos Expediente y Juzgado para ahorrar espacio
+            const exp = getVal(["Numero_Expediente (J)", "J"], "9");
+            const juz = getVal(["Juzgado_o_Entidad (K)", "K"], "10");
+            document.getElementById('m-extra').innerText = `${exp} / ${juz}`;
             
-            const dia = getVal("Día (O)", "14");
-            const horario = getVal("Horario (P)", "15");
-            document.getElementById('m-horario').innerText = `${dia} - ${horario}`;
+            document.getElementById('m-estatus').innerText = getVal(["Estatus_Asistencias (L)", "L"], "11");
+
+            // --- AQUÍ ESTÁ LA MAGIA PARA QUE SALGAN LOS DATOS ---
+            // Probamos varias llaves posibles que Make suele generar
+            document.getElementById('m-lugar').innerText = getVal(["Lugar (M)", "Lugar", "M"], "12");
+            document.getElementById('m-sala').innerText = getVal(["Sala (N)", "Sala", "N"], "13");
+            
+            const dia = getVal(["Día (O)", "Día", "Dia", "O"], "14");
+            const hora = getVal(["Horario (P)", "Horario", "P"], "15");
+            document.getElementById('m-horario').innerText = `${dia} - ${hora}`;
 
             document.getElementById('modal-detalle').style.display = 'flex';
         }
