@@ -487,11 +487,13 @@ async function guardarAsistenciasMasivas() {
             const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
             
             try {
-                const res = await fetch(WEBHOOK_ASISTENCIA, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ asistencias: lista }) 
-                });
+const res = await fetch(WEBHOOK_ASISTENCIA, { 
+    method: 'POST', 
+    // USAMOS text/plain PARA EVITAR EL "PREFLIGHT" (ERROR 405)
+    // Google Apps Script igual va a entender el JSON que va en el body.
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+    body: JSON.stringify({ asistencias: lista }) 
+});
 
                 if(res.ok) {
                     alert("✅ Asistencias registradas.\nSi alguien completó 8 sesiones, su constancia se está enviando en segundo plano.");
