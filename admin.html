@@ -400,21 +400,52 @@
             } else { alert("Error al guardar."); }
         }
 
-        // --- GESTION DE TALLERES Y ASISTENCIAS (IGUAL QUE ANTES) ---
+// --- 5. GESTION DE TALLERES (ACTUALIZADO) ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+            
             try {
+                // Asegúrate de que tu escenario de Make en la ruta "listar" 
+                // esté configurado para leer hasta la columna I (o toda la fila).
                 const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
                 const data = await res.json();
                 tbody.innerHTML = '';
+                
                 data.forEach((item, idx) => {
                     const v = Object.values(item);
-                    const est = String(v[2] || "").toUpperCase();
+                    
+                    // Mapeo de columnas (Basado en el orden de tu Excel):
+                    // v[0] = ID (Col A)
+                    // v[1] = Nombre Taller (Col B)
+                    // v[2] = Estatus (Col C)
+                    // ... saltamos D, E, F, G, H ...
+                    // v[8] = Impartido Por (Col I) -> Si no existe, ponemos "-"
+                    
+                    const idTaller = v[0];
+                    const nombreTaller = v[1];
+                    const estatus = String(v[2] || "").toUpperCase();
+                    // Intentamos leer la columna I. Si Make devuelve menos columnas, esto evita errores.
+                    const impartidoPor = v[8] || item["Impartido_Por (I)"] || item["8"] || "-"; 
+
                     const fila = idx + 2;
-                    tbody.innerHTML += `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td><span class="status-pill ${est === 'ACTIVO' ? 'val-si' : 'val-no'}">${est}</span></td><td style="text-align:center;"><button class="btn-action" onclick="toggleEstatus(${fila}, '${est}', this)">${est === 'ACTIVO' ? 'Desactivar' : 'Activar'}</button></td></tr>`;
+
+                    tbody.innerHTML += `<tr>
+                        <td><b>${idTaller}</b></td>
+                        <td>${nombreTaller}</td>
+                        <td><small style="color:#666;">${impartidoPor}</small></td>
+                        <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-action" onclick="toggleEstatus(${fila}, '${estatus}', this)">
+                                ${estatus === 'ACTIVO' ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </td>
+                    </tr>`;
                 });
-            } catch (e) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error.</td></tr>'; }
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos. Verifica que Make esté leyendo hasta la columna I.</td></tr>';
+            }
         }
 
         async function toggleEstatus(f, estActual, btnElement) {
