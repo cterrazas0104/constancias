@@ -182,58 +182,63 @@
         };
 
         // 2. Enviar formulario
+       // 2. Enviar formulario
         async function enviarEncuesta(e) {
-            e.preventDefault();
+            e.preventDefault(); // 1. Evitamos que la página se recargue inmediatamente
+
             const btn = document.getElementById('btnSubmit');
             btn.innerText = "ENVIANDO...";
             btn.disabled = true;
 
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Construimos el objeto de respuestas
+            // 2. Construimos el objeto de respuestas
             const formData = {
-                action: 'save_survey', // Importante para que el script sepa qué hacer
+                action: 'save_survey', 
                 folio: urlParams.get('folio'),
                 taller: urlParams.get('taller'),
                 respuestas: [
-                    urlParams.get('taller'), // Q1 (Nombre Taller) - Col AD
-                    getVal('q2'),            // Q2 - Col AE
-                    getVal('q3'),            // Q3 - Col AF
-                    getVal('q4'),            // Q4 - Col AG
-                    getVal('q5'),            // Q5 - Col AH
-                    getVal('q6'),            // Q6 - Col AI
-                    getVal('q7'),            // Q7 - Col AJ
-                    getVal('q8'),            // Q8 - Col AK
-                    getVal('q9'),            // Q9 - Col AL
-                    getVal('q10')            // Q10 - Col AM
+                    urlParams.get('taller'), // Col AD
+                    getVal('q2'),            // Col AE
+                    getVal('q3'),            // Col AF
+                    getVal('q4'),            // Col AG
+                    getVal('q5'),            // Col AH
+                    getVal('q6'),            // Col AI
+                    getVal('q7'),            // Col AJ
+                    getVal('q8'),            // Col AK
+                    getVal('q9'),            // Col AL
+                    getVal('q10')            // Col AM
                 ]
             };
 
             try {
-                // Enviamos usando 'no-cors' para evitar problemas simples, 
-                // aunque para recibir respuesta JSON idealmente usamos el script bien configurado.
-                // Como es una Web App pública, fetch normal funciona bien con text/plain.
-            const res = await fetch(WEBHOOK_URL, {
+                // 3. Realizamos el envío al servidor
+                const res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
-                    mode: 'cors', // Aseguramos modo cors
-                    redirect: 'follow', // IMPORTANTE para Apps Script
+                    mode: 'cors', 
+                    redirect: 'follow', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(formData)
                 });
                 
+                // 4. Esperamos la respuesta del servidor
                 const response = await res.json();
 
+                // 5. Actuamos según lo que diga el servidor
                 if (response.status === 'success') {
+                    // Éxito: Mostramos pantalla de agradecimiento
                     document.getElementById('main-container').classList.add('hidden');
                     document.getElementById('success-screen').classList.remove('hidden');
                 } else {
-                    alert("Error al guardar: " + response.message);
+                    // Error: El servidor rechazó el envío (ej: ya respondió)
+                    alert("Atención: " + response.message);
                     btn.disabled = false;
                     btn.innerText = "ENVIAR EVALUACIÓN";
                 }
             } catch (err) {
+                // Error de red o conexión
                 console.error(err);
-                alert("Hubo un error de conexión.");
+                alert("Hubo un error de conexión con el servidor.");
                 btn.disabled = false;
                 btn.innerText = "ENVIAR EVALUACIÓN";
             }
