@@ -176,7 +176,7 @@
                         <span id="m-estatus">-</span>
                     </div>
 
-                    <div class="data-item span-2">
+                    <div class="data-item span-2 full-width">
                         <label>Nombre Completo</label>
                         <span id="m-nombre" style="font-size:1em;">-</span>
                     </div>
@@ -185,7 +185,7 @@
                         <span id="m-telefono">-</span>
                     </div>
 
-                    <div class="data-item span-2">
+                    <div class="data-item span-2 full-width">
                         <label>Correo Electrónico</label>
                         <span id="m-correo">-</span>
                     </div>
@@ -194,12 +194,12 @@
                         <span id="m-canaliza">-</span>
                     </div>
 
-                    <div class="data-item span-3 highlight">
+                    <div class="data-item span-3 full-width highlight">
                         <label>Taller Seleccionado</label>
                         <span id="m-taller">-</span>
                     </div>
 
-                    <div class="data-item span-2">
+                    <div class="data-item span-2 full-width">
                         <label>Sede Asignada</label>
                         <span id="m-lugar" style="color:#2c3e50;">-</span>
                     </div>
@@ -208,7 +208,7 @@
                         <span id="m-sala">-</span>
                     </div>
 
-                    <div class="data-item span-2">
+                    <div class="data-item span-2 full-width">
                         <label>Día y Horario</label>
                         <span id="m-horario" style="color:#d35400;">-</span>
                     </div>
@@ -220,21 +220,15 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn-danger" onclick="rechazarInscripcion()">🚫 Rechazar</button>
-                <button class="btn-primary" onclick="validarInscripcion()">✅ Validar Datos</button>
-            </div>
-        </div>
-    </div>
-
-            <div class="modal-footer">
-                <button class="btn-primary" onclick="validarInscripcion()">✅ VALIDAR (Datos Correctos)</button>
-                <button class="btn-danger" onclick="rechazarInscripcion()">🚫 RECHAZAR (Datos Incorrectos)</button>
+                <button class="btn-primary" onclick="validarInscripcion()">✅ Validar (Datos Correctos)</button>
+                <button class="btn-danger" onclick="rechazarInscripcion()">🚫 Rechazar (Datos Incorrectos)</button>
             </div>
         </div>
     </div>
 
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
+        // ✅ URL ACTUALIZADA
         const WEBHOOK_ASISTENCIA = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
         
         let inscritosGlobal = [];
@@ -288,89 +282,88 @@
             if(sec === 'asistencias') cargarCatalogosAsis();
         }
 
-        // 3. CARGAR INSCRITOS
+        // ✅ 3. CARGAR INSCRITOS (Modificado para usar Apps Script)
         async function cargarInscritos() {
             const tbody = document.getElementById('body-inscritos');
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
             
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            inscritosGlobal = await res.json();
-            tbody.innerHTML = '';
-            
-            inscritosGlobal.forEach((item, index) => {
-                // Mapeo básico para la tabla
-                const folio = item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
-                const nombre = (item["Nombre_s (D)"] || item["3"] || "") + " " + (item["Apellido_Paterno (E)"] || item["4"] || "");
-                const taller = item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
-                const validadoRaw = (item["Validado (Q)"] || item["16"] || "").toString();
+            try {
+                const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+                inscritosGlobal = await res.json();
+                tbody.innerHTML = '';
                 
-                let badgeClass = 'val-no';
-                let badgeText = 'PENDIENTE';
-                if(validadoRaw.toLowerCase().includes('sí')) { badgeClass = 'val-si'; badgeText = 'VALIDADO'; }
-                else if(validadoRaw.toLowerCase().includes('no')) { badgeClass = 'val-no'; badgeText = 'RECHAZADO'; }
-                
-                // OJO: Pasamos el INDEX del array global para recuperar todos los datos después
-                tbody.innerHTML += `<tr>
-                    <td><b>${folio}</b></td>
-                    <td>${nombre}</td>
-                    <td>${taller}</td>
-                    <td style="text-align:center;"><span class="status-pill ${badgeClass}">${badgeText}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn-action" onclick="abrirModalDetalles(${index})">Ver / Gestionar</button>
-                    </td>
-                </tr>`;
-            });
+                inscritosGlobal.forEach((item, index) => {
+                    // Mapeo seguro: busca llave limpia (script) o llave sucia (make)
+                    const folio = item.folio || item["Folio_Inscripcion (A)"] || item["0"] || "S/N";
+                    const nombre = (item.nombres || item["Nombre_s (D)"] || item["3"] || "") + " " + (item.paterno || item["Apellido_Paterno (E)"] || item["4"] || "");
+                    const taller = item.taller || item["Taller_Seleccionado (H)"] || item["7"] || "N/A";
+                    const validadoRaw = (item.validado || item["Validado (Q)"] || item["16"] || "").toString();
+                    
+                    let badgeClass = 'val-no';
+                    let badgeText = 'PENDIENTE';
+                    if(validadoRaw.toLowerCase().includes('sí')) { badgeClass = 'val-si'; badgeText = 'VALIDADO'; }
+                    else if(validadoRaw.toLowerCase().includes('no')) { badgeClass = 'val-no'; badgeText = 'RECHAZADO'; }
+                    
+                    tbody.innerHTML += `<tr>
+                        <td><b>${folio}</b></td>
+                        <td>${nombre}</td>
+                        <td>${taller}</td>
+                        <td style="text-align:center;"><span class="status-pill ${badgeClass}">${badgeText}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-action" onclick="abrirModalDetalles(${index})">Ver / Gestionar</button>
+                        </td>
+                    </tr>`;
+                });
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
+            }
         }
 
-        // 4. MODAL DETALLADO (LÓGICA MEJORADA)
+        // ✅ 4. MODAL DETALLADO (Corregido y Completado)
         function abrirModalDetalles(index) {
             const data = inscritosGlobal[index];
             filaSeleccionada = index + 2; 
 
-            // Helper: Busca por llave exacta, luego por llave parcial (ej: contiene "Lugar"), luego por índice
+            // Helper para buscar llaves nuevas o viejas
             const getVal = (keys, idx) => {
-                // 1. Búsqueda exacta
                 for (let k of keys) {
-                    if (data[k] !== undefined) return data[k];
+                    if (data[k] !== undefined && data[k] !== null) return data[k];
                 }
-                // 2. Búsqueda por índice (backup)
-                if (data[idx] !== undefined) return data[idx];
-                
-                return "-"; // No encontrado
+                if (data[idx] !== undefined && data[idx] !== null) return data[idx];
+                return "-";
             };
 
-            document.getElementById('m-folio').innerText = getVal(["Folio_Inscripcion (A)", "A", "Folio"], "0");
+            // Mapeo
+            document.getElementById('m-folio').innerText = getVal(["folio", "Folio_Inscripcion (A)", "A"], "0");
             
-            // Fecha: a veces viene larga, cortamos los primeros 10 caracteres (YYYY-MM-DD)
-            let fecha = getVal(["Marca_temporal (B)", "Fecha_Registro", "B"], "1");
+            let fecha = getVal(["fecha_registro", "Marca_temporal (B)", "B"], "1");
             if(fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
             document.getElementById('m-fecha').innerText = fecha;
-            
-            const nombre = getVal(["Nombre_s (D)", "D"], "3");
-            const pat = getVal(["Apellido_Paterno (E)", "E"], "4");
-            const mat = getVal(["Apellido_Materno (F)", "F"], "5");
-            document.getElementById('m-nombre').innerText = `${nombre} ${pat} ${mat}`.toUpperCase();
-            
-            document.getElementById('m-correo').innerText = getVal(["Correo_Electronico (C)", "C"], "2");
-            document.getElementById('m-telefono').innerText = getVal(["Telefono_Celular (G)", "G"], "6");
-            document.getElementById('m-taller').innerText = getVal(["Taller_Seleccionado (H)", "H"], "7");
-            document.getElementById('m-canaliza').innerText = getVal(["Quien_Canaliza (I)", "I"], "8");
-            
-            // Combinamos Expediente y Juzgado para ahorrar espacio
-            const exp = getVal(["Numero_Expediente (J)", "J"], "9");
-            const juz = getVal(["Juzgado_o_Entidad (K)", "K"], "10");
-            document.getElementById('m-extra').innerText = `${exp} / ${juz}`;
-            
-            document.getElementById('m-estatus').innerText = getVal(["Estatus_Asistencias (L)", "L"], "11");
 
-            // --- AQUÍ ESTÁ LA MAGIA PARA QUE SALGAN LOS DATOS ---
-            // Probamos varias llaves posibles que Make suele generar
-            document.getElementById('m-lugar').innerText = getVal(["Lugar (M)", "Lugar", "M"], "12");
-            document.getElementById('m-sala').innerText = getVal(["Sala (N)", "Sala", "N"], "13");
+            document.getElementById('m-estatus').innerText = getVal(["estatus", "Estatus_Asistencias (L)", "L"], "11");
+
+            const nombre = getVal(["nombres", "Nombre_s (D)", "D"], "3");
+            const pat = getVal(["paterno", "Apellido_Paterno (E)", "E"], "4");
+            const mat = getVal(["materno", "Apellido_Materno (F)", "F"], "5");
+            document.getElementById('m-nombre').innerText = `${nombre} ${pat} ${mat}`.toUpperCase();
+
+            document.getElementById('m-correo').innerText = getVal(["correo", "Correo_Electronico (C)", "C"], "2");
+            document.getElementById('m-telefono').innerText = getVal(["telefono", "Telefono_Celular (G)", "G"], "6");
+
+            document.getElementById('m-taller').innerText = getVal(["taller", "Taller_Seleccionado (H)", "H"], "7");
+            document.getElementById('m-canaliza').innerText = getVal(["canaliza", "Quien_Canaliza (I)", "I"], "8");
             
-            const dia = getVal(["Día (O)", "Día", "Dia", "O"], "14");
-            const hora = getVal(["Horario (P)", "Horario", "P"], "15");
-            document.getElementById('m-horario').innerText = `${dia} - ${hora}`;
+            const exp = getVal(["expediente", "Numero_Expediente (J)", "J"], "9");
+            const juz = getVal(["juzgado", "Juzgado_o_Entidad (K)", "K"], "10");
+            document.getElementById('m-extra').innerText = `${exp} / ${juz}`;
+
+            // Datos que pueden no venir en la lista simple, mostramos guión si faltan
+            document.getElementById('m-lugar').innerText = getVal(["lugar", "Lugar (M)", "M"], "12");
+            document.getElementById('m-sala').innerText = getVal(["sala", "Sala (N)", "N"], "13");
+            
+            const dia = getVal(["dia", "Día (O)", "Dia", "O"], "14");
+            const hora = getVal(["horario", "Horario (P)", "P"], "15");
+            document.getElementById('m-horario').innerText = (dia !== "-" && hora !== "-") ? `${dia} - ${hora}` : "-";
 
             document.getElementById('modal-detalle').style.display = 'flex';
         }
@@ -386,11 +379,10 @@
             btn.innerText = "Guardando..."; btn.disabled = true;
 
             try {
-                // Solo enviamos confirmación, el script completa los datos
                 const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'Sí' };
                 await enviarAMake(payload);
             } catch(e) { alert("Error de conexión."); }
-            btn.innerText = "✅ VALIDAR (Datos Correctos)"; btn.disabled = false;
+            btn.innerText = "✅ Validar (Datos Correctos)"; btn.disabled = false;
         }
 
         async function rechazarInscripcion() {
@@ -402,7 +394,7 @@
                 const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'No' };
                 await enviarAMake(payload);
             } catch(e) { alert("Error de conexión."); }
-            btn.innerText = "🚫 RECHAZAR (Datos Incorrectos)"; btn.disabled = false;
+            btn.innerText = "🚫 Rechazar (Datos Incorrectos)"; btn.disabled = false;
         }
 
         async function enviarAMake(payload) {
@@ -418,32 +410,21 @@
             } else { alert("Error al guardar."); }
         }
 
-// --- 5. GESTION DE TALLERES (ACTUALIZADO) ---
+        // --- 5. GESTION DE TALLERES (Make) ---
         async function obtenerDatosCatalogos() {
             const tbody = document.getElementById('body-catalogos');
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
             
             try {
-                // Asegúrate de que tu escenario de Make en la ruta "listar" 
-                // esté configurado para leer hasta la columna I (o toda la fila).
                 const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
                 const data = await res.json();
                 tbody.innerHTML = '';
                 
                 data.forEach((item, idx) => {
                     const v = Object.values(item);
-                    
-                    // Mapeo de columnas (Basado en el orden de tu Excel):
-                    // v[0] = ID (Col A)
-                    // v[1] = Nombre Taller (Col B)
-                    // v[2] = Estatus (Col C)
-                    // ... saltamos D, E, F, G, H ...
-                    // v[8] = Impartido Por (Col I) -> Si no existe, ponemos "-"
-                    
                     const idTaller = v[0];
                     const nombreTaller = v[1];
                     const estatus = String(v[2] || "").toUpperCase();
-                    // Intentamos leer la columna I. Si Make devuelve menos columnas, esto evita errores.
                     const impartidoPor = v[8] || item["Impartido_Por (I)"] || item["8"] || "-"; 
 
                     const fila = idx + 2;
@@ -462,7 +443,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos. Verifica que Make esté leyendo hasta la columna I.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
             }
         }
 
@@ -494,26 +475,33 @@
             }
         }
 
+        // ✅ 6. PASE DE LISTA (Modificado para usar Apps Script)
         async function cargarAlumnosAsistencia() {
             const taller = document.getElementById('asis-taller-filtro').value;
             const tbody = document.getElementById('body-asistencias');
             if(!taller || taller === "Sin asignar") return;
+            
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+            
+            // Llamada a Apps Script
+            const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
+
             const filtrados = data.filter(al => {
-                const tallerFila = (al["Taller_Seleccionado (H)"] || al["7"]);
-                const estaValidado = (al["Validado (Q)"] || al["16"] || "").toString();
-                const numAsistencias = parseInt(al["Total_Asistencias (AA)"] || al["26"] || 0);
-                return tallerFila === taller && estaValidado.includes("Sí") && numAsistencias < 8;
+                const tallerFila = al.taller || al["Taller_Seleccionado (H)"] || al["7"];
+                const estaValidado = (al.validado || al["Validado (Q)"] || al["16"] || "").toString();
+                // Si quieres conteo real, añade la columna en el script. Por ahora es 0.
+                const numAsistencias = parseInt(al.asistencias || 0); 
+                return tallerFila === taller && estaValidado.includes("Sí");
             });
+
             if(filtrados.length) {
                 document.getElementById('btn-guardar-lista').style.display = 'block';
                 filtrados.forEach(al => {
-                    const folio = al["Folio_Inscripcion (A)"] || al["0"] || "S/N";
-                    const nombre = (al["Nombre_s (D)"] || al["3"] || "") + " " + (al["Apellido_Paterno (E)"] || al["4"] || "");
-                    const sesiones = al["Total_Asistencias (AA)"] || al["26"] || 0;
+                    const folio = al.folio || al["Folio_Inscripcion (A)"] || "S/N";
+                    const nombre = (al.nombres || al["Nombre_s (D)"] || "") + " " + (al.paterno || al["Apellido_Paterno (E)"] || "");
+                    const sesiones = 0; 
                     tbody.innerHTML += `<tr><td><strong>${nombre}</strong><br><small>${folio}</small></td><td style="text-align:center;"><b>${sesiones} / 8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td></tr>`;
                 });
             } else { 
@@ -530,6 +518,7 @@
             btn.innerText = "⏳ PROCESANDO..."; btn.disabled = true; btn.style.backgroundColor = "#95a5a6"; 
             const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
             try {
+                // Sigue usando POST a Apps Script (esto ya funcionaba antes)
                 const res = await fetch(WEBHOOK_ASISTENCIA, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ asistencias: lista }) });
                 if(res.ok) { alert("✅ Asistencias registradas."); await new Promise(r => setTimeout(r, 4000)); await cargarAlumnosAsistencia(); } 
                 else { alert("Error servidor."); }
