@@ -40,7 +40,7 @@
         .val-no { background: #fff5f5; color: #fa5252; }
         .check-asis { transform: scale(1.8); cursor: pointer; height: 20px; width: 20px; margin: 0 auto; display: block; }
 
-        /* --- ESTILOS DEL MODAL DETALLADO (CORREGIDOS PARA SCROLL) --- */
+        /* --- ESTILOS DEL MODAL DETALLADO --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
         
         .modal-content { 
@@ -51,12 +51,10 @@
             max-width: 700px; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
             position: relative; 
-            
-            /* ESTO HABILITA EL SCROLL INTERNO */
-            max-height: 90vh;       /* Altura máxima del 90% de la pantalla */
-            display: flex;          /* Usar flexbox */
-            flex-direction: column; /* Organizar en columna */
-            overflow: hidden;       /* Ocultar desbordamiento general */
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .modal-header { 
@@ -67,7 +65,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            flex-shrink: 0; /* Evita que el header se aplaste */
+            flex-shrink: 0;
         }
         
         .modal-header h2 { margin: 0; font-size: 1.2rem; }
@@ -75,8 +73,8 @@
         
         .modal-body { 
             padding: 25px; 
-            overflow-y: auto; /* EL SCROLL SOLO OCURRIRÁ AQUÍ */
-            flex-grow: 1;     /* Ocupa todo el espacio disponible */
+            overflow-y: auto;
+            flex-grow: 1;
         }
 
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
@@ -95,7 +93,7 @@
             display: flex; 
             gap: 10px; 
             flex-direction: column; 
-            flex-shrink: 0; /* Evita que el footer se aplaste o desaparezca */
+            flex-shrink: 0;
         }
 
         /* --- RESPONSIVE --- */
@@ -262,344 +260,330 @@
             </div>
         </div>
     </div>
-<script>
-    // ⚠️ CONFIGURACIÓN: URL DE APPS SCRIPT
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
 
-    // Usamos la misma URL para todo (Login, Asistencias, Listados)
-    const WEBHOOK_LOGIN = URL_APPS_SCRIPT;
-    const WEBHOOK_ASISTENCIA = URL_APPS_SCRIPT;
-    
-    let inscritosGlobal = [];
-    let usuarioLogueado = {};
-    let filaSeleccionada = null; 
+    <script>
+        // ⚠️ PEGA AQUÍ TU URL DE APPS SCRIPT (La que termina en /exec)
+        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
 
-    // ==========================================
-    // 1. FUNCIÓN DE LOGIN (CORREGIDA)
-    // ==========================================
-    async function ejecutarLogin() {
-        const email = document.getElementById('email').value.trim();
-        const pass = document.getElementById('pass').value.trim();
-        const btn = document.querySelector('.login-card button');
+        // Ambas deben usar la MISMA url de Apps Script
+        const WEBHOOK_LOGIN = URL_APPS_SCRIPT;
+        const WEBHOOK_ASISTENCIA = URL_APPS_SCRIPT;
         
-        if(!email || !pass) { alert("Llena todos los campos"); return; }
+        let inscritosGlobal = [];
+        let usuarioLogueado = {};
+        let filaSeleccionada = null; 
 
-        btn.innerText = "Verificando...";
-        btn.disabled = true;
-        
-        try {
-            // Usamos text/plain para evitar bloqueos de seguridad de Google
-            const res = await fetch(WEBHOOK_LOGIN, {
+        // 1. LOGIN
+        async function ejecutarLogin() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('pass').value.trim();
+            const btn = document.querySelector('.login-card button');
+            
+            if(!email || !pass) { alert("Llena todos los campos"); return; }
+
+            btn.innerText = "Verificando...";
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(WEBHOOK_LOGIN, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
+                });
+                
+                const user = await res.json();
+                
+                if (user.autorizado) {
+                    usuarioLogueado = user; 
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'flex';
+                    
+                    document.getElementById('user-display').innerText = user.nombre;
+                    document.getElementById('role-display').innerText = user.rol;
+                    
+                    if (user.rol === 'Tallerista') {
+                        if(document.getElementById('tab-inscritos')) document.getElementById('tab-inscritos').style.display = 'none';
+                        if(document.getElementById('tab-catalogos')) document.getElementById('tab-catalogos').style.display = 'none';
+                        cambiarSeccion('asistencias');
+                    } else {
+                        cambiarSeccion('inscritos');
+                    }
+                } else { 
+                    alert("Acceso denegado: " + (user.mensaje || "Revisa tus credenciales")); 
+                }
+            } catch (e) { 
+                console.error(e);
+                alert("Error de conexión: " + e.message); 
+            }
+            
+            btn.innerText = "ENTRAR";
+            btn.disabled = false;
+        }
+
+        // 2. NAVEGACIÓN
+        function cambiarSeccion(sec) {
+            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if(el) el.style.display = s === sec ? 'block' : 'none';
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
+            const tab = document.getElementById('tab-' + sec);
+            if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            
+            if(sec === 'inscritos') cargarInscritos();
+            if(sec === 'catalogos') obtenerDatosCatalogos();
+            if(sec === 'asistencias') cargarCatalogosAsis();
+        }
+
+        // 3. CARGAR INSCRITOS
+        async function cargarInscritos() {
+            const tbody = document.getElementById('body-inscritos');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+            
+            try {
+                const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+                inscritosGlobal = await res.json();
+                tbody.innerHTML = '';
+                
+                inscritosGlobal.forEach((item, index) => {
+                    const folio = item.folio || item["0"] || "S/N";
+                    const nombre = (item.nombres || item["3"] || "") + " " + (item.paterno || item["4"] || "") + " " + (item.materno || item["5"] || "");
+                    const taller = item.taller || item["7"] || "N/A";
+                    const validadoRaw = (item.validado || item["16"] || "").toString();
+                    
+                    let badgeClass = 'val-no';
+                    let badgeText = 'PENDIENTE';
+                    if(validadoRaw.toLowerCase().includes('sí')) { badgeClass = 'val-si'; badgeText = 'VALIDADO'; }
+                    else if(validadoRaw.toLowerCase().includes('no')) { badgeClass = 'val-no'; badgeText = 'RECHAZADO'; }
+                    
+                    tbody.innerHTML += `<tr>
+                        <td><b>${folio}</b></td>
+                        <td>${nombre}</td>
+                        <td>${taller}</td>
+                        <td style="text-align:center;"><span class="status-pill ${badgeClass}">${badgeText}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-action" onclick="abrirModalDetalles(${index})">Ver / Gestionar</button>
+                        </td>
+                    </tr>`;
+                });
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
+            }
+        }
+
+        // 4. MODAL DE DETALLES
+        function abrirModalDetalles(index) {
+            const data = inscritosGlobal[index];
+            filaSeleccionada = index + 2; 
+
+            const getVal = (keys, idx) => {
+                for (let k of keys) {
+                    if (data[k] !== undefined && data[k] !== null) return data[k];
+                }
+                if (data[idx] !== undefined && data[idx] !== null) return data[idx];
+                return "-";
+            };
+
+            document.getElementById('m-folio').innerText = getVal(["folio", "0"], "0");
+            
+            let fecha = getVal(["fecha_registro", "1"], "1");
+            if(fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
+            document.getElementById('m-fecha').innerText = fecha;
+
+            document.getElementById('m-estatus').innerText = getVal(["estatus", "11"], "11");
+            
+            const nom = getVal(["nombres", "3"], "3");
+            const pat = getVal(["paterno", "4"], "4");
+            const mat = getVal(["materno", "5"], "5");
+            document.getElementById('m-nombre').innerText = `${nom} ${pat} ${mat}`.toUpperCase();
+
+            document.getElementById('m-correo').innerText = getVal(["correo", "2"], "2");
+            document.getElementById('m-telefono').innerText = getVal(["telefono", "6"], "6");
+            document.getElementById('m-taller').innerText = getVal(["taller", "7"], "7");
+            document.getElementById('m-canaliza').innerText = getVal(["canaliza", "8"], "8");
+            
+            const exp = getVal(["expediente", "9"], "9");
+            const juz = getVal(["juzgado", "10"], "10");
+            document.getElementById('m-extra').innerText = `${exp} / ${juz}`;
+
+            document.getElementById('m-lugar').innerText = getVal(["lugar", "12"], "12");
+            document.getElementById('m-sala').innerText = getVal(["sala", "13"], "13");
+            
+            const dia = getVal(["dia", "14"], "14");
+            const hora = getVal(["horario", "15"], "15");
+            document.getElementById('m-horario').innerText = (dia !== "-" && hora !== "-") ? `${dia} - ${hora}` : "-";
+
+            document.getElementById('modal-detalle').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalle').style.display = 'none';
+            filaSeleccionada = null;
+        }
+
+        // Acciones de validación
+        async function validarInscripcion() {
+            const btn = document.querySelector('#modal-detalle .btn-primary');
+            btn.innerText = "Guardando..."; btn.disabled = true;
+            try {
+                const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'Sí' };
+                await enviarDatos(payload);
+            } catch(e) { alert("Error de conexión."); }
+            btn.innerText = "✅ Validar (Datos Correctos)"; btn.disabled = false;
+        }
+
+        async function rechazarInscripcion() {
+            if(!confirm("¿Estás seguro de RECHAZAR esta inscripción?")) return;
+            const btn = document.querySelector('#modal-detalle .btn-danger');
+            btn.innerText = "Procesando..."; btn.disabled = true;
+            try {
+                const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'No' };
+                await enviarDatos(payload);
+            } catch(e) { alert("Error de conexión."); }
+            btn.innerText = "🚫 Rechazar (Datos Incorrectos)"; btn.disabled = false;
+        }
+
+        async function enviarDatos(payload) {
+            const res = await fetch(WEBHOOK_ASISTENCIA, {
                 method: 'POST',
                 redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
             });
-            
-            const user = await res.json();
-            
-            if (user.autorizado) {
-                usuarioLogueado = user; 
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'flex';
-                
-                // Mostrar datos
-                document.getElementById('user-display').innerText = user.nombre;
-                document.getElementById('role-display').innerText = user.rol;
-                
-                // Redireccionar según rol
-                if (user.rol === 'Tallerista') {
-                    // Ocultar tabs de admin
-                    if(document.getElementById('tab-inscritos')) document.getElementById('tab-inscritos').style.display = 'none';
-                    if(document.getElementById('tab-catalogos')) document.getElementById('tab-catalogos').style.display = 'none';
-                    cambiarSeccion('asistencias');
-                } else {
-                    cambiarSeccion('inscritos');
-                }
-            } else { 
-                alert("Acceso denegado: " + (user.mensaje || "Credenciales incorrectas")); 
-            }
-        } catch (e) { 
-            console.error(e);
-            alert("Error de conexión: " + e.message); 
+            if(res.ok) {
+                alert("Procesado correctamente.");
+                cerrarModal();
+                cargarInscritos();
+            } else { alert("Error al guardar."); }
         }
-        
-        btn.innerText = "ENTRAR";
-        btn.disabled = false;
-    }
 
-    // ==========================================
-    // 2. NAVEGACIÓN (ESTA ES LA QUE FALTABA)
-    // ==========================================
-    function cambiarSeccion(sec) {
-        // Ocultar todas las secciones
-        ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
-            const el = document.getElementById('sec-' + s);
-            if(el) el.style.display = s === sec ? 'block' : 'none';
-        });
-
-        // Actualizar botones del menú
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
-        const tab = document.getElementById('tab-' + sec);
-        if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
-        
-        // Cargar datos según la sección
-        if(sec === 'inscritos') cargarInscritos();
-        if(sec === 'catalogos') obtenerDatosCatalogos();
-        if(sec === 'asistencias') cargarCatalogosAsis();
-    }
-
-    // ==========================================
-    // 3. CARGAR TABLA DE INSCRITOS
-    // ==========================================
-    async function cargarInscritos() {
-        const tbody = document.getElementById('body-inscritos');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
-        
-        try {
-            const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            inscritosGlobal = await res.json();
-            tbody.innerHTML = '';
+        // 5. GESTIÓN DE TALLERES
+        async function obtenerDatosCatalogos() {
+            const tbody = document.getElementById('body-catalogos');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
             
-            inscritosGlobal.forEach((item, index) => {
-                // Mapeo seguro
-                const folio = item.folio || item["0"] || "S/N";
-                const nombre = (item.nombres || item["3"] || "") + " " + (item.paterno || item["4"] || "") + " " + (item.materno || item["5"] || "");
-                const taller = item.taller || item["7"] || "N/A";
-                const validadoRaw = (item.validado || item["16"] || "").toString();
+            try {
+                const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_talleres&t=${new Date().getTime()}`);
+                const data = await res.json();
+                tbody.innerHTML = '';
                 
-                let badgeClass = 'val-no';
-                let badgeText = 'PENDIENTE';
-                if(validadoRaw.toLowerCase().includes('sí')) { badgeClass = 'val-si'; badgeText = 'VALIDADO'; }
-                else if(validadoRaw.toLowerCase().includes('no')) { badgeClass = 'val-no'; badgeText = 'RECHAZADO'; }
-                
-                tbody.innerHTML += `<tr>
-                    <td><b>${folio}</b></td>
-                    <td>${nombre}</td>
-                    <td>${taller}</td>
-                    <td style="text-align:center;"><span class="status-pill ${badgeClass}">${badgeText}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn-action" onclick="abrirModalDetalles(${index})">Ver / Gestionar</button>
-                    </td>
-                </tr>`;
-            });
-        } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
-        }
-    }
+                data.forEach((item, idx) => {
+                    const idTaller = item.id || item["0"];
+                    const nombreTaller = item.nombre || item["1"];
+                    const estatus = String(item.estatus || item["2"] || "").toUpperCase();
+                    const impartidoPor = item.impartido_por || item["8"] || "-"; 
 
-    // ==========================================
-    // 4. MODAL DE DETALLES
-    // ==========================================
-    function abrirModalDetalles(index) {
-        const data = inscritosGlobal[index];
-        filaSeleccionada = index + 2; 
+                    const fila = idx + 2;
 
-        const getVal = (keys, idx) => {
-            for (let k of keys) {
-                if (data[k] !== undefined && data[k] !== null) return data[k];
+                    tbody.innerHTML += `<tr>
+                        <td><b>${idTaller}</b></td>
+                        <td>${nombreTaller}</td>
+                        <td><small style="color:#666;">${impartidoPor}</small></td>
+                        <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn-action" onclick="toggleEstatus(${fila}, '${estatus}', this)">
+                                ${estatus === 'ACTIVO' ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
             }
-            if (data[idx] !== undefined && data[idx] !== null) return data[idx];
-            return "-";
-        };
+        }
 
-        // Llenar datos en el modal
-        document.getElementById('m-folio').innerText = getVal(["folio", "0"], "0");
-        
-        let fecha = getVal(["fecha_registro", "1"], "1");
-        if(fecha && fecha.length > 10) fecha = fecha.substring(0, 10);
-        document.getElementById('m-fecha').innerText = fecha;
+        async function toggleEstatus(f, estActual, btnElement) {
+            if(!confirm(`¿Cambiar estatus?`)) return;
+            btnElement.disabled = true;
+            try {
+                const nuevoEst = estActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+                await enviarDatos({ accion_admin: 'actualizar', fila: f, estatus: nuevoEst });
+                obtenerDatosCatalogos();
+            } catch(e) { alert("Error."); btnElement.disabled = false; }
+        }
 
-        document.getElementById('m-estatus').innerText = getVal(["estatus", "11"], "11");
-        
-        const nom = getVal(["nombres", "3"], "3");
-        const pat = getVal(["paterno", "4"], "4");
-        const mat = getVal(["materno", "5"], "5");
-        document.getElementById('m-nombre').innerText = `${nom} ${pat} ${mat}`.toUpperCase();
-
-        document.getElementById('m-correo').innerText = getVal(["correo", "2"], "2");
-        document.getElementById('m-telefono').innerText = getVal(["telefono", "6"], "6");
-        document.getElementById('m-taller').innerText = getVal(["taller", "7"], "7");
-        document.getElementById('m-canaliza').innerText = getVal(["canaliza", "8"], "8");
-        
-        const exp = getVal(["expediente", "9"], "9");
-        const juz = getVal(["juzgado", "10"], "10");
-        document.getElementById('m-extra').innerText = `${exp} / ${juz}`;
-
-        document.getElementById('m-lugar').innerText = getVal(["lugar", "12"], "12");
-        document.getElementById('m-sala').innerText = getVal(["sala", "13"], "13");
-        
-        const dia = getVal(["dia", "14"], "14");
-        const hora = getVal(["horario", "15"], "15");
-        document.getElementById('m-horario').innerText = (dia !== "-" && hora !== "-") ? `${dia} - ${hora}` : "-";
-
-        document.getElementById('modal-detalle').style.display = 'flex';
-    }
-
-    function cerrarModal() {
-        document.getElementById('modal-detalle').style.display = 'none';
-        filaSeleccionada = null;
-    }
-
-    // Funciones de validación
-    async function validarInscripcion() {
-        const btn = document.querySelector('#modal-detalle .btn-primary');
-        btn.innerText = "Guardando..."; btn.disabled = true;
-        try {
-            const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'Sí' };
-            await enviarDatos(payload);
-        } catch(e) { alert("Error de conexión."); }
-        btn.innerText = "✅ Validar (Datos Correctos)"; btn.disabled = false;
-    }
-
-    async function rechazarInscripcion() {
-        if(!confirm("¿Estás seguro de RECHAZAR esta inscripción?")) return;
-        const btn = document.querySelector('#modal-detalle .btn-danger');
-        btn.innerText = "Procesando..."; btn.disabled = true;
-        try {
-            const payload = { metodo: 'validar_inscrito', fila: filaSeleccionada, decision: 'No' };
-            await enviarDatos(payload);
-        } catch(e) { alert("Error de conexión."); }
-        btn.innerText = "🚫 Rechazar (Datos Incorrectos)"; btn.disabled = false;
-    }
-
-    async function enviarDatos(payload) {
-        const res = await fetch(WEBHOOK_ASISTENCIA, {
-            method: 'POST',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-        });
-        if(res.ok) {
-            alert("Procesado correctamente.");
-            cerrarModal();
-            cargarInscritos();
-        } else { alert("Error al guardar."); }
-    }
-
-    // ==========================================
-    // 5. GESTIÓN DE TALLERES
-    // ==========================================
-    async function obtenerDatosCatalogos() {
-        const tbody = document.getElementById('body-catalogos');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
-        
-        try {
+        // 6. PASE DE LISTA
+        async function cargarCatalogosAsis() {
             const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_talleres&t=${new Date().getTime()}`);
+            const talleres = await res.json();
+            const select = document.getElementById('asis-taller-filtro');
+            select.innerHTML = '';
+            
+            if (usuarioLogueado.rol === 'Administrador') {
+                select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
+                talleres.forEach(t => { 
+                    const nom = t.nombre || t["1"];
+                    select.innerHTML += `<option value="${nom}">${nom}</option>`; 
+                });
+                select.disabled = false;
+            } else {
+                const miTallerObj = talleres.find(t => (t.id || t["0"]) == usuarioLogueado.taller_id);
+                const nombreT = miTallerObj ? (miTallerObj.nombre || miTallerObj["1"]) : "Sin asignar";
+                select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
+                select.disabled = true;
+                cargarAlumnosAsistencia();
+            }
+        }
+
+        async function cargarAlumnosAsistencia() {
+            const taller = document.getElementById('asis-taller-filtro').value;
+            const tbody = document.getElementById('body-asistencias');
+            if(!taller || taller === "Sin asignar") return;
+            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
+            
+            const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
             const data = await res.json();
             tbody.innerHTML = '';
+
+            const filtrados = data.filter(al => {
+                const tallerFila = al.taller || al["7"];
+                const estaValidado = (al.validado || al["16"] || "").toString();
+                return tallerFila === taller && estaValidado.includes("Sí");
+            });
+
+            if(filtrados.length) {
+                document.getElementById('btn-guardar-lista').style.display = 'block';
+                filtrados.forEach(al => {
+                    const folio = al.folio || al["0"] || "S/N";
+                    const nombre = (al.nombres || al["3"] || "") + " " + (al.paterno || al["4"] || "");
+                    const sesiones = parseInt(al.asistencias || al["26"] || 0); 
+                    tbody.innerHTML += `<tr><td><strong>${nombre}</strong><br><small>${folio}</small></td><td style="text-align:center;"><b>${sesiones} / 8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td></tr>`;
+                });
+            } else { 
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos pendientes.</td></tr>'; 
+                document.getElementById('btn-guardar-lista').style.display = 'none';
+            }
+        }
+
+        async function guardarAsistenciasMasivas() {
+            const checks = document.querySelectorAll('.check-asis:checked');
+            if(!checks.length) return alert("Selecciona beneficiarios.");
+            const btn = document.getElementById('btn-guardar-lista');
+            const txt = btn.innerText;
+            btn.innerText = "⏳ PROCESANDO..."; btn.disabled = true; btn.style.backgroundColor = "#95a5a6"; 
             
-            data.forEach((item, idx) => {
-                // Mapeo flexible
-                const idTaller = item.id || item["0"];
-                const nombreTaller = item.nombre || item["1"];
-                const estatus = String(item.estatus || item["2"] || "").toUpperCase();
-                const impartidoPor = item.impartido_por || item["8"] || "-"; 
-
-                const fila = idx + 2;
-
-                tbody.innerHTML += `<tr>
-                    <td><b>${idTaller}</b></td>
-                    <td>${nombreTaller}</td>
-                    <td><small style="color:#666;">${impartidoPor}</small></td>
-                    <td><span class="status-pill ${estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${estatus}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn-action" onclick="alert('Función en mantenimiento (requiere POST)')">
-                            ${estatus === 'ACTIVO' ? 'Desactivar' : 'Activar'}
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        } catch (e) {
-            console.error(e);
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.</td></tr>';
+            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
+            
+            try {
+                const res = await fetch(WEBHOOK_ASISTENCIA, { 
+                    method: 'POST', 
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ asistencias: lista }) 
+                });
+                if(res.ok) { 
+                    alert("✅ Asistencias registradas."); 
+                    await new Promise(r => setTimeout(r, 4000)); 
+                    await cargarAlumnosAsistencia(); 
+                } 
+                else { alert("Error servidor."); }
+            } catch(e) { alert("Error conexión."); }
+            finally { btn.innerText = txt; btn.disabled = false; btn.style.backgroundColor = ""; }
         }
-    }
-
-    // ==========================================
-    // 6. PASE DE LISTA
-    // ==========================================
-    async function cargarCatalogosAsis() {
-        const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_talleres&t=${new Date().getTime()}`);
-        const talleres = await res.json();
-        const select = document.getElementById('asis-taller-filtro');
-        select.innerHTML = '';
-        
-        if (usuarioLogueado.rol === 'Administrador') {
-            select.innerHTML = '<option value="">-- Seleccionar Taller --</option>';
-            talleres.forEach(t => { 
-                const nom = t.nombre || t["1"];
-                select.innerHTML += `<option value="${nom}">${nom}</option>`; 
-            });
-            select.disabled = false;
-        } else {
-            // Lógica para tallerista
-            // Nota: Aquí se asume que 'taller_id' viene del login
-            const miTallerObj = talleres.find(t => (t.id || t["0"]) == usuarioLogueado.taller_id);
-            const nombreT = miTallerObj ? (miTallerObj.nombre || miTallerObj["1"]) : "Sin asignar";
-            select.innerHTML = `<option value="${nombreT}">${nombreT}</option>`;
-            select.disabled = true;
-            cargarAlumnosAsistencia();
-        }
-    }
-
-    async function cargarAlumnosAsistencia() {
-        const taller = document.getElementById('asis-taller-filtro').value;
-        const tbody = document.getElementById('body-asistencias');
-        if(!taller || taller === "Sin asignar") return;
-        
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
-        
-        const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-        const data = await res.json();
-        tbody.innerHTML = '';
-
-        const filtrados = data.filter(al => {
-            const tallerFila = al.taller || al["7"];
-            const estaValidado = (al.validado || al["16"] || "").toString();
-            return tallerFila === taller && estaValidado.includes("Sí");
-        });
-
-        if(filtrados.length) {
-            document.getElementById('btn-guardar-lista').style.display = 'block';
-            filtrados.forEach(al => {
-                const folio = al.folio || al["0"] || "S/N";
-                const nombre = (al.nombres || al["3"] || "") + " " + (al.paterno || al["4"] || "");
-                const sesiones = 0; 
-                tbody.innerHTML += `<tr><td><strong>${nombre}</strong><br><small>${folio}</small></td><td style="text-align:center;"><b>${sesiones} / 8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td></tr>`;
-            });
-        } else { 
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos pendientes.</td></tr>'; 
-            document.getElementById('btn-guardar-lista').style.display = 'none';
-        }
-    }
-
-    async function guardarAsistenciasMasivas() {
-        const checks = document.querySelectorAll('.check-asis:checked');
-        if(!checks.length) return alert("Selecciona beneficiarios.");
-        const btn = document.getElementById('btn-guardar-lista');
-        const txt = btn.innerText;
-        btn.innerText = "⏳ PROCESANDO..."; btn.disabled = true; btn.style.backgroundColor = "#95a5a6"; 
-        
-        const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-        
-        try {
-            const res = await fetch(WEBHOOK_ASISTENCIA, { 
-                method: 'POST', 
-                redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ asistencias: lista }) 
-            });
-            if(res.ok) { 
-                alert("✅ Asistencias registradas."); 
-                await new Promise(r => setTimeout(r, 4000)); 
-                await cargarAlumnosAsistencia(); 
-            } 
-            else { alert("Error servidor."); }
-        } catch(e) { alert("Error conexión."); }
-        finally { btn.innerText = txt; btn.disabled = false; btn.style.backgroundColor = ""; }
-    }
-</script>
-    
+    </script>
 </body>
 </html>
