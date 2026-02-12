@@ -356,16 +356,38 @@
 }
 
         async function guardarAsistenciasMasivas() {
-            const checks = document.querySelectorAll('.check-asis:checked');
-            if(!checks.length) return alert("Selecciona beneficiarios");
-            const btn = document.getElementById('btn-guardar-lista');
-            btn.innerText = "Guardando..."; btn.disabled = true;
-            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-            await fetch(URL_APPS_SCRIPT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ asistencias: lista }) });
-            alert("Asistencias guardadas");
-            cargarDatos();
-            btn.innerText = "💾 GUARDAR ASISTENCIAS"; btn.disabled = false;
+    const checks = document.querySelectorAll('.check-asis:checked');
+    if(!checks.length) return alert("Selecciona beneficiarios");
+    
+    const btn = document.getElementById('btn-guardar-lista');
+    btn.innerText = "Guardando..."; btn.disabled = true;
+    
+    const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
+    
+    try {
+        const res = await fetch(URL_APPS_SCRIPT, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ asistencias: lista }) 
+        });
+        
+        if (res.ok) {
+            alert("Asistencias guardadas correctamente.");
+            // Esperamos 2 segundos antes de refrescar para asegurar que el cambio se asentó en la hoja
+            setTimeout(() => {
+                cargarAlumnosAsistencia();
+                btn.innerText = "💾 GUARDAR ASISTENCIAS";
+                btn.disabled = false;
+            }, 2000);
+        } else {
+            alert("Error al guardar");
+            btn.disabled = false;
         }
+    } catch(e) { 
+        alert("Error de conexión"); 
+        btn.disabled = false;
+    }
+}
 
         function cerrarModal() { document.getElementById('modal-detalle').style.display = 'none'; }
         
