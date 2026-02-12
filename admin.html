@@ -264,9 +264,13 @@
     </div>
 
     <script>
-        const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
-        // ✅ URL APPS SCRIPT
-        const WEBHOOK_ASISTENCIA = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
+
+// ✅ USA LA DE APPS SCRIPT PARA AMBAS (Pega tu URL real aquí)
+const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
+
+const WEBHOOK_LOGIN = URL_APPS_SCRIPT;
+const WEBHOOK_ASISTENCIA = URL_APPS_SCRIPT;
+        
         
         let inscritosGlobal = [];
         let usuarioLogueado = {};
@@ -277,46 +281,54 @@
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             const btn = document.querySelector('.login-card button');
+            
+            // Validación básica
+            if(!email || !pass) { alert("Llena todos los campos"); return; }
+
             btn.innerText = "Verificando...";
+            btn.disabled = true;
             
             try {
+                // ✅ CORRECCIÓN AQUÍ: Usamos text/plain para evitar error de CORS en Apps Script
                 const res = await fetch(WEBHOOK_LOGIN, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
                 });
+                
                 const user = await res.json();
+                
                 if (user.autorizado) {
                     usuarioLogueado = user; 
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('admin-panel').style.display = 'flex';
+                    
+                    // Mostrar datos del usuario
                     document.getElementById('user-display').innerText = user.nombre;
                     document.getElementById('role-display').innerText = user.rol;
                     
+                    // Configurar vistas según rol
                     if (user.rol === 'Tallerista') {
-                        document.getElementById('tab-inscritos').style.display = 'none';
-                        document.getElementById('tab-catalogos').style.display = 'none';
+                        // Ocultar pestañas de admin
+                        const tab1 = document.getElementById('tab-inscritos');
+                        const tab2 = document.getElementById('tab-catalogos');
+                        if(tab1) tab1.style.display = 'none';
+                        if(tab2) tab2.style.display = 'none';
+                        
                         cambiarSeccion('asistencias');
                     } else {
                         cambiarSeccion('inscritos');
                     }
-                } else { alert("Acceso denegado"); }
-            } catch (e) { alert("Error de conexión"); }
-            btn.innerText = "ENTRAR";
-        }
-
-        // 2. NAVEGACIÓN
-        function cambiarSeccion(sec) {
-            ['inscritos', 'catalogos', 'asistencias'].forEach(s => {
-                document.getElementById('sec-' + s).style.display = s === sec ? 'block' : 'none';
-            });
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'active-asis'));
-            const tab = document.getElementById('tab-' + sec);
-            if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+                } else { 
+                    alert("Acceso denegado: " + (user.mensaje || "Revisa tus credenciales")); 
+                }
+            } catch (e) { 
+                console.error(e);
+                alert("Error de conexión con el servidor."); 
+            }
             
-            if(sec === 'inscritos') cargarInscritos();
-            if(sec === 'catalogos') obtenerDatosCatalogos();
-            if(sec === 'asistencias') cargarCatalogosAsis();
+            btn.innerText = "ENTRAR";
+            btn.disabled = false;
         }
 
         // ✅ 3. CARGAR INSCRITOS (Modificado para usar Apps Script)
