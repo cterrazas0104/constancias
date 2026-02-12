@@ -40,42 +40,44 @@
         .val-no { background: #fff5f5; color: #fa5252; }
         .check-asis { transform: scale(1.8); cursor: pointer; height: 20px; width: 20px; margin: 0 auto; display: block; }
 
-        /* --- ESTILOS DEL MODAL DETALLADO --- */
+        /* --- ESTILOS DEL MODAL DETALLADO (CORREGIDOS PARA SCROLL) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
-       .modal-content { 
-    background: white; 
-    padding: 0; 
-    border-radius: 12px; 
-    width: 95%; 
-    max-width: 700px; 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
-    position: relative; 
-    
-    /* ESTO ES LO NUEVO PARA EL SCROLL */
-    max-height: 90vh;       /* Altura máxima del 90% de la pantalla */
-    display: flex;          /* Usar flexbox */
-    flex-direction: column; /* Organizar en columna */
-    overflow: hidden;       /* Ocultar desbordamiento general */
-}
+        
+        .modal-content { 
+            background: white; 
+            padding: 0; 
+            border-radius: 12px; 
+            width: 95%; 
+            max-width: 700px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            position: relative; 
+            
+            /* ESTO HABILITA EL SCROLL INTERNO */
+            max-height: 90vh;       /* Altura máxima del 90% de la pantalla */
+            display: flex;          /* Usar flexbox */
+            flex-direction: column; /* Organizar en columna */
+            overflow: hidden;       /* Ocultar desbordamiento general */
+        }
         
         .modal-header { 
-    background: var(--primary); 
-    color: white; 
-    padding: 20px; 
-    border-radius: 12px 12px 0 0; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    flex-shrink: 0; /* Evita que el header se aplaste */
-}
+            background: var(--primary); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 12px 12px 0 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex-shrink: 0; /* Evita que el header se aplaste */
+        }
+        
         .modal-header h2 { margin: 0; font-size: 1.2rem; }
         .close-modal { font-size: 24px; cursor: pointer; color: white; opacity: 0.8; }
         
-       .modal-body { 
-    padding: 25px; 
-    overflow-y: auto; /* EL SCROLL SOLO OCURRIRÁ AQUÍ */
-    flex-grow: 1;     /* Ocupa todo el espacio disponible */
-}
+        .modal-body { 
+            padding: 25px; 
+            overflow-y: auto; /* EL SCROLL SOLO OCURRIRÁ AQUÍ */
+            flex-grow: 1;     /* Ocupa todo el espacio disponible */
+        }
 
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .data-item { background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
@@ -86,15 +88,15 @@
         .highlight { background: #e6fcf5; border-color: #0ca678; }
         .highlight label { color: #0ca678; }
 
-       .modal-footer { 
-    padding: 20px; 
-    background: #f8f9fa; 
-    border-top: 1px solid #eee; 
-    display: flex; 
-    gap: 10px; 
-    flex-direction: column; 
-    flex-shrink: 0; /* Evita que el footer se aplaste o desaparezca */
-}
+        .modal-footer { 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-top: 1px solid #eee; 
+            display: flex; 
+            gap: 10px; 
+            flex-direction: column; 
+            flex-shrink: 0; /* Evita que el footer se aplaste o desaparezca */
+        }
 
         /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
@@ -263,7 +265,7 @@
 
     <script>
         const WEBHOOK_LOGIN = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
-        // ✅ URL ACTUALIZADA
+        // ✅ URL APPS SCRIPT
         const WEBHOOK_ASISTENCIA = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
         
         let inscritosGlobal = [];
@@ -451,7 +453,7 @@
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
             
             try {
-                const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
+                const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_talleres&t=${new Date().getTime()}`);
                 const data = await res.json();
                 tbody.innerHTML = '';
                 
@@ -493,7 +495,7 @@
         }
 
         async function cargarCatalogosAsis() {
-            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar&t=${new Date().getTime()}`);
+            const res = await fetch(`${WEBHOOK_LOGIN}?accion=listar_talleres&t=${new Date().getTime()}`);
             const talleres = await res.json();
             const select = document.getElementById('asis-taller-filtro');
             select.innerHTML = '';
