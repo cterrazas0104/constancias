@@ -328,15 +328,32 @@
         }
 
         async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const activos = inscritosGlobal.filter(al => al.taller === taller && al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
-            document.getElementById('body-asistencias').innerHTML = activos.map(al => `
-                <tr><td><b>${al.nombres} ${al.paterno}</b><br><small>${al.folio}</small></td>
-                <td style="text-align:center;">${al.asistencias || 0} / 8</td>
-                <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td></tr>
-            `).join('') || '<tr><td colspan="3" style="text-align:center">Sin alumnos pendientes</td></tr>';
-            document.getElementById('btn-guardar-lista').style.display = activos.length ? 'block' : 'none';
-        }
+    const taller = document.getElementById('asis-taller-filtro').value;
+    const tbody = document.getElementById('body-asistencias');
+    if(!taller || taller === "Sin asignar") return;
+    
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
+    
+    // Agregamos "&nocache=" con la hora actual para obligar a traer datos nuevos
+    const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&nocache=${new Date().getTime()}`);
+    const data = await res.json();
+    
+    // Actualizamos la variable global con los datos nuevos
+    inscritosGlobal = data; 
+    tbody.innerHTML = '';
+
+    const activos = data.filter(al => al.taller === taller && al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
+    
+    tbody.innerHTML = activos.map(al => `
+        <tr>
+            <td><b>${al.nombres} ${al.paterno}</b><br><small>${al.folio}</small></td>
+            <td style="text-align:center;">${al.asistencias || 0} / 8</td>
+            <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td>
+        </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align:center">No hay alumnos pendientes</td></tr>';
+    
+    document.getElementById('btn-guardar-lista').style.display = activos.length ? 'block' : 'none';
+}
 
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
