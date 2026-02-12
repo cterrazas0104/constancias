@@ -529,36 +529,51 @@
         }
 
         async function cargarAlumnosAsistencia() {
-            const taller = document.getElementById('asis-taller-filtro').value;
-            const tbody = document.getElementById('body-asistencias');
-            if(!taller || taller === "Sin asignar") return;
-            
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
-            
-            const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
-            const data = await res.json();
-            tbody.innerHTML = '';
+        const taller = document.getElementById('asis-taller-filtro').value;
+        const tbody = document.getElementById('body-asistencias');
+        if(!taller || taller === "Sin asignar") return;
+        
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
+        
+        const res = await fetch(`${WEBHOOK_ASISTENCIA}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+        const data = await res.json();
+        tbody.innerHTML = '';
 
-            const filtrados = data.filter(al => {
-                const tallerFila = al.taller || al["7"];
-                const estaValidado = (al.validado || al["16"] || "").toString();
-                return tallerFila === taller && estaValidado.includes("Sí");
+        // Filtramos: 
+        // 1. Que pertenezca al taller seleccionado.
+        // 2. Que esté validado ("Sí").
+        // 3. NUEVO: Que sus asistencias sean MENORES a 8.
+        const filtrados = data.filter(al => {
+            const tallerFila = al.taller || al["7"];
+            const estaValidado = (al.validado || al["16"] || "").toString();
+            const numAsistencias = parseInt(al.asistencias || al["26"] || 0); 
+
+            return tallerFila === taller && 
+                   estaValidado.includes("Sí") && 
+                   numAsistencias < 8; // <--- Esta es la clave
+        });
+
+        if(filtrados.length) {
+            document.getElementById('btn-guardar-lista').style.display = 'block';
+            filtrados.forEach(al => {
+                const folio = al.folio || al["0"] || "S/N";
+                const nombre = (al.nombres || al["3"] || "") + " " + (al.paterno || al["4"] || "");
+                const sesiones = parseInt(al.asistencias || al["26"] || 0); 
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${nombre}</strong><br><small>${folio}</small></td>
+                        <td style="text-align:center;"><b>${sesiones} / 8</b></td>
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="check-asis" data-folio="${folio}">
+                        </td>
+                    </tr>`;
             });
-
-            if(filtrados.length) {
-                document.getElementById('btn-guardar-lista').style.display = 'block';
-                filtrados.forEach(al => {
-                    const folio = al.folio || al["0"] || "S/N";
-                    const nombre = (al.nombres || al["3"] || "") + " " + (al.paterno || al["4"] || "");
-                    const sesiones = parseInt(al.asistencias || al["26"] || 0); 
-                    tbody.innerHTML += `<tr><td><strong>${nombre}</strong><br><small>${folio}</small></td><td style="text-align:center;"><b>${sesiones} / 8</b></td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${folio}"></td></tr>`;
-                });
-            } else { 
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos pendientes.</td></tr>'; 
-                document.getElementById('btn-guardar-lista').style.display = 'none';
-            }
+        } else { 
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay alumnos pendientes de asistencia en este taller.</td></tr>'; 
+            document.getElementById('btn-guardar-lista').style.display = 'none';
         }
-
+    }
         async function guardarAsistenciasMasivas() {
             const checks = document.querySelectorAll('.check-asis:checked');
             if(!checks.length) return alert("Selecciona beneficiarios.");
