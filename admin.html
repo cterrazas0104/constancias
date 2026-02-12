@@ -278,59 +278,62 @@
         let filaSeleccionada = null; 
 
         // 1. LOGIN
-        async function ejecutarLogin() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-            const btn = document.querySelector('.login-card button');
-            
-            // Validación básica
-            if(!email || !pass) { alert("Llena todos los campos"); return; }
+        // REEMPLAZA TU FUNCIÓN ejecutarLogin POR ESTA:
+async function ejecutarLogin() {
+    const email = document.getElementById('email').value.trim(); // .trim() limpia espacios
+    const pass = document.getElementById('pass').value.trim();
+    const btn = document.querySelector('.login-card button');
+    
+    if(!email || !pass) { alert("Llena todos los campos"); return; }
 
-            btn.innerText = "Verificando...";
-            btn.disabled = true;
-            
-            try {
-                // ✅ CORRECCIÓN AQUÍ: Usamos text/plain para evitar error de CORS en Apps Script
-                const res = await fetch(WEBHOOK_LOGIN, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-                });
-                
-                const user = await res.json();
-                
-                if (user.autorizado) {
-                    usuarioLogueado = user; 
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('admin-panel').style.display = 'flex';
-                    
-                    // Mostrar datos del usuario
-                    document.getElementById('user-display').innerText = user.nombre;
-                    document.getElementById('role-display').innerText = user.rol;
-                    
-                    // Configurar vistas según rol
-                    if (user.rol === 'Tallerista') {
-                        // Ocultar pestañas de admin
-                        const tab1 = document.getElementById('tab-inscritos');
-                        const tab2 = document.getElementById('tab-catalogos');
-                        if(tab1) tab1.style.display = 'none';
-                        if(tab2) tab2.style.display = 'none';
-                        
-                        cambiarSeccion('asistencias');
-                    } else {
-                        cambiarSeccion('inscritos');
-                    }
-                } else { 
-                    alert("Acceso denegado: " + (user.mensaje || "Revisa tus credenciales")); 
-                }
-            } catch (e) { 
-                console.error(e);
-                alert("Error de conexión con el servidor."); 
-            }
-            
-            btn.innerText = "ENTRAR";
-            btn.disabled = false;
+    btn.innerText = "Verificando...";
+    btn.disabled = true;
+    
+    try {
+        // Usamos no-cors no, pero sí content-type text/plain para evitar el preflight OPTIONS
+        const res = await fetch(WEBHOOK_LOGIN, {
+            method: 'POST',
+            redirect: 'follow', // IMPORTANTE para Apps Script
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
+        });
+        
+        const textoRespuesta = await res.text(); // Leemos como texto primero para ver si hay error HTML
+        let user;
+        
+        try {
+            user = JSON.parse(textoRespuesta);
+        } catch (e) {
+            console.error("Respuesta no es JSON:", textoRespuesta);
+            throw new Error("El servidor devolvió un error desconocido.");
         }
+        
+        if (user.autorizado) {
+            usuarioLogueado = user; 
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            
+            document.getElementById('user-display').innerText = user.nombre;
+            document.getElementById('role-display').innerText = user.rol;
+            
+            if (user.rol === 'Tallerista') {
+                document.getElementById('tab-inscritos').style.display = 'none';
+                document.getElementById('tab-catalogos').style.display = 'none';
+                cambiarSeccion('asistencias');
+            } else {
+                cambiarSeccion('inscritos');
+            }
+        } else { 
+            alert("Acceso denegado: " + (user.mensaje || "Revisa tus credenciales")); 
+        }
+    } catch (e) { 
+        console.error(e);
+        alert("Error de conexión: " + e.message); 
+    }
+    
+    btn.innerText = "ENTRAR";
+    btn.disabled = false;
+}
 
         // ✅ 3. CARGAR INSCRITOS (Modificado para usar Apps Script)
         async function cargarInscritos() {
