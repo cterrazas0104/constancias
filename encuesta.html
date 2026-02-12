@@ -213,8 +213,11 @@
                 // Enviamos usando 'no-cors' para evitar problemas simples, 
                 // aunque para recibir respuesta JSON idealmente usamos el script bien configurado.
                 // Como es una Web App pública, fetch normal funciona bien con text/plain.
-                const res = await fetch(WEBHOOK_URL, {
+            const res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
+                    mode: 'cors', // Aseguramos modo cors
+                    redirect: 'follow', // IMPORTANTE para Apps Script
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(formData)
                 });
                 
