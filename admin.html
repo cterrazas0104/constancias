@@ -229,12 +229,15 @@
             `).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
 
             // 3. GRADUADOS (Asistencias >= 8)
+         // 3. GRADUADOS
             const graduados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8);
-            document.getElementById('body-graduados').innerHTML = graduados.map(al => `
+            document.getElementById('body-graduados').innerHTML = graduados.map(al => {
+                const esGraduado = (al.estatus === "Evaluación Recibida");
+                return `
                 <tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
-                <td><small>${al.validado === "Evaluación Recibida" ? "✅ Graduado" : "⏳ Pendiente Encuesta"}</small></td>
+                <td><span class="status-pill ${esGraduado ? 'pill-active' : 'pill-new'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td>
                 <td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'graduado')">Ver Evaluación</button></td></tr>
-            `).join('') || '<tr><td colspan="5" style="text-align:center">Sin graduados</td></tr>';
+            `}).join('') || '<tr><td colspan="5" style="text-align:center">Sin graduados</td></tr>';
 
             if(usuarioLogueado.rol === 'Administrador') obtenerDatosCatalogos();
         }
@@ -242,16 +245,28 @@
         // --- MODAL INTEGRAL ---
         function abrirExpediente(folio, tipo) {
             const al = inscritosGlobal.find(a => a.folio === folio);
-            document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente de Graduado";
+            if (!al) return;
+
+            document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
+            // Limpiamos valores undefined por seguridad
+            const sede = al.lugar || "No asignada";
+            const dia = al.dia || "No asignado";
+            const hora = al.horario || "No asignado";
+            const estatusReal = al.estatus || "PENDIENTE";
+
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
-                    <div class="data-item"><label>Estatus</label><span>${al.validado || 'PENDIENTE'}</span></div>
+                    <div class="data-item"><label>Estatus</label><span>${estatusReal}</span></div>
                     <div class="data-item full-width"><label>Nombre Completo</label><span>${al.nombres} ${al.paterno} ${al.materno}</span></div>
                     <div class="data-item full-width"><label>Taller</label><span>${al.taller}</span></div>
                     <div class="data-item"><label>Teléfono</label><span>${al.telefono}</span></div>
                     <div class="data-item"><label>Correo</label><span>${al.correo}</span></div>
+                    <div class="data-item"><label>Sede</label><span>${sede}</span></div>
+                    <div class="data-item"><label>Horario</label><span>${dia} - ${hora}</span></div>
+                    <div class="data-item"><label>Expediente</label><span>${al.expediente || 'N/A'}</span></div>
+                    <div class="data-item"><label>Canaliza</label><span>${al.canaliza || 'N/A'}</span></div>
             `;
 
             if(tipo === 'graduado' && al.encuesta_fecha) {
@@ -266,19 +281,11 @@
                     <label>Comentarios:</label><span style="font-style:italic">${al.comentarios || 'Sin comentarios'}</span>
                     </div>
                 `;
-            } else {
-                contenido += `
-                    <div class="data-item"><label>Sede</label><span>${al.lugar}</span></div>
-                    <div class="data-item"><label>Horario</label><span>${al.dia} - ${al.horario}</span></div>
-                    <div class="data-item"><label>Expediente</label><span>${al.expediente}</span></div>
-                    <div class="data-item"><label>Canaliza</label><span>${al.canaliza}</span></div>
-                `;
             }
 
             contenido += `</div>`;
             document.getElementById('modal-contenido').innerHTML = contenido;
 
-            // Botones del footer
             if(tipo === 'validar') {
                 document.getElementById('modal-footer').innerHTML = `
                     <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
