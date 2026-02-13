@@ -9,22 +9,17 @@
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --danger: #e74c3c; --bg: #f0f2f5; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
         
-        /* --- LOGIN --- */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .login-card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 350px; text-align: center; }
         
-        /* --- LAYOUT --- */
         #admin-panel { display: none; min-height: 100vh; width: 100%; display: flex; }
         .sidebar { width: 260px; background: white; height: 100vh; padding: 30px 20px; position: fixed; border-right: 1px solid #e1e8f0; display: flex; flex-direction: column; box-sizing: border-box; z-index: 100; overflow-y: auto; }
         .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; overflow-y: auto; height: 100vh; -webkit-overflow-scrolling: touch; }
         
-        /* --- COMPONENTES --- */
         .user-box { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .nav-btn { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 500; color: #555; display: flex; align-items: center; gap: 10px; }
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
-        
-        /* Burbuja del contador */
         .count-badge { background: var(--danger); color: white; font-size: 0.75em; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: auto; }
 
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; width: 100%; overflow-x: auto; }
@@ -43,13 +38,15 @@
         .val-no { background: #fff5f5; color: #fa5252; }
         .check-asis { transform: scale(1.8); cursor: pointer; height: 20px; width: 20px; margin: 0 auto; display: block; }
 
-        /* --- ESTADÍSTICAS --- */
+        /* BUSCADOR DE CÓDIGOS */
+        .search-box-container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .result-code-box { margin-top: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); display: none; }
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid var(--primary); }
         .stat-card h3 { margin: 0; color: var(--primary); font-size: 2.2rem; }
         .stat-card p { margin: 5px 0 0; color: #666; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; }
 
-        /* --- MODAL DETALLADO --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
         .modal-content { background: white; border-radius: 12px; width: 95%; max-width: 700px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
         .modal-header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -64,12 +61,7 @@
         .highlight { background: #e6fcf5; border-color: #0ca678; }
         .modal-footer { padding: 20px; background: #f8f9fa; border-top: 1px solid #eee; display: flex; gap: 10px; flex-direction: column; }
 
-        @media (max-width: 768px) {
-            body { overflow: auto; }
-            #admin-panel { flex-direction: column; }
-            .sidebar { position: relative; width: 100%; height: auto; padding: 20px; }
-            .main-content { margin-left: 0; width: 100%; }
-        }
+        @media (max-width: 768px) { body { overflow: auto; } #admin-panel { flex-direction: column; } .sidebar { position: relative; width: 100%; height: auto; padding: 20px; } .main-content { margin-left: 0; width: 100%; } }
     </style>
 </head>
 <body>
@@ -95,6 +87,8 @@
                 </div>
                 <div id="tab-activos" class="nav-btn" onclick="cambiarSeccion('activos')">👥 Alumnos Activos</div>
                 <div id="tab-graduados" class="nav-btn" onclick="cambiarSeccion('graduados')">🎓 Graduados</div>
+                <div id="tab-rechazados" class="nav-btn" onclick="cambiarSeccion('rechazados')">🚫 Rechazados</div>
+                <div id="tab-verificador" class="nav-btn" onclick="cambiarSeccion('verificador')" style="background:#eef2ff;">🔍 Validar Códigos</div>
                 <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Talleres</div>
                 <div id="tab-stats" class="nav-btn" onclick="cambiarSeccion('stats')" style="color: var(--secondary); font-weight: bold;">📈 Estadísticas</div>
             </div>
@@ -106,40 +100,45 @@
             <div id="sec-nuevas" class="content-section">
                 <h1>📩 Solicitudes Pendientes</h1>
                 <div class="table-card">
-                    <table>
-                        <thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Acción</th></tr></thead>
-                        <tbody id="body-nuevas"></tbody>
-                    </table>
+                    <table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Acción</th></tr></thead><tbody id="body-nuevas"></tbody></table>
                 </div>
             </div>
 
             <div id="sec-activos" class="content-section" style="display:none;">
                 <h1>👥 Alumnos en Curso</h1>
                 <div class="table-card">
-                    <table>
-                        <thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Asistencias</th><th>Estatus</th></tr></thead>
-                        <tbody id="body-activos"></tbody>
-                    </table>
+                    <table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Asistencias</th><th>Estatus</th></tr></thead><tbody id="body-activos"></tbody></table>
                 </div>
             </div>
 
             <div id="sec-graduados" class="content-section" style="display:none;">
                 <h1>🎓 Histórico de Graduados</h1>
                 <div class="table-card">
-                    <table>
-                        <thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Finalización</th><th>Evaluación</th></tr></thead>
-                        <tbody id="body-graduados"></tbody>
-                    </table>
+                    <table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Finalización</th><th>Evaluación</th></tr></thead><tbody id="body-graduados"></tbody></table>
+                </div>
+            </div>
+
+            <div id="sec-rechazados" class="content-section" style="display:none;">
+                <h1>🚫 Solicitudes Rechazadas</h1>
+                <div class="table-card">
+                    <table><thead><tr><th>Folio</th><th>Nombre</th><th>Taller</th><th>Motivo</th></tr></thead><tbody id="body-rechazados"></tbody></table>
+                </div>
+            </div>
+
+            <div id="sec-verificador" class="content-section" style="display:none;">
+                <h1>🔍 Verificador de Constancias</h1>
+                <p>Ingrese el Folio de Inscripción para recuperar los códigos únicos de validación.</p>
+                <div class="search-box-container">
+                    <input type="text" id="input-search-folio" placeholder="Ej: EFDH-2026-001" style="text-transform: uppercase;">
+                    <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="buscarCodigos()">BUSCAR CÓDIGOS</button>
+                    <div id="search-result" class="result-code-box"></div>
                 </div>
             </div>
 
             <div id="sec-catalogos" class="content-section" style="display:none;">
                 <h1>🏫 Gestión de Talleres</h1>
                 <div class="table-card">
-                    <table>
-                        <thead><tr><th>ID</th><th>Taller</th><th>Impartido Por</th><th>Estatus</th><th>Acción</th></tr></thead>
-                        <tbody id="body-catalogos"></tbody>
-                    </table>
+                    <table><thead><tr><th>ID</th><th>Taller</th><th>Impartido Por</th><th>Estatus</th><th>Acción</th></tr></thead><tbody id="body-catalogos"></tbody></table>
                 </div>
             </div>
 
@@ -150,10 +149,7 @@
                     <select id="asis-taller-filtro" onchange="cargarAlumnosAsistencia()"></select>
                 </div>
                 <div class="table-card">
-                    <table>
-                        <thead><tr><th>Beneficiario</th><th style="text-align:center;">Ses.</th><th style="text-align:center;">Asistencia</th></tr></thead>
-                        <tbody id="body-asistencias"></tbody>
-                    </table>
+                    <table><thead><tr><th>Beneficiario</th><th style="text-align:center;">Ses.</th><th style="text-align:center;">Asistencia</th></tr></thead><tbody id="body-asistencias"></tbody></table>
                 </div>
                 <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR ASISTENCIAS</button>
             </div>
@@ -165,16 +161,14 @@
                     <div class="stat-card"><h3 id="stat-pend">0</h3><p>Pendientes</p></div>
                     <div class="stat-card"><h3 id="stat-cursando">0</h3><p>Cursando</p></div>
                     <div class="stat-card"><h3 id="stat-grad">0</h3><p>Graduados</p></div>
+                    <div class="stat-card" style="border-bottom-color: var(--danger);"><h3 id="stat-rech" style="color:var(--danger)">0</h3><p>Rechazados</p></div>
                 </div>
                 <div class="table-card" style="padding:20px; margin-bottom: 20px;">
                     <canvas id="canvasStats" style="max-height: 280px;"></canvas>
                 </div>
                 <div class="table-card">
                     <h2 style="padding: 20px 20px 0; margin:0;">Rendimiento por Taller</h2>
-                    <table>
-                        <thead><tr><th>Taller</th><th style="text-align:center;">Inscritos</th><th style="text-align:center;">Graduados</th><th style="text-align:center;">% Éxito</th></tr></thead>
-                        <tbody id="body-stats-taller"></tbody>
-                    </table>
+                    <table><thead><tr><th>Taller</th><th style="text-align:center;">Inscritos</th><th style="text-align:center;">Graduados</th><th style="text-align:center;">% Éxito</th></tr></thead><tbody id="body-stats-taller"></tbody></table>
                 </div>
             </div>
         </div>
@@ -201,11 +195,7 @@
             if(!email || !pass) return alert("Completa los campos");
             btn.innerText = "Verificando...";
             try {
-                const res = await fetch(URL_APPS_SCRIPT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass })
-                });
+                const res = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ accion: 'login_seguro', correo: email, password: pass }) });
                 const user = await res.json();
                 if (user.autorizado) {
                     usuarioLogueado = user;
@@ -213,17 +203,15 @@
                     document.getElementById('admin-panel').style.display = 'flex';
                     document.getElementById('user-display').innerText = user.nombre;
                     document.getElementById('role-display').innerText = user.rol;
-                    if(user.rol === 'Tallerista') {
-                        document.getElementById('menu-admin-only').style.display = 'none';
-                        cambiarSeccion('asistencias');
-                    } else { cambiarSeccion('nuevas'); }
+                    if(user.rol === 'Tallerista') { document.getElementById('menu-admin-only').style.display = 'none'; cambiarSeccion('asistencias'); }
+                    else { cambiarSeccion('nuevas'); }
                 } else { alert("Acceso denegado"); }
             } catch (e) { alert("Error de conexión"); }
             btn.innerText = "ENTRAR";
         }
 
         function cambiarSeccion(sec) {
-            ['nuevas', 'activos', 'graduados', 'catalogos', 'asistencias', 'stats'].forEach(s => {
+            ['nuevas', 'activos', 'graduados', 'rechazados', 'verificador', 'catalogos', 'asistencias', 'stats'].forEach(s => {
                 const el = document.getElementById('sec-' + s);
                 if(el) el.style.display = s === sec ? 'block' : 'none';
             });
@@ -241,40 +229,38 @@
         }
 
         function renderizarTablas() {
-            // 1. NUEVAS + CONTADOR
+            // Filtros
             const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
-            const badge = document.getElementById('badge-nuevas');
-            if(nuevas.length > 0) { badge.innerText = nuevas.length; badge.style.display = 'block'; }
-            else { badge.style.display = 'none'; }
-            
-            document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `
-                <tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
-                <td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>
-            `).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
-
-            // 2. ACTIVOS
             const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
-            document.getElementById('body-activos').innerHTML = activos.map(al => `
-                <tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
-                <td><b>${al.asistencias || 0} / 8</b></td><td><span class="status-pill val-si">EN CURSO</span></td></tr>
-            `).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
-
-            // 3. GRADUADOS
             const graduados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8);
+            const rechazados = inscritosGlobal.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
+
+            // Badge
+            const badge = document.getElementById('badge-nuevas');
+            if(nuevas.length > 0) { badge.innerText = nuevas.length; badge.style.display = 'block'; } else { badge.style.display = 'none'; }
+            
+            // Tablas
+            document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `<tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
+            
+            document.getElementById('body-activos').innerHTML = activos.map(al => `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><b>${al.asistencias || 0} / 8</b></td><td><span class="status-pill val-si">EN CURSO</span></td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
+
             document.getElementById('body-graduados').innerHTML = graduados.map(al => {
                 const esGraduado = (al.estatus === "Evaluación Recibida");
-                return `
-                <tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
-                <td><span class="status-pill ${esGraduado ? 'pill-active' : 'val-no'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td>
-                <td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'graduado')">Ver Evaluación</button></td></tr>
-            `}).join('') || '<tr><td colspan="5" style="text-align:center">Sin graduados</td></tr>';
+                return `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><span class="status-pill ${esGraduado ? 'pill-active' : 'val-no'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'graduado')">Ver Evaluación</button></td></tr>`
+            }).join('') || '<tr><td colspan="5" style="text-align:center">Sin graduados</td></tr>';
 
-            // 6. ESTADÍSTICAS
+            // Tabla Rechazados
+            document.getElementById('body-rechazados').innerHTML = rechazados.map(al => `<tr><td>${al.folio}</td><td>${al.nombres}</td><td>${al.taller}</td><td><span class="status-pill val-no">RECHAZADO</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">No hay registros rechazados</td></tr>';
+
+            // Estadísticas
             document.getElementById('stat-total').innerText = inscritosGlobal.length;
             document.getElementById('stat-pend').innerText = nuevas.length;
             document.getElementById('stat-cursando').innerText = activos.length;
             document.getElementById('stat-grad').innerText = graduados.filter(g => g.estatus === "Evaluación Recibida").length;
+            document.getElementById('stat-rech').innerText = rechazados.length;
 
+            dibujarGrafica(nuevas.length, activos.length, graduados.length, rechazados.length);
+            
             const talleresUnicos = [...new Set(inscritosGlobal.map(al => al.taller))];
             document.getElementById('body-stats-taller').innerHTML = talleresUnicos.map(t => {
                 const porTaller = inscritosGlobal.filter(al => al.taller === t);
@@ -283,21 +269,42 @@
                 return `<tr><td>${t}</td><td style="text-align:center">${porTaller.length}</td><td style="text-align:center">${grads}</td><td style="text-align:center"><b>${porc}%</b></td></tr>`;
             }).join('');
 
-            dibujarGrafica(inscritosGlobal.length, nuevas.length, activos.length, graduados.length);
             if(usuarioLogueado.rol === 'Administrador') obtenerDatosCatalogos();
         }
 
-        function dibujarGrafica(t, p, c, g) {
+        function dibujarGrafica(p, c, g, r) {
             const ctx = document.getElementById('canvasStats').getContext('2d');
             if(miGrafica) miGrafica.destroy();
             miGrafica = new Chart(ctx, {
-                type: 'bar',
+                type: 'doughnut', // Cambié a dona para que se vea más moderno con 4 datos
                 data: {
-                    labels: ['Total', 'Pendientes', 'Cursando', 'Graduados'],
-                    datasets: [{ label: 'Alumnos', data: [t, p, c, g], backgroundColor: ['#7b7bb5', '#e74c3c', '#00ad9f', '#2c3e50'], borderRadius: 8 }]
+                    labels: ['Pendientes', 'Cursando', 'Graduados', 'Rechazados'],
+                    datasets: [{ data: [p, c, g, r], backgroundColor: ['#7b7bb5', '#00ad9f', '#2c3e50', '#e74c3c'], borderRadius: 0 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
+        }
+
+        function buscarCodigos() {
+            const folio = document.getElementById('input-search-folio').value.trim().toUpperCase();
+            const resBox = document.getElementById('search-result');
+            const al = inscritosGlobal.find(a => a.folio === folio);
+            
+            resBox.style.display = 'block';
+            if(!al) { resBox.innerHTML = "<p style='color:red;'>⚠️ El folio no existe en la base de datos.</p>"; return; }
+            
+            // Usamos los campos nuevos del script
+            const hIns = al.folio_val_ins || "Pendiente";
+            const hFin = al.folio_val_fin || "No generado aún";
+            
+            resBox.innerHTML = `
+                <h4>Resultados para: ${folio}</h4>
+                <p><b>Alumno:</b> ${al.nombres} ${al.paterno}</p>
+                <hr>
+                <p><b>🔑 Cód. Inscripción:</b><br><code style='background:#eee; padding:2px 5px; font-size:1.1em;'>${hIns}</code></p>
+                <p><b>🎓 Cód. Finalización:</b><br><code style='background:#eee; padding:2px 5px; font-size:1.1em;'>${hFin}</code></p>
+                <p><small>*Si el código final no aparece, el alumno aún no se gradúa o el sistema no ha emitido la constancia.</small></p>
+            `;
         }
 
         function abrirExpediente(folio, tipo) {
