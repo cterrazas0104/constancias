@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Panel Administrativo - SEDIF EFDH</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --danger: #e74c3c; --bg: #f0f2f5; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
@@ -23,6 +24,9 @@
         .nav-btn.active { background: var(--primary); color: white; }
         .nav-btn.active-asis { background: var(--secondary); color: white; }
         
+        /* Burbuja del contador */
+        .count-badge { background: var(--danger); color: white; font-size: 0.75em; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: auto; }
+
         .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 20px; width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 700px; }
         th { background: #fafbfc; color: #8898aa; font-size: 0.75em; text-transform: uppercase; padding: 15px 20px; text-align: left; }
@@ -39,25 +43,33 @@
         .val-no { background: #fff5f5; color: #fa5252; }
         .check-asis { transform: scale(1.8); cursor: pointer; height: 20px; width: 20px; margin: 0 auto; display: block; }
 
-        /* --- ESTILOS DEL MODAL DETALLADO (MANTENIENDO TU SCROLL) --- */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 0; border-radius: 12px; width: 95%; max-width: 700px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
-        .modal-header { background: var(--primary); color: white; padding: 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .modal-header h2 { margin: 0; font-size: 1.2rem; }
-        .close-modal { font-size: 24px; cursor: pointer; color: white; opacity: 0.8; }
-        .modal-body { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        /* --- ESTADÍSTICAS --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid var(--primary); }
+        .stat-card h3 { margin: 0; color: var(--primary); font-size: 2.2rem; }
+        .stat-card p { margin: 5px 0 0; color: #666; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; }
 
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        /* --- MODAL DETALLADO --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 12px; width: 95%; max-width: 700px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { margin: 0; font-size: 1.2rem; }
+        .close-modal { font-size: 24px; cursor: pointer; color: white; }
+        .modal-body { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .data-item { background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
         .data-item label { font-size: 0.75em; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 4px; }
-        .data-item span { font-size: 0.95em; color: #333; font-weight: 500; word-break: break-word; }
+        .data-item span { font-size: 0.95em; color: #333; font-weight: 500; }
         .full-width { grid-column: span 2; }
         .highlight { background: #e6fcf5; border-color: #0ca678; }
-        .highlight label { color: #0ca678; }
-        .modal-footer { padding: 20px; background: #f8f9fa; border-top: 1px solid #eee; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
+        .modal-footer { padding: 20px; background: #f8f9fa; border-top: 1px solid #eee; display: flex; gap: 10px; flex-direction: column; }
 
-        /* --- RESPONSIVE --- */
-        @media (max-width: 768px) { body { overflow: auto; } #admin-panel { flex-direction: column; } .sidebar { position: relative; width: 100%; height: auto; padding: 20px; border-right: none; border-bottom: 1px solid #ddd; } .main-content { margin-left: 0; width: 100%; padding: 15px; height: auto; overflow: visible; } .data-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
+        @media (max-width: 768px) {
+            body { overflow: auto; }
+            #admin-panel { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; padding: 20px; }
+            .main-content { margin-left: 0; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -78,13 +90,15 @@
                 <small id="role-display" style="color:gray;">Rol</small>
             </div>
             <div id="menu-admin-only">
-                <div id="tab-nuevas" class="nav-btn active" onclick="cambiarSeccion('nuevas')">📩 Nuevas Solicitudes</div>
+                <div id="tab-nuevas" class="nav-btn active" onclick="cambiarSeccion('nuevas')">
+                    📩 Solicitudes <span id="badge-nuevas" class="count-badge" style="display:none;">0</span>
+                </div>
                 <div id="tab-activos" class="nav-btn" onclick="cambiarSeccion('activos')">👥 Alumnos Activos</div>
                 <div id="tab-graduados" class="nav-btn" onclick="cambiarSeccion('graduados')">🎓 Graduados</div>
-                <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Gestión de Talleres</div>
+                <div id="tab-catalogos" class="nav-btn" onclick="cambiarSeccion('catalogos')">🏫 Talleres</div>
+                <div id="tab-stats" class="nav-btn" onclick="cambiarSeccion('stats')" style="color: var(--secondary); font-weight: bold;">📈 Estadísticas</div>
             </div>
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pase de Lista</div>
-            
             <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Salir</div>
         </div>
 
@@ -123,7 +137,7 @@
                 <h1>🏫 Gestión de Talleres</h1>
                 <div class="table-card">
                     <table>
-                        <thead><tr><th>ID</th><th>Taller</th><th>Impartido Por</th> <th>Estatus</th><th>Acción</th></tr></thead>
+                        <thead><tr><th>ID</th><th>Taller</th><th>Impartido Por</th><th>Estatus</th><th>Acción</th></tr></thead>
                         <tbody id="body-catalogos"></tbody>
                     </table>
                 </div>
@@ -143,19 +157,34 @@
                 </div>
                 <button id="btn-guardar-lista" class="btn-save" onclick="guardarAsistenciasMasivas()" style="display:none;">💾 GUARDAR ASISTENCIAS</button>
             </div>
+
+            <div id="sec-stats" class="content-section" style="display:none;">
+                <h1>📈 Inteligencia de Datos</h1>
+                <div class="stats-grid">
+                    <div class="stat-card"><h3 id="stat-total">0</h3><p>Inscritos</p></div>
+                    <div class="stat-card"><h3 id="stat-pend">0</h3><p>Pendientes</p></div>
+                    <div class="stat-card"><h3 id="stat-cursando">0</h3><p>Cursando</p></div>
+                    <div class="stat-card"><h3 id="stat-grad">0</h3><p>Graduados</p></div>
+                </div>
+                <div class="table-card" style="padding:20px; margin-bottom: 20px;">
+                    <canvas id="canvasStats" style="max-height: 280px;"></canvas>
+                </div>
+                <div class="table-card">
+                    <h2 style="padding: 20px 20px 0; margin:0;">Rendimiento por Taller</h2>
+                    <table>
+                        <thead><tr><th>Taller</th><th style="text-align:center;">Inscritos</th><th style="text-align:center;">Graduados</th><th style="text-align:center;">% Éxito</th></tr></thead>
+                        <tbody id="body-stats-taller"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="modal-detalle" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-titulo">Expediente</h2>
-                <span class="close-modal" onclick="cerrarModal()">&times;</span>
-            </div>
-            <div class="modal-body" id="modal-contenido">
-                </div>
-            <div class="modal-footer" id="modal-footer">
-                </div>
+            <div class="modal-header"><h2 id="modal-titulo">Expediente</h2><span class="close-modal" onclick="cerrarModal()">&times;</span></div>
+            <div class="modal-body" id="modal-contenido"></div>
+            <div class="modal-footer" id="modal-footer"></div>
         </div>
     </div>
 
@@ -163,6 +192,7 @@
         const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
         let inscritosGlobal = [];
         let usuarioLogueado = {};
+        let miGrafica = null;
 
         async function ejecutarLogin() {
             const email = document.getElementById('email').value.trim();
@@ -170,7 +200,6 @@
             const btn = document.querySelector('.login-card button');
             if(!email || !pass) return alert("Completa los campos");
             btn.innerText = "Verificando...";
-            
             try {
                 const res = await fetch(URL_APPS_SCRIPT, {
                     method: 'POST',
@@ -184,133 +213,124 @@
                     document.getElementById('admin-panel').style.display = 'flex';
                     document.getElementById('user-display').innerText = user.nombre;
                     document.getElementById('role-display').innerText = user.rol;
-                    
                     if(user.rol === 'Tallerista') {
                         document.getElementById('menu-admin-only').style.display = 'none';
                         cambiarSeccion('asistencias');
-                    } else {
-                        cambiarSeccion('nuevas');
-                    }
+                    } else { cambiarSeccion('nuevas'); }
                 } else { alert("Acceso denegado"); }
             } catch (e) { alert("Error de conexión"); }
             btn.innerText = "ENTRAR";
         }
 
         function cambiarSeccion(sec) {
-            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-            document.getElementById('sec-' + sec).style.display = 'block';
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            ['nuevas', 'activos', 'graduados', 'catalogos', 'asistencias', 'stats'].forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if(el) el.style.display = s === sec ? 'block' : 'none';
+            });
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'active-asis'));
             const tab = document.getElementById('tab-' + sec);
-            if(tab) tab.classList.add('active');
-            
-            if(sec !== 'asistencias') cargarDatos();
-            if(sec === 'asistencias') { cargarDatos(); cargarCatalogosFiltro(); }
+            if(tab) tab.classList.add(sec === 'asistencias' ? 'active-asis' : 'active');
+            cargarDatos();
+            if(sec === 'asistencias') cargarCatalogosFiltro();
         }
 
         async function cargarDatos() {
-            const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&t=${new Date().getTime()}`);
+            const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&nocache=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             renderizarTablas();
         }
 
         function renderizarTablas() {
-            // 1. NUEVAS (Validado vacío)
+            // 1. NUEVAS + CONTADOR
             const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
+            const badge = document.getElementById('badge-nuevas');
+            if(nuevas.length > 0) { badge.innerText = nuevas.length; badge.style.display = 'block'; }
+            else { badge.style.display = 'none'; }
+            
             document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `
                 <tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
                 <td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>
             `).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
 
-            // 2. ACTIVOS (Validado "Sí" y asistencias < 8)
+            // 2. ACTIVOS
             const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
             document.getElementById('body-activos').innerHTML = activos.map(al => `
                 <tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
                 <td><b>${al.asistencias || 0} / 8</b></td><td><span class="status-pill val-si">EN CURSO</span></td></tr>
             `).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
 
-            // 3. GRADUADOS (Asistencias >= 8)
-         // 3. GRADUADOS
+            // 3. GRADUADOS
             const graduados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8);
             document.getElementById('body-graduados').innerHTML = graduados.map(al => {
                 const esGraduado = (al.estatus === "Evaluación Recibida");
                 return `
                 <tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td>
-                <td><span class="status-pill ${esGraduado ? 'pill-active' : 'pill-new'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td>
+                <td><span class="status-pill ${esGraduado ? 'pill-active' : 'val-no'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td>
                 <td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'graduado')">Ver Evaluación</button></td></tr>
             `}).join('') || '<tr><td colspan="5" style="text-align:center">Sin graduados</td></tr>';
 
+            // 6. ESTADÍSTICAS
+            document.getElementById('stat-total').innerText = inscritosGlobal.length;
+            document.getElementById('stat-pend').innerText = nuevas.length;
+            document.getElementById('stat-cursando').innerText = activos.length;
+            document.getElementById('stat-grad').innerText = graduados.filter(g => g.estatus === "Evaluación Recibida").length;
+
+            const talleresUnicos = [...new Set(inscritosGlobal.map(al => al.taller))];
+            document.getElementById('body-stats-taller').innerHTML = talleresUnicos.map(t => {
+                const porTaller = inscritosGlobal.filter(al => al.taller === t);
+                const grads = porTaller.filter(al => parseInt(al.asistencias || 0) >= 8 && al.estatus === "Evaluación Recibida").length;
+                const porc = porTaller.length > 0 ? Math.round((grads / porTaller.length) * 100) : 0;
+                return `<tr><td>${t}</td><td style="text-align:center">${porTaller.length}</td><td style="text-align:center">${grads}</td><td style="text-align:center"><b>${porc}%</b></td></tr>`;
+            }).join('');
+
+            dibujarGrafica(inscritosGlobal.length, nuevas.length, activos.length, graduados.length);
             if(usuarioLogueado.rol === 'Administrador') obtenerDatosCatalogos();
         }
 
-        // --- MODAL INTEGRAL ---
+        function dibujarGrafica(t, p, c, g) {
+            const ctx = document.getElementById('canvasStats').getContext('2d');
+            if(miGrafica) miGrafica.destroy();
+            miGrafica = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total', 'Pendientes', 'Cursando', 'Graduados'],
+                    datasets: [{ label: 'Alumnos', data: [t, p, c, g], backgroundColor: ['#7b7bb5', '#e74c3c', '#00ad9f', '#2c3e50'], borderRadius: 8 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
         function abrirExpediente(folio, tipo) {
             const al = inscritosGlobal.find(a => a.folio === folio);
             if (!al) return;
-
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
-            
-            // Limpiamos valores undefined por seguridad
-            const sede = al.lugar || "No asignada";
-            const dia = al.dia || "No asignado";
-            const hora = al.horario || "No asignado";
-            const estatusReal = al.estatus || "PENDIENTE";
-
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
-                    <div class="data-item"><label>Estatus</label><span>${estatusReal}</span></div>
+                    <div class="data-item"><label>Estatus</label><span>${al.estatus || 'PENDIENTE'}</span></div>
                     <div class="data-item full-width"><label>Nombre Completo</label><span>${al.nombres} ${al.paterno} ${al.materno}</span></div>
                     <div class="data-item full-width"><label>Taller</label><span>${al.taller}</span></div>
-                    <div class="data-item"><label>Teléfono</label><span>${al.telefono}</span></div>
-                    <div class="data-item"><label>Correo</label><span>${al.correo}</span></div>
-                    <div class="data-item"><label>Sede</label><span>${sede}</span></div>
-                    <div class="data-item"><label>Horario</label><span>${dia} - ${hora}</span></div>
-                    <div class="data-item"><label>Expediente</label><span>${al.expediente || 'N/A'}</span></div>
-                    <div class="data-item"><label>Canaliza</label><span>${al.canaliza || 'N/A'}</span></div>
+                    <div class="data-item"><label>Sede</label><span>${al.lugar || 'No asignada'}</span></div>
+                    <div class="data-item"><label>Horario</label><span>${al.dia || ''} - ${al.horario || ''}</span></div>
             `;
-
             if(tipo === 'graduado' && al.encuesta_fecha) {
-                contenido += `
-                    <div class="data-item full-width highlight" style="margin-top:15px;"><label>Resultados de Evaluación</label>
-                    <small>Respondido el: ${al.encuesta_fecha}</small>
-                    <p style="font-size:0.85rem; margin:10px 0;">
-                        1. Duración: <b>${al.r2}</b> | 2. Tallerista: <b>${al.r3}</b> | 3. Estrategias: <b>${al.r4}</b><br>
-                        4. Aprendizaje: <b>${al.r5}</b> | 5. Voluntario: <b>${al.r6}</b> | 6. Recomienda: <b>${al.r7}</b><br>
-                        7. Participación: <b>${al.r8}</b> | 8. Puntualidad: <b>${al.r9}</b> | 9. Aplicación: <b>${al.r10}</b>
-                    </p>
-                    <label>Comentarios:</label><span style="font-style:italic">${al.comentarios || 'Sin comentarios'}</span>
-                    </div>
-                `;
+                contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
             }
-
             contenido += `</div>`;
             document.getElementById('modal-contenido').innerHTML = contenido;
-
-            if(tipo === 'validar') {
-                document.getElementById('modal-footer').innerHTML = `
-                    <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
-                    <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
-                `;
-            } else {
-                document.getElementById('modal-footer').innerHTML = `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
-            }
-            
+            document.getElementById('modal-footer').innerHTML = tipo === 'validar' ? 
+                `<button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
+                 <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>` : 
+                `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
             document.getElementById('modal-detalle').style.display = 'flex';
         }
 
         async function procesarValidacion(folio, decision) {
-            if(!confirm(`¿Confirmar decisión: ${decision}?`)) return;
             const fila = inscritosGlobal.findIndex(a => a.folio === folio) + 2;
-            await fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ metodo: 'validar_inscrito', fila: fila, decision: decision })
-            });
-            cerrarModal();
-            cargarDatos();
+            await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ metodo: 'validar_inscrito', fila: fila, decision: decision }) });
+            cerrarModal(); cargarDatos();
         }
 
-        // --- ASISTENCIAS (FILTRADO POR ROL) ---
         async function cargarCatalogosFiltro() {
             const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres`);
             const talleres = await res.json();
@@ -321,88 +341,43 @@
             } else {
                 const miT = talleres.find(t => t.id == usuarioLogueado.taller_id);
                 const n = miT ? miT.nombre : "Sin taller";
-                select.innerHTML = `<option value="${n}">${n}</option>`;
-                select.disabled = true;
+                select.innerHTML = `<option value="${n}">${n}</option>`; select.disabled = true;
                 cargarAlumnosAsistencia();
             }
         }
 
         async function cargarAlumnosAsistencia() {
-    const taller = document.getElementById('asis-taller-filtro').value;
-    const tbody = document.getElementById('body-asistencias');
-    if(!taller || taller === "Sin asignar") return;
-    
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando lista...</td></tr>';
-    
-    // Agregamos "&nocache=" con la hora actual para obligar a traer datos nuevos
-    const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&nocache=${new Date().getTime()}`);
-    const data = await res.json();
-    
-    // Actualizamos la variable global con los datos nuevos
-    inscritosGlobal = data; 
-    tbody.innerHTML = '';
-
-    const activos = data.filter(al => al.taller === taller && al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
-    
-    tbody.innerHTML = activos.map(al => `
-        <tr>
-            <td><b>${al.nombres} ${al.paterno}</b><br><small>${al.folio}</small></td>
-            <td style="text-align:center;">${al.asistencias || 0} / 8</td>
-            <td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td>
-        </tr>
-    `).join('') || '<tr><td colspan="3" style="text-align:center">No hay alumnos pendientes</td></tr>';
-    
-    document.getElementById('btn-guardar-lista').style.display = activos.length ? 'block' : 'none';
-}
+            const taller = document.getElementById('asis-taller-filtro').value;
+            const tbody = document.getElementById('body-asistencias');
+            if(!taller) return;
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Actualizando...</td></tr>';
+            const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&nocache=${new Date().getTime()}`);
+            inscritosGlobal = await res.json();
+            const activos = inscritosGlobal.filter(al => al.taller === taller && al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
+            tbody.innerHTML = activos.map(al => `<tr><td><b>${al.nombres}</b><br><small>${al.folio}</small></td><td style="text-align:center;">${al.asistencias}/8</td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td></tr>`).join('') || '<tr><td colspan="3">Sin alumnos</td></tr>';
+            document.getElementById('btn-guardar-lista').style.display = activos.length ? 'block' : 'none';
+        }
 
         async function guardarAsistenciasMasivas() {
-    const checks = document.querySelectorAll('.check-asis:checked');
-    if(!checks.length) return alert("Selecciona beneficiarios");
-    
-    const btn = document.getElementById('btn-guardar-lista');
-    btn.innerText = "Guardando..."; btn.disabled = true;
-    
-    const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
-    
-    try {
-        const res = await fetch(URL_APPS_SCRIPT, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify({ asistencias: lista }) 
-        });
-        
-        if (res.ok) {
-            alert("Asistencias guardadas correctamente.");
-            // Esperamos 2 segundos antes de refrescar para asegurar que el cambio se asentó en la hoja
-            setTimeout(() => {
-                cargarAlumnosAsistencia();
-                btn.innerText = "💾 GUARDAR ASISTENCIAS";
-                btn.disabled = false;
-            }, 2000);
-        } else {
-            alert("Error al guardar");
-            btn.disabled = false;
+            const checks = document.querySelectorAll('.check-asis:checked');
+            if(!checks.length) return alert("Selecciona beneficiarios");
+            const btn = document.getElementById('btn-guardar-lista');
+            btn.innerText = "Guardando..."; btn.disabled = true;
+            const lista = Array.from(checks).map(c => ({ folio: c.dataset.folio }));
+            try {
+                await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ asistencias: lista }) });
+                alert("Asistencias guardadas");
+                setTimeout(() => { cargarAlumnosAsistencia(); btn.innerText = "💾 GUARDAR ASISTENCIAS"; btn.disabled = false; }, 2000);
+            } catch(e) { alert("Error"); btn.disabled = false; }
         }
-    } catch(e) { 
-        alert("Error de conexión"); 
-        btn.disabled = false;
-    }
-}
+
+        async function obtenerDatosCatalogos() {
+            const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres&t=${new Date().getTime()}`);
+            const data = await res.json();
+            document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `<tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td>${item.impartido_por || '-'}</td><td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td><td><button class="btn-action">Alternar</button></td></tr>`).join('');
+        }
 
         function cerrarModal() { document.getElementById('modal-detalle').style.display = 'none'; }
-        
-        // Función de talleres (Solo Admin)
-        async function obtenerDatosCatalogos() {
-            try {
-                const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres&t=${new Date().getTime()}`);
-                const data = await res.json();
-                document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `
-                    <tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td><small>${item.impartido_por || '-'}</small></td>
-                    <td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td>
-                    <td><button class="btn-action" onclick="toggleTaller(${idx+2}, '${item.estatus}')">Alternar</button></td></tr>
-                `).join('');
-            } catch (e) {}
-        }
     </script>
 </body>
 </html>
