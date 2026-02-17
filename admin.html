@@ -325,10 +325,13 @@
             `;
         }
 
-        function abrirExpediente(folio, tipo) {
+       function abrirExpediente(folio, tipo) {
             const al = inscritosGlobal.find(a => a.folio === folio);
             if (!al) return;
+
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
+            
+            // Construimos el contenido
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
@@ -338,16 +341,62 @@
                     <div class="data-item"><label>Sede</label><span>${al.lugar || 'No asignada'}</span></div>
                     <div class="data-item"><label>Horario</label><span>${al.dia || ''} - ${al.horario || ''}</span></div>
             `;
+
             if(tipo === 'graduado' && al.encuesta_fecha) {
                 contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
             }
             contenido += `</div>`;
             document.getElementById('modal-contenido').innerHTML = contenido;
-            document.getElementById('modal-footer').innerHTML = tipo === 'validar' ? 
-                `<button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
-                 <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>` : 
-                `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
+
+            // Construimos el Footer con los botones
+            let botonesFooter = '';
+
+            if(tipo === 'validar') {
+                botonesFooter = `
+                    <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
+                    <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
+                `;
+            } else {
+                // Si es solo ver expediente y ya está validado, mostramos el botón de reenviar
+                if (al.validado === 'Sí') {
+                    botonesFooter += `
+                        <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarConstancia('${al.folio}')">
+                            🔄 REENVIAR CONSTANCIA INSCRIPCIÓN
+                        </button>
+                    `;
+                }
+                botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
+            }
+
+            document.getElementById('modal-footer').innerHTML = botonesFooter;
             document.getElementById('modal-detalle').style.display = 'flex';
+        }
+
+        async function reenviarConstancia(folio) {
+            if(!confirm(`¿Estás seguro de reenviar la Constancia de Inscripción al folio ${folio}?\n\nEl sistema generará un nuevo código de validación y enviará el correo automáticamente en el próximo minuto.`)) return;
+
+            const btn = document.querySelector('#modal-footer button[style*="background:#f39c12"]');
+            if(btn) { btn.innerText = "Procesando..."; btn.disabled = true; }
+
+            const fila = inscritosGlobal.findIndex(a => a.folio === folio) + 2;
+
+            try {
+                await fetch(URL_APPS_SCRIPT, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ 
+                        metodo: 'reenviar_constancia', 
+                        fila: fila 
+                    }) 
+                });
+                
+                alert("✅ Solicitud de reenvío procesada.\n\nEl Monitor Maestro detectará el cambio y enviará el correo en breve.");
+                cerrarModal();
+                cargarDatos(); // Recargar para ver los cambios
+            } catch (e) {
+                alert("Error de conexión");
+                if(btn) { btn.innerText = "🔄 REENVIAR CONSTANCIA INSCRIPCIÓN"; btn.disabled = false; }
+            }
         }
 
         async function procesarValidacion(folio, decision) {
