@@ -249,10 +249,10 @@
             // Tabla Nuevas
             document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `<tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
             
-            // Tabla Activos
-            document.getElementById('body-activos').innerHTML = activos.map(al => `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><b>${al.asistencias || 0} / 8</b></td><td><span class="status-pill val-si">EN CURSO</span></td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
+            // Tabla Activos (BOTÓN CON TIPO 'activo' para que salga el reenvío de inscripción)
+            document.getElementById('body-activos').innerHTML = activos.map(al => `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><b>${al.asistencias || 0} / 8</b></td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'activo')">Ver Detalle</button></td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
 
-            // Tabla Graduados
+            // Tabla Graduados (BOTÓN CON TIPO 'graduado')
             document.getElementById('body-graduados').innerHTML = graduados.map(al => {
                 const esGraduado = (al.estatus === "Evaluación Recibida");
                 return `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><span class="status-pill ${esGraduado ? 'pill-active' : 'val-no'}">${esGraduado ? "✅ Finalizado" : "⏳ Pendiente Encuesta"}</span></td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'graduado')">Ver Evaluación</button></td></tr>`
@@ -311,7 +311,6 @@
             resBox.style.display = 'block';
             if(!al) { resBox.innerHTML = "<p style='color:red;'>⚠️ El folio no existe en la base de datos.</p>"; return; }
             
-            // Usamos los campos nuevos del script
             const hIns = al.folio_val_ins || "Pendiente";
             const hFin = al.folio_val_fin || "No generado aún";
             
@@ -325,13 +324,12 @@
             `;
         }
 
-function abrirExpediente(folio, tipo) {
+        function abrirExpediente(folio, tipo) {
             const al = inscritosGlobal.find(a => a.folio === folio);
             if (!al) return;
 
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
-            // ... (Tu código de contenido HTML se queda igual) ...
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
@@ -347,7 +345,7 @@ function abrirExpediente(folio, tipo) {
             contenido += `</div>`;
             document.getElementById('modal-contenido').innerHTML = contenido;
 
-            // --- LÓGICA DE BOTONES ---
+            // --- LÓGICA DE BOTONES SEPARADA ---
             let botonesFooter = '';
 
             if(tipo === 'validar') {
@@ -372,7 +370,6 @@ function abrirExpediente(folio, tipo) {
                         </button>
                     `;
                 }
-                
                 botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
             }
 
@@ -380,36 +377,8 @@ function abrirExpediente(folio, tipo) {
             document.getElementById('modal-detalle').style.display = 'flex';
         }
 
-        async function reenviarConstancia(folio) {
-            if(!confirm(`¿Estás seguro de reenviar la Constancia de Inscripción al folio ${folio}?\n\nEl sistema generará un nuevo código de validación y enviará el correo automáticamente en el próximo minuto.`)) return;
-
-            const btn = document.querySelector('#modal-footer button[style*="background:#f39c12"]');
-            if(btn) { btn.innerText = "Procesando..."; btn.disabled = true; }
-
-            const fila = inscritosGlobal.findIndex(a => a.folio === folio) + 2;
-
-            try {
-                await fetch(URL_APPS_SCRIPT, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ 
-                        metodo: 'reenviar_constancia', 
-                        fila: fila 
-                    }) 
-                });
-                
-                alert("✅ Solicitud de reenvío procesada.\n\nEl Monitor Maestro detectará el cambio y enviará el correo en breve.");
-                cerrarModal();
-                cargarDatos(); // Recargar para ver los cambios
-            } catch (e) {
-                alert("Error de conexión");
-                if(btn) { btn.innerText = "🔄 REENVIAR CONSTANCIA INSCRIPCIÓN"; btn.disabled = false; }
-            }
-        }
-
         async function procesarValidacion(folio, decision) {
             let motivoRechazo = "";
-
             if (decision === 'No') {
                 motivoRechazo = prompt("⚠️ Por favor, ingresa el motivo del rechazo:");
                 if (motivoRechazo === null) return; 
@@ -434,6 +403,39 @@ function abrirExpediente(folio, tipo) {
             
             cerrarModal();
             cargarDatos();
+        }
+
+        // --- FUNCIONES DE REENVÍO SEPARADAS ---
+        async function reenviarInscripcion(folio) {
+            if(!confirm(`¿Reenviar CONSTANCIA DE INSCRIPCIÓN al folio ${folio}?`)) return;
+            procesarReenvio(folio, 'reenviar_inscripcion');
+        }
+
+        async function reenviarFinal(folio) {
+            if(!confirm(`¿Reenviar DIPLOMA FINAL al folio ${folio}?`)) return;
+            procesarReenvio(folio, 'reenviar_final');
+        }
+
+        async function procesarReenvio(folio, metodo) {
+            const btn = document.querySelector('#modal-footer button[style*="background"]'); 
+            if(btn) { btn.innerText = "Procesando..."; btn.disabled = true; }
+
+            const fila = inscritosGlobal.findIndex(a => a.folio === folio) + 2;
+
+            try {
+                await fetch(URL_APPS_SCRIPT, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ metodo: metodo, fila: fila }) 
+                });
+                
+                alert("✅ Solicitud enviada. El Monitor procesará el correo en breve.");
+                cerrarModal();
+                cargarDatos();
+            } catch (e) {
+                alert("Error de conexión");
+                if(btn) btn.disabled = false;
+            }
         }
 
         async function cargarCatalogosFiltro() {
