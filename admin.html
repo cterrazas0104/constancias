@@ -6,7 +6,7 @@
     <title>Panel Administrativo - SEDIF EFDH</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #7b7bb5; --secondary: #00ad9f; --danger: #e74c3c; --bg: #f0f2f5; --text: #2c3e50; }
+        :root { --primary: #7b7bb5; --secondary: #00ad9f; --danger: #e74c3c; --bg: #f0f2f5; --text: #2c3e50; --purple: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
         
         /* --- LOGIN --- */
@@ -169,7 +169,10 @@
                     <div class="stat-card"><h3 id="stat-cursando">0</h3><p>Cursando</p></div>
                     <div class="stat-card"><h3 id="stat-grad">0</h3><p>Graduados</p></div>
                     <div class="stat-card" style="border-bottom-color: var(--danger);"><h3 id="stat-rech" style="color:var(--danger)">0</h3><p>Rechazados</p></div>
+                    
+                    <div class="stat-card" style="border-bottom-color: var(--purple);"><h3 id="stat-inst" style="color:var(--purple)">0</h3><p>Instituciones</p></div>
                 </div>
+                
                 <div class="table-card" style="padding:20px; margin-bottom: 20px;">
                     <canvas id="canvasStats" style="max-height: 280px;"></canvas>
                 </div>
@@ -478,10 +481,27 @@
             } catch(e) { alert("Error"); btn.disabled = false; }
         }
 
+        // --- FUNCIÓN ACTUALIZADA PARA CONTAR INSTITUCIONES ---
         async function obtenerDatosCatalogos() {
             const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres&t=${new Date().getTime()}`);
             const data = await res.json();
+            
+            // 1. Llenar tabla de talleres
             document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `<tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td>${item.impartido_por || '-'}</td><td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td><td><button class="btn-action">Alternar</button></td></tr>`).join('');
+
+            // 2. Contar Instituciones Activas
+            const talleresActivos = data.filter(t => t.estatus === 'ACTIVO');
+            const institucionesUnicas = new Set();
+            
+            talleresActivos.forEach(t => {
+                if (t.impartido_por && t.impartido_por.trim() !== "") {
+                    institucionesUnicas.add(t.impartido_por.trim());
+                }
+            });
+
+            // 3. Actualizar la tarjeta de estadística
+            const elStat = document.getElementById('stat-inst');
+            if (elStat) elStat.innerText = institucionesUnicas.size;
         }
 
         function cerrarModal() { document.getElementById('modal-detalle').style.display = 'none'; }
