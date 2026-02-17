@@ -325,13 +325,13 @@
             `;
         }
 
-       function abrirExpediente(folio, tipo) {
+function abrirExpediente(folio, tipo) {
             const al = inscritosGlobal.find(a => a.folio === folio);
             if (!al) return;
 
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
-            // Construimos el contenido
+            // ... (Tu código de contenido HTML se queda igual) ...
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
@@ -341,14 +341,13 @@
                     <div class="data-item"><label>Sede</label><span>${al.lugar || 'No asignada'}</span></div>
                     <div class="data-item"><label>Horario</label><span>${al.dia || ''} - ${al.horario || ''}</span></div>
             `;
-
             if(tipo === 'graduado' && al.encuesta_fecha) {
                 contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
             }
             contenido += `</div>`;
             document.getElementById('modal-contenido').innerHTML = contenido;
 
-            // Construimos el Footer con los botones
+            // --- LÓGICA DE BOTONES ---
             let botonesFooter = '';
 
             if(tipo === 'validar') {
@@ -357,14 +356,23 @@
                     <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
                 `;
             } else {
-                // Si es solo ver expediente y ya está validado, mostramos el botón de reenviar
-                if (al.validado === 'Sí') {
+                // SI ES GRADUADO -> Botón de Diploma Final
+                if (tipo === 'graduado') {
                     botonesFooter += `
-                        <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarConstancia('${al.folio}')">
-                            🔄 REENVIAR CONSTANCIA INSCRIPCIÓN
+                        <button class="btn-action" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarFinal('${al.folio}')">
+                            🎓 REENVIAR DIPLOMA FINAL
+                        </button>
+                    `;
+                } 
+                // SI ES ACTIVO (NO GRADUADO) -> Botón de Inscripción
+                else if (al.validado === 'Sí') {
+                    botonesFooter += `
+                        <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarInscripcion('${al.folio}')">
+                            📄 REENVIAR CONSTANCIA INSCRIPCIÓN
                         </button>
                     `;
                 }
+                
                 botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
             }
 
