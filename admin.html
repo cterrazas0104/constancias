@@ -464,7 +464,7 @@
             const res = await fetch(`${URL_APPS_SCRIPT}?accion=admin_listar_inscritos&nocache=${new Date().getTime()}`);
             inscritosGlobal = await res.json();
             const activos = inscritosGlobal.filter(al => al.taller === taller && al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
-            tbody.innerHTML = activos.map(al => `<tr><td><b>${al.nombres}</b><br><small>${al.folio}</small></td><td style="text-align:center;">${al.asistencias}/8</td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td></tr>`).join('') || '<tr><td colspan="3">Sin alumnos</td></tr>';
+            tbody.innerHTML = activos.map(al => `<tr><td><b>${al.nombres} ${al.paterno} ${al.materno}</b><br><small>${al.folio}</small></td><td style="text-align:center;">${al.asistencias}/8</td><td style="text-align:center;"><input type="checkbox" class="check-asis" data-folio="${al.folio}"></td></tr>`).join('') || '<tr><td colspan="3">Sin alumnos</td></tr>';
             document.getElementById('btn-guardar-lista').style.display = activos.length ? 'block' : 'none';
         }
 
