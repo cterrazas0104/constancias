@@ -79,11 +79,11 @@
             <input type="email" id="correo" placeholder="ejemplo@correo.com" required>
             
             <label>Nombre(s) *</label>
-            <input type="text" id="nombre" required>
+            <input type="text" id="nombre" style="text-transform: uppercase;" required>
             
             <div class="grid">
-                <div><label>Apellido Paterno *</label><input type="text" id="paterno" required></div>
-                <div><label>Apellido Materno *</label><input type="text" id="materno" required></div>
+                <div><label>Apellido Paterno *</label><input type="text" id="paterno" style="text-transform: uppercase;" required></div>
+                <div><label>Apellido Materno *</label><input type="text" id="materno" style="text-transform: uppercase;" required></div>
             </div>
             
             <div class="grid">
@@ -107,7 +107,7 @@
             
             <div id="seccionExpediente" class="hidden-section">
                 <label>Número de Expediente: *</label>
-                <input type="text" id="expediente" placeholder="Ej. 1234/2024" pattern="[0-9]+/[0-9]{4}" title="El formato debe ser número de expediente seguido del año a 4 dígitos, por ejemplo: 123/2023">
+                <input type="text" id="expediente" style="text-transform: uppercase;" placeholder="Ej. 1234/2024" pattern="[0-9]+/[0-9]{4}" title="El formato debe ser número de expediente seguido del año a 4 dígitos, por ejemplo: 123/2023">
                 
                 <label>Número de Juzgado *</label>
                 <select id="juzgado">
@@ -128,7 +128,7 @@
             </div>
             
             <div id="seccionOtros" class="hidden-section">
-                <label>Especifique quién canaliza *</label><input type="text" id="canalizaOtro">
+                <label>Especifique quién canaliza *</label><input type="text" id="canalizaOtro" style="text-transform: uppercase;">
             </div>
             
             <input type="hidden" id="privacidadAceptada" value="false">
@@ -369,25 +369,25 @@
             btn.innerText = "ENVIANDO..."; 
             btn.disabled = true;
 
+            // SE AGREGÓ: Conversión a mayúsculas al leer "canalizaOtro"
             let canalizaVal = document.getElementById('canaliza').value;
-            if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value;
+            if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value.trim().toUpperCase();
 
-            // EXTRACCIÓN DE SEXO DESDE EL CURP
             const curpVal = document.getElementById('curp').value.trim().toUpperCase();
-            // La letra del sexo se encuentra en la posición 10 del array de string (11vo caracter)
             const sexoExtraido = curpVal.length >= 11 ? curpVal.charAt(10) : "N/A";
 
+            // SE AGREGÓ: .toUpperCase() a los valores antes de mandarlos
             const datos = {
-                correo_electronico: document.getElementById('correo').value,
-                nombres: document.getElementById('nombre').value,
-                paterno: document.getElementById('paterno').value,
-                materno: document.getElementById('materno').value,
-                telefono: document.getElementById('telefono').value,
+                correo_electronico: document.getElementById('correo').value.trim().toLowerCase(), // Correo siempre en minúscula
+                nombres: document.getElementById('nombre').value.trim().toUpperCase(),
+                paterno: document.getElementById('paterno').value.trim().toUpperCase(),
+                materno: document.getElementById('materno').value.trim().toUpperCase(),
+                telefono: document.getElementById('telefono').value.trim(),
                 curp: curpVal,
                 sexo: sexoExtraido,
                 taller: document.getElementById('taller').value,
                 canaliza: canalizaVal,
-                expediente: document.getElementById('expediente').value || "N/A",
+                expediente: document.getElementById('expediente').value.trim().toUpperCase() || "N/A",
                 juzgado: document.getElementById('juzgado').value || "N/A"
             };
 
