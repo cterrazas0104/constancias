@@ -106,8 +106,25 @@
             </select>
             
             <div id="seccionExpediente" class="hidden-section">
-                <label>Número de Expediente: (Ejemplo 000/AÑO)*</label><input type="text" id="expediente">
-                <label>Número de Juzgado y/o Entidad *</label><input type="text" id="juzgado">
+                <label>Número de Expediente: *</label>
+                <input type="text" id="expediente" placeholder="Ej. 1234/2024" pattern="[0-9]+/[0-9]{4}" title="El formato debe ser número de expediente seguido del año a 4 dígitos, por ejemplo: 123/2023">
+                
+                <label>Número de Juzgado *</label>
+                <select id="juzgado">
+                    <option value="">Seleccione el juzgado...</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                </select>
             </div>
             
             <div id="seccionOtros" class="hidden-section">
@@ -151,7 +168,7 @@
             <div class="text-scroll">
                 <p>La Procuraduría de Protección de Niñas, Niños y Adolescentes del Estado de Querétaro informa que sus datos personales serán tratados para el proceso de inscripción y seguimiento a los talleres de la Escuela de Formación y Desarrollo Humano.</p>
                 <p>Usted puede ejercer sus derechos de acceso o rectificación enviando una solicitud oficial a la institución.</p>
-                <p><a href="aviso_privacidad.pdf" target="_blank" style="color: var(--secondary-blue); font-weight: bold;">Ver documento completo (PDF)</a></p>
+                <p><a href="https://github.com/cterrazas0104/constancias/blob/main/aviso_privacidad.pdf" target="_blank" style="color: var(--secondary-blue); font-weight: bold;">Ver documento completo (PDF)</a></p>
             </div>
             <div class="modal-footer">
                 <button onclick="confirmarPrivacidad()" style="background: var(--secondary-blue); color:white; border:none; padding: 15px 25px; border-radius:6px; cursor:pointer; font-weight:bold; width: 100%;">ACEPTAR Y CONTINUAR</button>
