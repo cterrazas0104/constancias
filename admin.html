@@ -54,7 +54,7 @@
         .stat-card h3 { margin: 0; color: var(--primary); font-size: 2rem; }
         .stat-card p { margin: 5px 0 0; color: #666; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
 
-        /* MODAL DETALLADO */
+        /* MODALES */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; justify-content: center; align-items: center; }
         .modal-content { background: white; border-radius: 12px; width: 95%; max-width: 700px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
         .modal-header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -121,7 +121,9 @@
                 <div id="tab-buscar" class="nav-btn" onclick="cambiarSeccion('buscar')" style="color: #2980b9; font-weight: bold;">🔎 Buscar Registro</div>
             </div>
             <div id="tab-asistencias" class="nav-btn" onclick="cambiarSeccion('asistencias')">📝 Pase de Lista</div>
-            <div class="nav-btn" onclick="location.reload()" style="margin-top:auto; color:#e74c3c;">🚪 Salir</div>
+            
+            <div id="tab-acerca" class="nav-btn" onclick="mostrarAcercaDe()" style="margin-top:auto; margin-bottom: 5px; color: #7f8c8d;">ℹ️ Acerca del Sistema</div>
+            <div class="nav-btn" onclick="location.reload()" style="color:#e74c3c;">🚪 Salir</div>
         </div>
 
         <div class="main-content">
@@ -202,7 +204,6 @@
                     <div class="stat-card" style="border-bottom-color: var(--danger);"><h3 id="stat-rech" style="color:var(--danger)">0</h3><p>Rechazados</p></div>
                     <div class="stat-card" style="border-bottom-color: var(--man);"><h3 id="stat-hombres" style="color:var(--man)">0</h3><p>Hombres</p></div>
                     <div class="stat-card" style="border-bottom-color: var(--woman);"><h3 id="stat-mujeres" style="color:var(--woman)">0</h3><p>Mujeres</p></div>
-                    
                     <div class="stat-card" style="border-bottom-color: var(--purple);"><h3 id="stat-inst" style="color:var(--purple)">0</h3><p>Instituciones</p></div>
                 </div>
                 
@@ -225,13 +226,40 @@
         </div>
     </div>
 
+    <div id="acerca-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div class="modal-header" style="background: #2c3e50;">
+                <h2 style="margin: 0; font-size: 1.2rem;">Acerca del Sistema</h2>
+                <span class="close-modal" onclick="cerrarAcerca()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 30px; line-height: 1.6;">
+                <h1 style="color: var(--primary); margin-top: 0; margin-bottom: 5px;">EFDH - SEDIF</h1>
+                <p style="font-size: 1.1em; font-weight: bold; color: #555; margin-top: 0;">Sistema de Gestión Integral</p>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                
+                <div style="font-size: 0.95em; color: #666; text-align: left; padding-left: 10px;">
+                    <p><b>Versión:</b> 1.5 (Build Final - 2026)</p>
+                    <p><b>Arquitectura:</b> Ecosistema Serverless y PWA</p>
+                    <p><b>Cumplimiento Normativo:</b> Arts. 17, 32, 34 y 50 (SSTI-SF)</p>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 4px solid var(--secondary); text-align: left; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <p style="margin: 0 0 8px 0; color: #888; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px;"><strong>Diseño y Desarrollo Autoral:</strong></p>
+                    <p style="margin: 0; font-weight: bold; color: #2c3e50; font-size: 1.1em;">Mtro. César Gabriel Terrazas Zarazúa</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #555;">Lic. en Sistemas Computacionales</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #777; font-style: italic;">Jefe del Departamento de Tecnologías de la Información y Comunicación (TIC)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
         let inscritosGlobal = [];
         let usuarioLogueado = {};
         let miGrafica = null;
 
-        // Función para decodificar la respuesta segura de Google
         function decodificarJWT(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -241,14 +269,10 @@
             return JSON.parse(jsonPayload);
         }
 
-        // Función que se ejecuta cuando el usuario hace clic en el botón de Google y se verifica
         async function manejarRespuestaGoogle(respuesta) {
             document.getElementById('login-msg').innerText = "Verificando en base de datos...";
-            
-            // Extraemos el correo validado por Google
             const datosGoogle = decodificarJWT(respuesta.credential);
             const emailVerificado = datosGoogle.email;
-
             const infoEquipo = navigator.userAgent;
 
             try {
@@ -646,6 +670,8 @@
         }
 
         function cerrarModal() { document.getElementById('modal-detalle').style.display = 'none'; }
+        function mostrarAcercaDe() { document.getElementById('acerca-modal').style.display = 'flex'; }
+        function cerrarAcerca() { document.getElementById('acerca-modal').style.display = 'none'; }
     </script>
 </body>
 </html>
