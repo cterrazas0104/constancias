@@ -74,7 +74,7 @@
 </head>
 <body>
 
-<div id="login-screen">
+    <div id="login-screen">
         <div class="login-card">
             <h2>Acceso EFDH</h2>
             <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">Use su cuenta institucional</p>
@@ -86,14 +86,16 @@
                  data-callback="manejarRespuestaGoogle"
                  data-auto_prompt="false">
             </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="outline"
-                 data-text="signin_with"
-                 data-size="large"
-                 data-logo_alignment="center"
-                 data-width="100%">
+            
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
             </div>
             
             <p id="login-msg" style="font-size:0.85em; color:var(--primary); margin-top:15px;"></p>
@@ -224,13 +226,12 @@
     </div>
 
     <script>
-        // ESTA ES LA URL DE TU API PERSONAL (EFDH), NO LA DE TICKETS
         const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec';
         let inscritosGlobal = [];
         let usuarioLogueado = {};
         let miGrafica = null;
 
-// Función para decodificar la respuesta segura de Google
+        // Función para decodificar la respuesta segura de Google
         function decodificarJWT(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -247,14 +248,6 @@
             // Extraemos el correo validado por Google
             const datosGoogle = decodificarJWT(respuesta.credential);
             const emailVerificado = datosGoogle.email;
-
-            // Opcional: Bloquear si no es de queretaro.gob.mx (descomenta si lo necesitas)
-            /* if(!emailVerificado.endsWith("@queretaro.gob.mx")) {
-                alert("Acceso restringido a cuentas institucionales.");
-                document.getElementById('login-msg').innerText = "";
-                return;
-            } 
-            */
 
             const infoEquipo = navigator.userAgent;
 
