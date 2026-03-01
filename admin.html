@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Panel Administrativo - SEDIF EFDH</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root { --primary: #7b7bb5; --secondary: #00ad9f; --danger: #e74c3c; --bg: #f0f2f5; --text: #2c3e50; --purple: #8e44ad; --man: #3498db; --woman: #e84393; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
@@ -73,12 +74,29 @@
 </head>
 <body>
 
-    <div id="login-screen">
+<div id="login-screen">
         <div class="login-card">
             <h2>Acceso EFDH</h2>
-            <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="pass" placeholder="Contraseña (Mín. 10 caracteres)">
-            <button class="btn-primary" onclick="ejecutarLogin()">ENTRAR</button>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">Use su cuenta institucional</p>
+            
+            <div id="g_id_onload"
+                 data-client_id="1002166167341-diguctcp78ppfvup8i8kof4l9herp18h.apps.googleusercontent.com"
+                 data-context="signin"
+                 data-ux_mode="popup"
+                 data-callback="manejarRespuestaGoogle"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="signin_with"
+                 data-size="large"
+                 data-logo_alignment="center"
+                 data-width="100%">
+            </div>
+            
+            <p id="login-msg" style="font-size:0.85em; color:var(--primary); margin-top:15px;"></p>
         </div>
     </div>
 
@@ -212,22 +230,32 @@
         let usuarioLogueado = {};
         let miGrafica = null;
 
-        async function ejecutarLogin() {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('pass').value.trim();
-            const btn = document.querySelector('.login-card button');
-            
-            if(!email || !pass) return alert("Completa los campos");
-            
-            // VALIDACIÓN ART. 50: Contraseña de 10 caracteres
-            if(pass.length < 10) {
-                alert("Por normatividad (Art. 50), las contraseñas deben tener al menos 10 caracteres.");
-                return;
-            }
+// Función para decodificar la respuesta segura de Google
+        function decodificarJWT(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
 
-            btn.innerText = "Verificando...";
+        // Función que se ejecuta cuando el usuario hace clic en el botón de Google y se verifica
+        async function manejarRespuestaGoogle(respuesta) {
+            document.getElementById('login-msg').innerText = "Verificando en base de datos...";
             
-            // CAPTURA DE DISPOSITIVO PARA BITÁCORA (ART. 34)
+            // Extraemos el correo validado por Google
+            const datosGoogle = decodificarJWT(respuesta.credential);
+            const emailVerificado = datosGoogle.email;
+
+            // Opcional: Bloquear si no es de queretaro.gob.mx (descomenta si lo necesitas)
+            /* if(!emailVerificado.endsWith("@queretaro.gob.mx")) {
+                alert("Acceso restringido a cuentas institucionales.");
+                document.getElementById('login-msg').innerText = "";
+                return;
+            } 
+            */
+
             const infoEquipo = navigator.userAgent;
 
             try {
@@ -235,23 +263,34 @@
                     method: 'POST', 
                     body: JSON.stringify({ 
                         accion: 'login_seguro', 
-                        correo: email, 
-                        password: pass,
-                        equipo: infoEquipo
+                        correo: emailVerificado, 
+                        equipo: infoEquipo 
                     }) 
                 });
+                
                 const user = await res.json();
+                
                 if (user.autorizado) {
                     usuarioLogueado = user;
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('admin-panel').style.display = 'flex';
                     document.getElementById('user-display').innerText = user.nombre;
                     document.getElementById('role-display').innerText = user.rol;
-                    if(user.rol === 'Tallerista') { document.getElementById('menu-admin-only').style.display = 'none'; cambiarSeccion('asistencias'); }
-                    else { cambiarSeccion('nuevas'); }
-                } else { alert("Acceso denegado"); }
-            } catch (e) { alert("Error de conexión"); }
-            btn.innerText = "ENTRAR";
+                    
+                    if(user.rol === 'Tallerista') { 
+                        document.getElementById('menu-admin-only').style.display = 'none'; 
+                        cambiarSeccion('asistencias'); 
+                    } else { 
+                        cambiarSeccion('nuevas'); 
+                    }
+                } else { 
+                    alert("Tu correo validado (" + emailVerificado + ") no está dado de alta en la base de datos de usuarios del sistema.");
+                    document.getElementById('login-msg').innerText = "";
+                }
+            } catch (e) { 
+                alert("Error de conexión al servidor."); 
+                document.getElementById('login-msg').innerText = "";
+            }
         }
 
         function cambiarSeccion(sec) {
