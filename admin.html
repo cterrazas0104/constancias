@@ -239,7 +239,7 @@
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                 
                 <div style="font-size: 0.95em; color: #666; text-align: left; padding-left: 10px;">
-                    <p><b>Versión:</b> 1.5 (Build Final - 2026)</p>
+                    <p><b>Versión:</b> 1.6 (Build Normativo - 2026)</p>
                     <p><b>Arquitectura:</b> Ecosistema Serverless y PWA</p>
                     <p><b>Cumplimiento Normativo:</b> Arts. 17, 32, 34 y 50 (SSTI-SF)</p>
                 </div>
@@ -299,6 +299,10 @@
                         cambiarSeccion('asistencias'); 
                     } else { 
                         cambiarSeccion('nuevas'); 
+                        
+                        // 🟢 ¡AQUÍ ESTÁ LA MAGIA DEL AUTO-REFRESH! 🟢
+                        // Esto hace que el panel lea los datos nuevos cada 30 segundos de forma invisible
+                        setInterval(cargarDatos, 30000);
                     }
                 } else { 
                     alert("Tu correo validado (" + emailVerificado + ") no está dado de alta en la base de datos de usuarios del sistema.");
@@ -329,13 +333,20 @@
         }
 
         function renderizarTablas() {
+            // El filtro para las nuevas solicitudes requiere que "validado" esté completamente vacío
             const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
             const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
             const terminados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8); 
             const rechazados = inscritosGlobal.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
 
+            // 🟢 LÓGICA DE LA BURBUJITA ROJA (BADGE) 🟢
             const badge = document.getElementById('badge-nuevas');
-            if(nuevas.length > 0) { badge.innerText = nuevas.length; badge.style.display = 'block'; } else { badge.style.display = 'none'; }
+            if(nuevas.length > 0) { 
+                badge.innerText = nuevas.length; 
+                badge.style.display = 'block'; 
+            } else { 
+                badge.style.display = 'none'; 
+            }
             
             document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `<tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
             document.getElementById('body-activos').innerHTML = activos.map(al => `<tr><td>${al.folio}</td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><b>${al.asistencias || 0} / 8</b></td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'activo')">Ver Detalle</button></td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center">No hay alumnos activos</td></tr>';
