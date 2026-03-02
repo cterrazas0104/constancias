@@ -509,14 +509,18 @@
 
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
+            // Lógica visual: Si está vacío, mostramos un relojito de arena
+            const textoSede = al.lugar ? al.lugar : '<span style="color:#e67e22; font-weight:bold;">⏳ Calculando asignación...</span>';
+            const textoHorario = al.dia ? `${al.dia} - ${al.horario}` : '<span style="color:#e67e22;">⏳ Procesando...</span>';
+
             let contenido = `
                 <div class="data-grid">
                     <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
                     <div class="data-item"><label>Estatus</label><span>${al.estatus || 'PENDIENTE'}</span></div>
                     <div class="data-item full-width"><label>Nombre Completo</label><span>${al.nombres} ${al.paterno} ${al.materno}</span></div>
                     <div class="data-item full-width"><label>Taller</label><span>${al.taller}</span></div>
-                    <div class="data-item"><label>Sede</label><span>${al.lugar || 'No asignada'}</span></div>
-                    <div class="data-item"><label>Horario</label><span>${al.dia || ''} - ${al.horario || ''}</span></div>
+                    <div class="data-item"><label>Sede</label><span>${textoSede}</span></div>
+                    <div class="data-item"><label>Horario</label><span>${textoHorario}</span></div>
             `;
             if((tipo === 'terminado' || tipo === 'graduado') && al.encuesta_fecha) {
                 contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
@@ -527,10 +531,22 @@
             let botonesFooter = '';
 
             if(tipo === 'validar') {
-                botonesFooter = `
-                    <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
-                    <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
-                `;
+                // BLOQUEO DE SEGURIDAD: Si no hay sede asignada aún, bloqueamos la aprobación
+                if (!al.lugar || al.lugar.trim() === "") {
+                    botonesFooter = `
+                        <div style="background: #fff4e6; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 10px; font-size: 0.85em; color: #d35400;">
+                            <b>El sistema maestro está asignando la Sede y Horario en la nube.</b><br>Por favor, cierre esta ventana y espere unos segundos para poder aprobar.
+                        </div>
+                        <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR SOLICITUD</button>
+                        <button class="btn-primary" onclick="cerrarModal()">CERRAR Y ESPERAR</button>
+                    `;
+                } else {
+                    // Si ya tiene sede, mostramos los botones normales
+                    botonesFooter = `
+                        <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
+                        <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
+                    `;
+                }
             } else {
                 if (tipo === 'terminado' || tipo === 'graduado') {
                     botonesFooter += `
@@ -548,6 +564,10 @@
                 }
                 botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
             }
+
+            document.getElementById('modal-footer').innerHTML = botonesFooter;
+            document.getElementById('modal-detalle').style.display = 'flex';
+        }
 
             document.getElementById('modal-footer').innerHTML = botonesFooter;
             document.getElementById('modal-detalle').style.display = 'flex';
