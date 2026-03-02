@@ -299,10 +299,7 @@
                         cambiarSeccion('asistencias'); 
                     } else { 
                         cambiarSeccion('nuevas'); 
-                        
-                        // 🟢 ¡AQUÍ ESTÁ LA MAGIA DEL AUTO-REFRESH! 🟢
-                        // Esto hace que el panel lea los datos nuevos cada 30 segundos de forma invisible
-                        setInterval(cargarDatos, 30000);
+                        setInterval(cargarDatos, 30000); // El Refresh automático
                     }
                 } else { 
                     alert("Tu correo validado (" + emailVerificado + ") no está dado de alta en la base de datos de usuarios del sistema.");
@@ -333,19 +330,19 @@
         }
 
         function renderizarTablas() {
-            // El filtro para las nuevas solicitudes requiere que "validado" esté completamente vacío
             const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
             const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
             const terminados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8); 
             const rechazados = inscritosGlobal.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
 
-            // 🟢 LÓGICA DE LA BURBUJITA ROJA (BADGE) 🟢
             const badge = document.getElementById('badge-nuevas');
-            if(nuevas.length > 0) { 
-                badge.innerText = nuevas.length; 
-                badge.style.display = 'block'; 
-            } else { 
-                badge.style.display = 'none'; 
+            if (badge) {
+                if (nuevas.length > 0) { 
+                    badge.innerText = nuevas.length; 
+                    badge.style.display = 'inline-block'; 
+                } else { 
+                    badge.style.display = 'none'; 
+                }
             }
             
             document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `<tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
@@ -509,7 +506,6 @@
 
             document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
-            // Lógica visual: Si está vacío, mostramos un relojito de arena
             const textoSede = al.lugar ? al.lugar : '<span style="color:#e67e22; font-weight:bold;">⏳ Calculando asignación...</span>';
             const textoHorario = al.dia ? `${al.dia} - ${al.horario}` : '<span style="color:#e67e22;">⏳ Procesando...</span>';
 
@@ -531,7 +527,6 @@
             let botonesFooter = '';
 
             if(tipo === 'validar') {
-                // BLOQUEO DE SEGURIDAD: Si no hay sede asignada aún, bloqueamos la aprobación
                 if (!al.lugar || al.lugar.trim() === "") {
                     botonesFooter = `
                         <div style="background: #fff4e6; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 10px; font-size: 0.85em; color: #d35400;">
@@ -541,7 +536,6 @@
                         <button class="btn-primary" onclick="cerrarModal()">CERRAR Y ESPERAR</button>
                     `;
                 } else {
-                    // Si ya tiene sede, mostramos los botones normales
                     botonesFooter = `
                         <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
                         <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
@@ -564,10 +558,6 @@
                 }
                 botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
             }
-
-            document.getElementById('modal-footer').innerHTML = botonesFooter;
-            document.getElementById('modal-detalle').style.display = 'flex';
-        }
 
             document.getElementById('modal-footer').innerHTML = botonesFooter;
             document.getElementById('modal-detalle').style.display = 'flex';
