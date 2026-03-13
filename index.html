@@ -192,99 +192,36 @@
     </div>
 
     <script>
-        const WEBHOOK_URL = 'https://hook.us2.make.com/7zxqsk1gjtjjz4qux7rzfq5337y0ab4n';
+        // 🚀 URL DIRECTA A GOOGLE APPS SCRIPT (Reemplaza a Make)
+        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec'; 
         let estaEnviando = false;
 
         // --- DATOS DE LOS TALLERES (SIN HORARIOS) ---
         const INFO_TALLERES = [
-            {
-                nombre: "Conductas de riesgo de la vida familiar (El poder de la familia)",
-                obj: "Brindar herramientas a padres, madres, tutores y cuidadores para ejercer la crianza de manera respetuosa, mientras detectan conductas y factores de riesgo para el consumo de sustancias y problemas de salud mental que pueden afectar la vida familiar.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Conductas de riesgo", "Depresión", "Ansiedad", "Consumo de sustancias", "Autoestima", "Manejo de emociones"]
-            },
-            {
-                nombre: "Solución de Conflictos en Procesos de Separación o Divorcio",
-                obj: "Facilitar un espacio de reflexión sobre las diferentes formas de interacción en el espacio familiar que facilite a los participantes, el desarrollo de habilidades de comunicación.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Teoría del conflicto", "Mecanismos de solución", "Habilidades de mediación", "Modelo de policía de proximidad"]
-            },
-            {
-                nombre: "Competencias Parentales",
-                obj: "Brindar herramientas para llevar responsabilidad asertiva y poder acompañar, proteger y crear un espacio seguro para sus hijos.",
-                sede: "Psyque IAP (Circuito Universitario)",
-                temas: ["Padres responsables", "Apego seguro", "Violencia familiar", "Inteligencia emocional", "Manejo de estrés", "Maltrato infantil"]
-            },
-            {
-                nombre: "Herramientas para la crianza con hijos adolescentes",
-                obj: "Ofrecer un espacio de aprendizaje, diálogo y reflexión, desde el cual, madres, padres y cuidadores de adolescentes puedan sensibilizarse en temas de familia y crianza, facilitando la responsabilidad en la paternidad, prevención y solución de conflictos. Así como fomentar el desarrollo de herramientas que impulsen la construcción de vínculos familiares positivos para el adecuado desarrollo del adolescente.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Responsabilidades parentales", "Adolescente y familia", "Crianza positiva", "Autocuidado", "Delitos Cibernéticos", "Manejo de conflictos"]
-            },
-            {
-                nombre: "¿Qué le falta a tu casa?",
-                obj: "Mejorar la convivencia entre padres e hijos; fortalecer creencias, valores y hábitos que ayuden en la formación de estilos de vida saludables y prevenir el consumo de alcohol, tabaco y otras drogas.",
-                sede: "Se confirma al inscribirse.",
-                temas: ["Valores", "Comunicación", "Expresión de sentimientos", "Supervisión", "Normas y reglas", "Factores protectores"]
-            },
-            {
-                nombre: "Espacios de hombres: responsabilidad, poder y vínculos",
-                obj: "Confrontar a los participantes acerca de su responsabilidad en las conductas violentas ejercidas hacia mujeres, hijas e hijos, utilizando como marco las Siete P’s de la violencia masculina de Michael Kaufman, la metodología confrontativa del modelo CECEVIM y los recursos reflexivos del Instituto WEM, con el fin de deconstruir patrones de violencia, reconocer privilegios, aprender a gestionar emociones y construir nuevas formas de masculinidad responsable, corresponsable y cuidadora.             ***TALLER EXCLUSIVO PARA HOMBRES***",
-                sede: "Invierno 89, Col. España",
-                temas: ["Violencia y consecuencias", "Masculinidad y poder", "Las 7 P's de la violencia", "Sexualidad sin violencia", "Autocontrol"]
-            },
-            {
-                nombre: "Crianza Afectiva (Escuela de las Familias)",
-                obj: "Promover contextos familiares afectivos y libres de violencia, promoviendo dinámicas familiares sanas y el fortalecimiento de los vínculos afectivos.",
-                sede: "Salón Adulto Mayor (Quintas del Marqués)",
-                temas: ["Mirada al interior", "Inteligencia emocional", "Heridas de infancia", "Autoestima familiar", "Estilos de crianza", "Lenguajes del amor"]
-            },
-            {
-                nombre: "Cerrando para Sanar (Reingeniería Familiar)",
-                obj: "Brindar un espacio de contención y orientación que contribuya a la reducción de la tensión emocional, a fin de propiciar la disminución del impacto de la separación o divorcio en el desarrollo psicoemocional de los niños, niñas, adolescentes y jóvenes; brindando herramientas a las personas involucradas para fortalecer sus vínculos y realizar su función educativa de forma afectiva y asertiva.",
-                sede: "Salón Adulto Mayor (Quintas del Marqués)",
-                temas: ["Impacto de la separación", "Duelo", "El perdón", "Autoestima familiar", "Estilos de crianza", "Acuerdos para el bienestar"]
-            },
-            {
-                nombre: "Relaciones Familiares Sanas",
-                obj: "Facilitar un espacio de reflexión sobre las diferentes formas de interacción en la familia que posibilite a los participantes el desarrollo de habilidades de comunicación, así como la obtención de herramientas que les permita mejorar sus relaciones dentro de su círculo familiar.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Tipos de familia", "Dinámica familiar", "Violencia", "Comunicación asertiva", "Emociones", "Parentalidad positiva"]
-            },
-            {
-                nombre: "Vida, Estrés y Crianza (Democratización de las familias)",
-                obj: "Crear un espacio de escucha para padres y madres por medio de un taller psicoeducativo que les brinde herramientas/técnicas/recursos donde se aborde el estrés parental y puedan reflexionar sobre cómo influye en su rol como cuidadores, cómo disminuirlo y/o cómo afrontarlo en beneficio de sí mismos y en relación con sus hijos.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Expectativas vs Realidad", "¿Qué es el estrés?", "Límites claros", "Crianza positiva", "Vínculo parental", "Culpa y duelo"]
-            },
-            {
-                nombre: "Habilidades de Crianza para Cuidadores de Niñas, Niños y/o Adolescentes",
-                obj: "Facilitar un espacio de reflexión sobre las diferentes formas de interacción en la familia que posibilite a los participantes el desarrollo de habilidades de comunicación, así como la obtención de herramientas que les permita mejorar sus relaciones dentro de su círculo familiar.",
-                sede: "Centro Cultural Manuel Gómez Morín",
-                temas: ["Cuidados de NNA", "Buen trato", "Resiliencia", "Maltrato infantil", "Apego", "Competencias parentales"]
-            },
-            {
-                nombre: "Vivir sin Violencia y en Igualdad: herramientas para la vida cotidiana.",
-                obj: "Brindar a las personas participantes herramientas sencillas y claras para comprender la igualdad y la violencia de género desde la vida cotidiana, identificar situaciones de riesgo, fortalecer el autocuidado y promover relaciones más respetuosas, corresponsables y libres de violencia, tanto en el ámbito de pareja, como en el familiar en la comunidad.    ***TALLER EXCLUSIVO PARA MUJERES***",
-                sede: "Se confirma al inscribirse.",
-                temas: ["ABC de género", "Igualdad y no discriminación", "Tipos de violencia", "Amor romántico vs real", "Violencia sexual", "Masculinidades positivas"]
-            }
+            { nombre: "Conductas de riesgo de la vida familiar (El poder de la familia)", obj: "Brindar herramientas...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Conductas de riesgo", "Depresión", "Ansiedad", "Consumo de sustancias", "Autoestima", "Manejo de emociones"] },
+            { nombre: "Solución de Conflictos en Procesos de Separación o Divorcio", obj: "Facilitar un espacio...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Teoría del conflicto", "Mecanismos de solución", "Habilidades de mediación", "Modelo de policía de proximidad"] },
+            { nombre: "Competencias Parentales", obj: "Brindar herramientas...", sede: "Psyque IAP (Circuito Universitario)", temas: ["Padres responsables", "Apego seguro", "Violencia familiar", "Inteligencia emocional", "Manejo de estrés", "Maltrato infantil"] },
+            { nombre: "Herramientas para la crianza con hijos adolescentes", obj: "Ofrecer un espacio...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Responsabilidades parentales", "Adolescente y familia", "Crianza positiva", "Autocuidado", "Delitos Cibernéticos", "Manejo de conflictos"] },
+            { nombre: "¿Qué le falta a tu casa?", obj: "Mejorar la convivencia...", sede: "Se confirma al inscribirse.", temas: ["Valores", "Comunicación", "Expresión de sentimientos", "Supervisión", "Normas y reglas", "Factores protectores"] },
+            { nombre: "Espacios de hombres: responsabilidad, poder y vínculos", obj: "Confrontar a los participantes...", sede: "Invierno 89, Col. España", temas: ["Violencia y consecuencias", "Masculinidad y poder", "Las 7 P's de la violencia", "Sexualidad sin violencia", "Autocontrol"] },
+            { nombre: "Crianza Afectiva (Escuela de las Familias)", obj: "Promover contextos familiares...", sede: "Salón Adulto Mayor (Quintas del Marqués)", temas: ["Mirada al interior", "Inteligencia emocional", "Heridas de infancia", "Autoestima familiar", "Estilos de crianza", "Lenguajes del amor"] },
+            { nombre: "Cerrando para Sanar (Reingeniería Familiar)", obj: "Brindar un espacio de contención...", sede: "Salón Adulto Mayor (Quintas del Marqués)", temas: ["Impacto de la separación", "Duelo", "El perdón", "Autoestima familiar", "Estilos de crianza", "Acuerdos para el bienestar"] },
+            { nombre: "Relaciones Familiares Sanas", obj: "Facilitar un espacio de reflexión...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Tipos de familia", "Dinámica familiar", "Violencia", "Comunicación asertiva", "Emociones", "Parentalidad positiva"] },
+            { nombre: "Vida, Estrés y Crianza (Democratización de las familias)", obj: "Crear un espacio de escucha...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Expectativas vs Realidad", "¿Qué es el estrés?", "Límites claros", "Crianza positiva", "Vínculo parental", "Culpa y duelo"] },
+            { nombre: "Habilidades de Crianza para Cuidadores de Niñas, Niños y/o Adolescentes", obj: "Facilitar un espacio de reflexión...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Cuidados de NNA", "Buen trato", "Resiliencia", "Maltrato infantil", "Apego", "Competencias parentales"] },
+            { nombre: "Vivir sin Violencia y en Igualdad: herramientas para la vida cotidiana.", obj: "Brindar a las personas...", sede: "Se confirma al inscribirse.", temas: ["ABC de género", "Igualdad y no discriminación", "Tipos de violencia", "Amor romántico vs real", "Violencia sexual", "Masculinidades positivas"] }
         ];
 
         // --- LÓGICA DEL CATÁLOGO ---
         function abrirCatalogoTalleres() {
             const contenedor = document.getElementById('listaTalleres');
-            
-            // Si está vacío, lo llenamos (solo la primera vez)
             if (contenedor.innerHTML.trim() === "") {
                 INFO_TALLERES.forEach((t, index) => {
                     let temasHtml = t.temas.map(tema => `<li>${tema}</li>`).join('');
-                    
                     let html = `
                         <div class="accordion-item">
                             <div class="accordion-header" onclick="toggleAcordeon(${index})">
-                                <span>${t.nombre}</span>
-                                <span>▼</span>
+                                <span>${t.nombre}</span><span>▼</span>
                             </div>
                             <div class="accordion-content" id="content-${index}">
                                 <p><strong>Objetivo:</strong> ${t.obj}</p>
@@ -292,8 +229,7 @@
                                 <p><strong>Temáticas principales:</strong></p>
                                 <ul class="list-temas">${temasHtml}</ul>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     contenedor.innerHTML += html;
                 });
             }
@@ -302,20 +238,16 @@
 
         function toggleAcordeon(index) {
             const content = document.getElementById(`content-${index}`);
-            if (content.style.display === "block") {
-                content.style.display = "none";
-            } else {
-                // Cerrar los demás primero (opcional, para limpieza visual)
+            if (content.style.display === "block") content.style.display = "none";
+            else {
                 document.querySelectorAll('.accordion-content').forEach(el => el.style.display = 'none');
                 content.style.display = "block";
             }
         }
 
-        function cerrarCatalogo() {
-            document.getElementById('modalCatalogo').style.display = 'none';
-        }
+        function cerrarCatalogo() { document.getElementById('modalCatalogo').style.display = 'none'; }
 
-        // --- LÓGICA ORIGINAL DEL FORMULARIO ---
+        // --- LÓGICA DEL FORMULARIO ---
         function confirmarPrivacidad() {
             document.getElementById('miModal').style.display = 'none';
             document.getElementById('privacidadAceptada').value = "true";
@@ -325,14 +257,12 @@
         async function cargarTalleres() {
             const select = document.getElementById('taller');
             try {
-                // Aquí seguimos cargando del Webhook para asegurar que coincida con la base de datos
-                const res = await fetch(`${WEBHOOK_URL}?accion=listar`);
+                // 🟢 LEER TALLERES DIRECTO DE GOOGLE
+                const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres`);
                 const data = await res.json();
-                const talleres = data.map(item => {
-                    if (!item) return null;
-                    const valores = Object.values(item);
-                    return valores.find(v => typeof v === 'string' && v.length > 10);
-                }).filter(t => t);
+                
+                // Extraer solo los nombres de los talleres activos
+                const talleres = data.map(item => item.nombre).filter(t => t);
                 
                 select.innerHTML = '<option value="">Seleccione el taller...</option>';
                 [...new Set(talleres)].forEach(nombre => {
@@ -366,19 +296,19 @@
             if (estaEnviando) return;
             estaEnviando = true;
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "ENVIANDO..."; 
+            btn.innerText = "PROCESANDO SOLICITUD..."; // Mensaje más descriptivo
+            btn.style.background = "#aaa";
             btn.disabled = true;
 
-            // SE AGREGÓ: Conversión a mayúsculas al leer "canalizaOtro"
             let canalizaVal = document.getElementById('canaliza').value;
             if (canalizaVal === 'Otros') canalizaVal = document.getElementById('canalizaOtro').value.trim().toUpperCase();
 
             const curpVal = document.getElementById('curp').value.trim().toUpperCase();
             const sexoExtraido = curpVal.length >= 11 ? curpVal.charAt(10) : "N/A";
 
-            // SE AGREGÓ: .toUpperCase() a los valores antes de mandarlos
             const datos = {
-                correo_electronico: document.getElementById('correo').value.trim().toLowerCase(), // Correo siempre en minúscula
+                accion: 'nueva_inscripcion', // 🟢 LLAVE QUE ACTIVA EL SCRIPT EN GOOGLE
+                correo_electronico: document.getElementById('correo').value.trim().toLowerCase(),
                 nombres: document.getElementById('nombre').value.trim().toUpperCase(),
                 paterno: document.getElementById('paterno').value.trim().toUpperCase(),
                 materno: document.getElementById('materno').value.trim().toUpperCase(),
@@ -392,9 +322,10 @@
             };
 
             try {
-                const response = await fetch(WEBHOOK_URL, {
+                // 🟢 ENVÍO DIRECTO A GOOGLE APPS SCRIPT
+                const response = await fetch(URL_APPS_SCRIPT, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Truco anti-CORS de Google
                     body: JSON.stringify(datos)
                 });
 
@@ -406,6 +337,7 @@
                 alert("Error al enviar. Por favor intente de nuevo."); 
                 estaEnviando = false;
                 btn.disabled = false; 
+                btn.style.background = "var(--primary-purple)";
                 btn.innerText = "Realizar Inscripción"; 
             }
         }
