@@ -671,11 +671,13 @@
             } catch(e) { alert("Error"); btn.disabled = false; }
         }
 
+        // --- 🟢 SE ACTUALIZÓ ESTA FUNCIÓN ---
         async function obtenerDatosCatalogos() {
             const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres&t=${new Date().getTime()}`);
             const data = await res.json();
             
-            document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `<tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td>${item.impartido_por || '-'}</td><td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td><td><button class="btn-action">Alternar</button></td></tr>`).join('');
+            // Aquí agregué el onclick="alternarTaller(...)" al botón de la tabla
+            document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `<tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td>${item.impartido_por || '-'}</td><td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td><td><button class="btn-action" onclick="alternarTaller('${item.estatus}', ${idx + 2})">Alternar</button></td></tr>`).join('');
 
             const talleresActivos = data.filter(t => t.estatus === 'ACTIVO');
             const institucionesUnicas = new Set();
@@ -688,6 +690,31 @@
 
             const elStat = document.getElementById('stat-inst');
             if (elStat) elStat.innerText = institucionesUnicas.size;
+        }
+
+        // --- 🟢 NUEVA FUNCIÓN PARA COMUNICARSE CON GOOGLE APPS SCRIPT ---
+        async function alternarTaller(estatusActual, filaExcel) {
+            const nuevoEstatus = (estatusActual === 'ACTIVO') ? 'INACTIVO' : 'ACTIVO';
+            
+            if(!confirm(`¿Deseas cambiar el estatus del taller a ${nuevoEstatus}?`)) return;
+
+            try {
+                // Enviamos la petición directa al Apps Script
+                await fetch(URL_APPS_SCRIPT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        accion_admin: 'actualizar',
+                        fila: filaExcel,
+                        estatus: nuevoEstatus
+                    })
+                });
+                
+                // Recargamos la tablita para que se vea el cambio
+                obtenerDatosCatalogos();
+            } catch(e) {
+                alert("Hubo un error al intentar actualizar el taller.");
+            }
         }
 
         function cerrarModal() { document.getElementById('modal-detalle').style.display = 'none'; }
