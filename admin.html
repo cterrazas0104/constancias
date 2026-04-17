@@ -539,7 +539,45 @@ function abrirExpediente(folio, tipo) {
     contenido += `</div>`;
     document.getElementById('modal-contenido').innerHTML = contenido;
 
-    // ... (el resto del código de los botones del footer se queda igual que antes)
+    let botonesFooter = '';
+
+    if(tipo === 'validar') {
+        if (!al.lugar || al.lugar.trim() === "") {
+            botonesFooter = `
+                <div style="background: #fff4e6; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 10px; font-size: 0.85em; color: #d35400;">
+                    <b>El sistema maestro está asignando la Sede y Horario en la nube.</b><br>Por favor, cierre esta ventana y espere unos segundos para poder aprobar.
+                </div>
+                <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR SOLICITUD</button>
+                <button class="btn-primary" onclick="cerrarModal()">CERRAR Y ESPERAR</button>
+            `;
+        } else {
+            botonesFooter = `
+                <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
+                <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
+            `;
+        }
+    } else {
+        if (tipo === 'terminado' || tipo === 'graduado') {
+            botonesFooter += `
+                <button class="btn-action" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarFinal('${al.folio}')">
+                    🎓 REENVIAR DIPLOMA FINAL
+                </button>
+            `;
+        } 
+        else if (al.validado === 'Sí') {
+            botonesFooter += `
+                <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarInscripcion('${al.folio}')">
+                    📄 REENVIAR CONSTANCIA INSCRIPCIÓN
+                </button>
+            `;
+        }
+        botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
+    }
+
+    document.getElementById('modal-footer').innerHTML = botonesFooter;
+    
+    // ESTA ES LA INSTRUCCIÓN VITAL QUE SE HABÍA BORRADO:
+    document.getElementById('modal-detalle').style.display = 'flex';
 }
 
         async function procesarValidacion(folio, decision) {
