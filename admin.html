@@ -196,6 +196,19 @@
 
             <div id="sec-stats" class="content-section" style="display:none;">
                 <h1>📈 Inteligencia de Datos</h1>
+                
+                <div style="background:white; padding:20px; border-radius:12px; border-left: 5px solid var(--primary); margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex-grow: 1;">
+                        <label style="font-weight:bold; color:var(--primary); display:block; margin-bottom:5px;">📅 Seleccionar Mes de Reporte:</label>
+                        <select id="filtro-mes-stats" onchange="procesarEstadisticasMensuales()" style="margin-top:0;">
+                            <option value="GLOBAL">-- TODO EL HISTÓRICO --</option>
+                        </select>
+                    </div>
+                    <div id="resumen-mes-badge" style="background: var(--bg); padding: 10px 20px; border-radius: 8px; font-weight: bold; color: var(--primary); display:none;">
+                        Mostrando: <span id="label-mes-activo">Global</span>
+                    </div>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-card"><h3 id="stat-total">0</h3><p>Inscritos</p></div>
                     <div class="stat-card"><h3 id="stat-pend">0</h3><p>Pendientes</p></div>
@@ -210,9 +223,22 @@
                 <div class="table-card" style="padding:20px; margin-bottom: 20px;">
                     <canvas id="canvasStats" style="max-height: 280px;"></canvas>
                 </div>
+
                 <div class="table-card">
-                    <h2 style="padding: 20px 20px 0; margin:0;">Rendimiento por Taller</h2>
-                    <table><thead><tr><th>Taller</th><th style="text-align:center;">Inscritos</th><th style="text-align:center; color:var(--man);">H</th><th style="text-align:center; color:var(--woman);">M</th><th style="text-align:center;">Terminados</th><th style="text-align:center;">% Éxito</th></tr></thead><tbody id="body-stats-taller"></tbody></table>
+                    <h2 style="padding: 20px 20px 0; margin:0;">Desglose Detallado por Taller <span id="titulo-tabla-mes" style="font-size: 0.6em; color: gray;">(Global)</span></h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Taller</th>
+                                <th style="text-align:center;">Inscritos</th>
+                                <th style="text-align:center; color:var(--man);">Hombres</th>
+                                <th style="text-align:center; color:var(--woman);">Mujeres</th>
+                                <th style="text-align:center;">Terminados</th>
+                                <th style="text-align:center;">% Éxito</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-stats-taller"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -329,7 +355,92 @@
             renderizarTablas();
         }
 
+        // --- 🟢 NUEVA LÓGICA DE RENDERIZADO Y ESTADÍSTICAS ---
         function renderizarTablas() {
+            const selectorMes = document.getElementById('filtro-mes-stats');
+            if (selectorMes && selectorMes.options.length === 1) {
+                const mesesDisponibles = [...new Set(inscritosGlobal.map(al => {
+                    const fecha = new Date(al.fecha_registro);
+                    return isNaN(fecha) ? null : `${fecha.getFullYear()}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
+                }))].filter(m => m).sort().reverse();
+
+                const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                
+                mesesDisponibles.forEach(m => {
+                    const [year, month] = m.split("-");
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = `${nombresMeses[parseInt(month) - 1]} ${year}`;
+                    selectorMes.appendChild(opt);
+                });
+            }
+            procesarEstadisticasMensuales();
+        }
+
+        function procesarEstadisticasMensuales() {
+            const mesSeleccionado = document.getElementById('filtro-mes-stats').value;
+            const labelMes = document.getElementById('label-mes-activo');
+            const badgeMes = document.getElementById('resumen-mes-badge');
+            const tituloTabla = document.getElementById('titulo-tabla-mes');
+
+            let datosFiltrados = inscritosGlobal;
+            if (mesSeleccionado !== "GLOBAL") {
+                datosFiltrados = inscritosGlobal.filter(al => {
+                    const fecha = new Date(al.fecha_registro);
+                    const mesFila = `${fecha.getFullYear()}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
+                    return mesFila === mesSeleccionado;
+                });
+                labelMes.innerText = document.getElementById('filtro-mes-stats').selectedOptions[0].text;
+                badgeMes.style.display = "block";
+                tituloTabla.innerText = `(${document.getElementById('filtro-mes-stats').selectedOptions[0].text})`;
+            } else {
+                badgeMes.style.display = "none";
+                tituloTabla.innerText = "(Histórico Global)";
+            }
+
+            const nuevas = datosFiltrados.filter(al => !al.validado || al.validado === "");
+            const activos = datosFiltrados.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
+            const terminados = datosFiltrados.filter(al => parseInt(al.asistencias || 0) >= 8); 
+            const rechazados = datosFiltrados.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
+
+            document.getElementById('stat-total').innerText = datosFiltrados.length;
+            document.getElementById('stat-pend').innerText = nuevas.length;
+            document.getElementById('stat-cursando').innerText = activos.length;
+            document.getElementById('stat-term').innerText = terminados.filter(g => g.estatus === "Evaluación Recibida").length;
+            document.getElementById('stat-rech').innerText = rechazados.length;
+            document.getElementById('stat-hombres').innerText = datosFiltrados.filter(al => al.sexo === 'H').length;
+            document.getElementById('stat-mujeres').innerText = datosFiltrados.filter(al => al.sexo === 'M').length;
+
+            dibujarGrafica(nuevas.length, activos.length, terminados.length, rechazados.length);
+            
+            const talleresUnicos = [...new Set(datosFiltrados.map(al => al.taller))];
+            document.getElementById('body-stats-taller').innerHTML = talleresUnicos.map(t => {
+                const porTaller = datosFiltrados.filter(al => al.taller === t);
+                const grads = porTaller.filter(al => parseInt(al.asistencias || 0) >= 8 && al.estatus === "Evaluación Recibida").length;
+                const hombres = porTaller.filter(al => al.sexo === 'H').length;
+                const mujeres = porTaller.filter(al => al.sexo === 'M').length;
+                const porc = porTaller.length > 0 ? Math.round((grads / porTaller.length) * 100) : 0;
+                
+                return `<tr>
+                    <td>${t}</td>
+                    <td style="text-align:center"><b>${porTaller.length}</b></td>
+                    <td style="text-align:center; color:var(--man); font-weight:bold;">${hombres}</td>
+                    <td style="text-align:center; color:var(--woman); font-weight:bold;">${mujeres}</td>
+                    <td style="text-align:center">${grads}</td>
+                    <td style="text-align:center"><b>${porc}%</b></td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="6" style="text-align:center">Sin datos en este periodo</td></tr>';
+
+            const talleresActivos = datosFiltrados.filter(t => t.estatus !== 'INACTIVO');
+            const institucionesUnicas = new Set();
+            talleresActivos.forEach(t => { if (t.impartido_por) institucionesUnicas.add(t.impartido_por.trim()); });
+            const elStat = document.getElementById('stat-inst');
+            if (elStat) elStat.innerText = institucionesUnicas.size;
+
+            renderizarTablasGestionAdmin(); 
+        }
+
+        function renderizarTablasGestionAdmin() {
             const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
             const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
             const terminados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8); 
@@ -337,12 +448,8 @@
 
             const badge = document.getElementById('badge-nuevas');
             if (badge) {
-                if (nuevas.length > 0) { 
-                    badge.innerText = nuevas.length; 
-                    badge.style.display = 'inline-block'; 
-                } else { 
-                    badge.style.display = 'none'; 
-                }
+                if (nuevas.length > 0) { badge.innerText = nuevas.length; badge.style.display = 'inline-block'; }
+                else { badge.style.display = 'none'; }
             }
             
             document.getElementById('body-nuevas').innerHTML = nuevas.map(al => `<tr><td><b>${al.folio}</b></td><td>${al.nombres} ${al.paterno}</td><td>${al.taller}</td><td><button class="btn-action" onclick="abrirExpediente('${al.folio}', 'validar')">Gestionar</button></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sin pendientes</td></tr>';
@@ -364,37 +471,10 @@
                 </tr>
             `).join('') || '<tr><td colspan="4" style="text-align:center">No hay registros rechazados</td></tr>';
 
-            document.getElementById('stat-total').innerText = inscritosGlobal.length;
-            document.getElementById('stat-pend').innerText = nuevas.length;
-            document.getElementById('stat-cursando').innerText = activos.length;
-            document.getElementById('stat-term').innerText = terminados.filter(g => g.estatus === "Evaluación Recibida").length;
-            document.getElementById('stat-rech').innerText = rechazados.length;
-            
-            document.getElementById('stat-hombres').innerText = inscritosGlobal.filter(al => al.sexo === 'H').length;
-            document.getElementById('stat-mujeres').innerText = inscritosGlobal.filter(al => al.sexo === 'M').length;
-
-            dibujarGrafica(nuevas.length, activos.length, terminados.length, rechazados.length);
-            
-            const talleresUnicos = [...new Set(inscritosGlobal.map(al => al.taller))];
-            document.getElementById('body-stats-taller').innerHTML = talleresUnicos.map(t => {
-                const porTaller = inscritosGlobal.filter(al => al.taller === t);
-                const grads = porTaller.filter(al => parseInt(al.asistencias || 0) >= 8 && al.estatus === "Evaluación Recibida").length;
-                const hombres = porTaller.filter(al => al.sexo === 'H').length;
-                const mujeres = porTaller.filter(al => al.sexo === 'M').length;
-                const porc = porTaller.length > 0 ? Math.round((grads / porTaller.length) * 100) : 0;
-                
-                return `<tr>
-                    <td>${t}</td>
-                    <td style="text-align:center"><b>${porTaller.length}</b></td>
-                    <td style="text-align:center; color:var(--man);">${hombres}</td>
-                    <td style="text-align:center; color:var(--woman);">${mujeres}</td>
-                    <td style="text-align:center">${grads}</td>
-                    <td style="text-align:center"><b>${porc}%</b></td>
-                </tr>`;
-            }).join('');
-
             if(usuarioLogueado.rol === 'Administrador') obtenerDatosCatalogos();
         }
+
+        // --- FUNCIONES RESTANTES ---
 
         function dibujarGrafica(p, c, g, r) {
             const ctx = document.getElementById('canvasStats').getContext('2d');
@@ -409,83 +489,83 @@
             });
         }
 
-function buscarHistorialCompleto() {
-    const term = document.getElementById('input-buscar-registro').value.trim().toUpperCase();
-    const resBox = document.getElementById('resultado-historial');
-    if(!term) return;
+        function buscarHistorialCompleto() {
+            const term = document.getElementById('input-buscar-registro').value.trim().toUpperCase();
+            const resBox = document.getElementById('resultado-historial');
+            if(!term) return;
 
-    const encontrados = inscritosGlobal.filter(al => 
-        (al.curp && al.curp.toUpperCase() === term) || 
-        `${al.nombres} ${al.paterno} ${al.materno}`.toUpperCase().includes(term)
-    );
+            const encontrados = inscritosGlobal.filter(al => 
+                (al.curp && al.curp.toUpperCase() === term) || 
+                `${al.nombres} ${al.paterno} ${al.materno}`.toUpperCase().includes(term)
+            );
 
-    if(encontrados.length === 0) {
-        resBox.innerHTML = `
-            <div style="background:#fff5f5; padding:20px; border-radius:8px; border-left:5px solid var(--danger);">
-                <h4 style="color:var(--danger); margin:0;">⚠️ Sin resultados</h4>
-                <p style="margin-top:5px; margin-bottom:0;">CURP o nombre no registrado en este sistema.</p>
-            </div>`;
-        return;
-    }
+            if(encontrados.length === 0) {
+                resBox.innerHTML = `
+                    <div style="background:#fff5f5; padding:20px; border-radius:8px; border-left:5px solid var(--danger);">
+                        <h4 style="color:var(--danger); margin:0;">⚠️ Sin resultados</h4>
+                        <p style="margin-top:5px; margin-bottom:0;">CURP o nombre no registrado en este sistema.</p>
+                    </div>`;
+                return;
+            }
 
-    let html = `<h3 style="color:var(--primary);">Registros encontrados (${encontrados.length})</h3>`;
-    
-    encontrados.forEach(al => {
-        let estadoBadge = "";
-        let colorBg = "#fff";
-        let borderColor = "#ddd";
-        let infoExtra = "";
-
-        if (al.validado === "No" || al.validado === "Rechazado") {
-            estadoBadge = "🚫 RECHAZADO";
-            colorBg = "#fff5f5"; borderColor = "var(--danger)";
-            infoExtra = `<p><b>Motivo del rechazo:</b> <span style="color:var(--danger);">${al.motivo || "No especificado"}</span></p>`;
-        } else if (!al.validado || al.validado === "") {
-            estadoBadge = "📩 PENDIENTE DE VALIDAR";
-            colorBg = "#f8f9fa";
-        } else if (parseInt(al.asistencias || 0) >= 8) {
-            estadoBadge = "🎓 TERMINADO";
-            colorBg = "#e6fcf5"; borderColor = "var(--secondary)";
-            infoExtra = `<p><b>Constancia Final Emitida:</b> ${al.encuesta_fecha ? "Sí, evaluación contestada" : "En espera de evaluación"}</p>`;
-        } else {
-            estadoBadge = "⏳ ACTIVO (EN CURSO)";
-            colorBg = "#eef2ff"; borderColor = "var(--primary)";
-            let fechas = al.fechas_asis && al.fechas_asis.length > 0 ? al.fechas_asis.join(", ") : "Aún no tiene asistencias";
-            infoExtra = `
-                <p><b>Asistencias acumuladas:</b> ${al.asistencias || 0} / 8</p>
-                <p><b>Fechas en las que asistió:</b> ${fechas}</p>
-            `;
-        }
-
-        html += `
-        <div style="background:${colorBg}; border:1px solid ${borderColor}; padding:20px; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding-bottom:10px; margin-bottom:10px;">
-                <span style="font-weight:bold; color:var(--text); font-size:1.1em;">${al.nombres} ${al.paterno} ${al.materno}</span>
-                <span style="font-weight:bold; color:${borderColor};">${estadoBadge}</span>
-            </div>
+            let html = `<h3 style="color:var(--primary);">Registros encontrados (${encontrados.length})</h3>`;
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.9em; margin-bottom:10px;">
-                <div><b>Folio:</b> ${al.folio}</div>
-                <div><b>CURP:</b> ${al.curp || "N/A"}</div>
-                <div style="grid-column: span 2;"><b>Taller:</b> ${al.taller}</div>
-            </div>
+            encontrados.forEach(al => {
+                let estadoBadge = "";
+                let colorBg = "#fff";
+                let borderColor = "#ddd";
+                let infoExtra = "";
 
-            <div style="background:#f0f4ff; padding:10px; border-radius:6px; font-size:0.85em; display:grid; grid-template-columns: 1fr 1fr; gap:5px; border:1px solid #d1d9e6;">
-                <div style="grid-column: span 2; border-bottom:1px solid #d1d9e6; margin-bottom:5px; font-weight:bold; color:var(--primary);">DATOS DE CONTACTO Y ORIGEN:</div>
-                <div><b>📧 Correo:</b> ${al.correo}</div>
-                <div><b>📱 Teléfono:</b> ${al.telefono}</div>
-                <div><b>⚖️ Canaliza:</b> ${al.canaliza}</div>
-                <div><b>📂 Expediente:</b> ${al.expediente} (Juzgado ${al.juzgado})</div>
-            </div>
+                if (al.validado === "No" || al.validado === "Rechazado") {
+                    estadoBadge = "🚫 RECHAZADO";
+                    colorBg = "#fff5f5"; borderColor = "var(--danger)";
+                    infoExtra = `<p><b>Motivo del rechazo:</b> <span style="color:var(--danger);">${al.motivo || "No especificado"}</span></p>`;
+                } else if (!al.validado || al.validado === "") {
+                    estadoBadge = "📩 PENDIENTE DE VALIDAR";
+                    colorBg = "#f8f9fa";
+                } else if (parseInt(al.asistencias || 0) >= 8) {
+                    estadoBadge = "🎓 TERMINADO";
+                    colorBg = "#e6fcf5"; borderColor = "var(--secondary)";
+                    infoExtra = `<p><b>Constancia Final Emitida:</b> ${al.encuesta_fecha ? "Sí, evaluación contestada" : "En espera de evaluación"}</p>`;
+                } else {
+                    estadoBadge = "⏳ ACTIVO (EN CURSO)";
+                    colorBg = "#eef2ff"; borderColor = "var(--primary)";
+                    let fechas = al.fechas_asis && al.fechas_asis.length > 0 ? al.fechas_asis.join(", ") : "Aún no tiene asistencias";
+                    infoExtra = `
+                        <p><b>Asistencias acumuladas:</b> ${al.asistencias || 0} / 8</p>
+                        <p><b>Fechas en las que asistió:</b> ${fechas}</p>
+                    `;
+                }
 
-            <div style="margin-top:10px; background:white; padding:10px; border-radius:6px; border:1px solid #eee; font-size:0.85em;">
-                ${infoExtra}
-            </div>
-        </div>`;
-    });
+                html += `
+                <div style="background:${colorBg}; border:1px solid ${borderColor}; padding:20px; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding-bottom:10px; margin-bottom:10px;">
+                        <span style="font-weight:bold; color:var(--text); font-size:1.1em;">${al.nombres} ${al.paterno} ${al.materno}</span>
+                        <span style="font-weight:bold; color:${borderColor};">${estadoBadge}</span>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.9em; margin-bottom:10px;">
+                        <div><b>Folio:</b> ${al.folio}</div>
+                        <div><b>CURP:</b> ${al.curp || "N/A"}</div>
+                        <div style="grid-column: span 2;"><b>Taller:</b> ${al.taller}</div>
+                    </div>
 
-    resBox.innerHTML = html;
-}
+                    <div style="background:#f0f4ff; padding:10px; border-radius:6px; font-size:0.85em; display:grid; grid-template-columns: 1fr 1fr; gap:5px; border:1px solid #d1d9e6;">
+                        <div style="grid-column: span 2; border-bottom:1px solid #d1d9e6; margin-bottom:5px; font-weight:bold; color:var(--primary);">DATOS DE CONTACTO Y ORIGEN:</div>
+                        <div><b>📧 Correo:</b> ${al.correo}</div>
+                        <div><b>📱 Teléfono:</b> ${al.telefono}</div>
+                        <div><b>⚖️ Canaliza:</b> ${al.canaliza}</div>
+                        <div><b>📂 Expediente:</b> ${al.expediente} (Juzgado ${al.juzgado})</div>
+                    </div>
+
+                    <div style="margin-top:10px; background:white; padding:10px; border-radius:6px; border:1px solid #eee; font-size:0.85em;">
+                        ${infoExtra}
+                    </div>
+                </div>`;
+            });
+
+            resBox.innerHTML = html;
+        }
 
         function buscarCodigos() {
             const folio = document.getElementById('input-search-folio').value.trim().toUpperCase();
@@ -508,78 +588,76 @@ function buscarHistorialCompleto() {
             `;
         }
 
-function abrirExpediente(folio, tipo) {
-    const al = inscritosGlobal.find(a => a.folio === folio);
-    if (!al) return;
+        function abrirExpediente(folio, tipo) {
+            const al = inscritosGlobal.find(a => a.folio === folio);
+            if (!al) return;
 
-    document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
-    
-    const textoSede = al.lugar ? al.lugar : '<span style="color:#e67e22; font-weight:bold;">⏳ Calculando asignación...</span>';
-    const textoHorario = al.dia ? `${al.dia} - ${al.horario}` : '<span style="color:#e67e22;">⏳ Procesando...</span>';
-
-    let contenido = `
-        <div class="data-grid">
-            <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
-            <div class="data-item"><label>Estatus</label><span>${al.estatus || 'PENDIENTE'}</span></div>
-            <div class="data-item full-width"><label>Nombre Completo</label><span>${al.nombres} ${al.paterno} ${al.materno}</span></div>
+            document.getElementById('modal-titulo').innerText = tipo === 'validar' ? "Validar Solicitud" : "Expediente del Beneficiario";
             
-            <div class="data-item"><label>Correo Electrónico</label><span>${al.correo}</span></div>
-            <div class="data-item"><label>Teléfono</label><span>${al.telefono}</span></div>
-            
-            <div class="data-item"><label>Canalizado por</label><span>${al.canaliza}</span></div>
-            <div class="data-item"><label>Expediente / Juzgado</label><span>${al.expediente} (Juzgado ${al.juzgado})</span></div>
+            const textoSede = al.lugar ? al.lugar : '<span style="color:#e67e22; font-weight:bold;">⏳ Calculando asignación...</span>';
+            const textoHorario = al.dia ? `${al.dia} - ${al.horario}` : '<span style="color:#e67e22;">⏳ Procesando...</span>';
 
-            <div class="data-item full-width"><label>Taller</label><span>${al.taller}</span></div>
-            <div class="data-item"><label>Sede</label><span>${textoSede}</span></div>
-            <div class="data-item"><label>Horario</label><span>${textoHorario}</span></div>
-    `;
-    if((tipo === 'terminado' || tipo === 'graduado') && al.encuesta_fecha) {
-        contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
-    }
-    contenido += `</div>`;
-    document.getElementById('modal-contenido').innerHTML = contenido;
+            let contenido = `
+                <div class="data-grid">
+                    <div class="data-item highlight"><label>Folio</label><span>${al.folio}</span></div>
+                    <div class="data-item"><label>Estatus</label><span>${al.estatus || 'PENDIENTE'}</span></div>
+                    <div class="data-item full-width"><label>Nombre Completo</label><span>${al.nombres} ${al.paterno} ${al.materno}</span></div>
+                    
+                    <div class="data-item"><label>Correo Electrónico</label><span>${al.correo}</span></div>
+                    <div class="data-item"><label>Teléfono</label><span>${al.telefono}</span></div>
+                    
+                    <div class="data-item"><label>Canalizado por</label><span>${al.canaliza}</span></div>
+                    <div class="data-item"><label>Expediente / Juzgado</label><span>${al.expediente} (Juzgado ${al.juzgado})</span></div>
 
-    let botonesFooter = '';
-
-    if(tipo === 'validar') {
-        if (!al.lugar || al.lugar.trim() === "") {
-            botonesFooter = `
-                <div style="background: #fff4e6; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 10px; font-size: 0.85em; color: #d35400;">
-                    <b>El sistema maestro está asignando la Sede y Horario en la nube.</b><br>Por favor, cierre esta ventana y espere unos segundos para poder aprobar.
-                </div>
-                <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR SOLICITUD</button>
-                <button class="btn-primary" onclick="cerrarModal()">CERRAR Y ESPERAR</button>
+                    <div class="data-item full-width"><label>Taller</label><span>${al.taller}</span></div>
+                    <div class="data-item"><label>Sede</label><span>${textoSede}</span></div>
+                    <div class="data-item"><label>Horario</label><span>${textoHorario}</span></div>
             `;
-        } else {
-            botonesFooter = `
-                <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
-                <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
-            `;
+            if((tipo === 'terminado' || tipo === 'graduado') && al.encuesta_fecha) {
+                contenido += `<div class="data-item full-width highlight">Resultados de Evaluación Respondida: ${al.encuesta_fecha}</div>`;
+            }
+            contenido += `</div>`;
+            document.getElementById('modal-contenido').innerHTML = contenido;
+
+            let botonesFooter = '';
+
+            if(tipo === 'validar') {
+                if (!al.lugar || al.lugar.trim() === "") {
+                    botonesFooter = `
+                        <div style="background: #fff4e6; border-left: 4px solid #e67e22; padding: 10px; margin-bottom: 10px; font-size: 0.85em; color: #d35400;">
+                            <b>El sistema maestro está asignando la Sede y Horario en la nube.</b><br>Por favor, cierre esta ventana y espere unos segundos para poder aprobar.
+                        </div>
+                        <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR SOLICITUD</button>
+                        <button class="btn-primary" onclick="cerrarModal()">CERRAR Y ESPERAR</button>
+                    `;
+                } else {
+                    botonesFooter = `
+                        <button class="btn-primary" onclick="procesarValidacion('${al.folio}', 'Sí')">✅ APROBAR</button>
+                        <button class="btn-danger" onclick="procesarValidacion('${al.folio}', 'No')">🚫 RECHAZAR</button>
+                    `;
+                }
+            } else {
+                if (tipo === 'terminado' || tipo === 'graduado') {
+                    botonesFooter += `
+                        <button class="btn-action" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarFinal('${al.folio}')">
+                            🎓 REENVIAR DIPLOMA FINAL
+                        </button>
+                    `;
+                } 
+                else if (al.validado === 'Sí') {
+                    botonesFooter += `
+                        <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarInscripcion('${al.folio}')">
+                            📄 REENVIAR CONSTANCIA INSCRIPCIÓN
+                        </button>
+                    `;
+                }
+                botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
+            }
+
+            document.getElementById('modal-footer').innerHTML = botonesFooter;
+            document.getElementById('modal-detalle').style.display = 'flex';
         }
-    } else {
-        if (tipo === 'terminado' || tipo === 'graduado') {
-            botonesFooter += `
-                <button class="btn-action" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarFinal('${al.folio}')">
-                    🎓 REENVIAR DIPLOMA FINAL
-                </button>
-            `;
-        } 
-        else if (al.validado === 'Sí') {
-            botonesFooter += `
-                <button class="btn-action" style="background:#f39c12; color:white; border:none; padding:12px; width:100%; margin-bottom:10px; font-weight:bold;" onclick="reenviarInscripcion('${al.folio}')">
-                    📄 REENVIAR CONSTANCIA INSCRIPCIÓN
-                </button>
-            `;
-        }
-        botonesFooter += `<button class="btn-primary" onclick="cerrarModal()">CERRAR</button>`;
-    }
 
-    document.getElementById('modal-footer').innerHTML = botonesFooter;
-    
-    // ESTA ES LA INSTRUCCIÓN VITAL QUE SE HABÍA BORRADO:
-    document.getElementById('modal-detalle').style.display = 'flex';
-}
- 
         async function procesarValidacion(folio, decision) {
             let motivoRechazo = "";
             if (decision === 'No') {
@@ -688,12 +766,10 @@ function abrirExpediente(folio, tipo) {
             } catch(e) { alert("Error"); btn.disabled = false; }
         }
 
-        // --- 🟢 SE ACTUALIZÓ ESTA FUNCIÓN ---
         async function obtenerDatosCatalogos() {
             const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres&t=${new Date().getTime()}`);
             const data = await res.json();
             
-            // Aquí agregué el onclick="alternarTaller(...)" al botón de la tabla
             document.getElementById('body-catalogos').innerHTML = data.map((item, idx) => `<tr><td><b>${item.id}</b></td><td>${item.nombre}</td><td>${item.impartido_por || '-'}</td><td><span class="status-pill ${item.estatus === 'ACTIVO' ? 'val-si' : 'val-no'}">${item.estatus}</span></td><td><button class="btn-action" onclick="alternarTaller('${item.estatus}', ${idx + 2})">Alternar</button></td></tr>`).join('');
 
             const talleresActivos = data.filter(t => t.estatus === 'ACTIVO');
@@ -709,14 +785,12 @@ function abrirExpediente(folio, tipo) {
             if (elStat) elStat.innerText = institucionesUnicas.size;
         }
 
-        // --- 🟢 NUEVA FUNCIÓN PARA COMUNICARSE CON GOOGLE APPS SCRIPT ---
         async function alternarTaller(estatusActual, filaExcel) {
             const nuevoEstatus = (estatusActual === 'ACTIVO') ? 'INACTIVO' : 'ACTIVO';
             
             if(!confirm(`¿Deseas cambiar el estatus del taller a ${nuevoEstatus}?`)) return;
 
             try {
-                // Enviamos la petición directa al Apps Script
                 await fetch(URL_APPS_SCRIPT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -727,7 +801,6 @@ function abrirExpediente(folio, tipo) {
                     })
                 });
                 
-                // Recargamos la tablita para que se vea el cambio
                 obtenerDatosCatalogos();
             } catch(e) {
                 alert("Hubo un error al intentar actualizar el taller.");
