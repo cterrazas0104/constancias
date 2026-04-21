@@ -355,14 +355,40 @@
             renderizarTablas();
         }
 
-        // --- 🟢 NUEVA LÓGICA DE RENDERIZADO Y ESTADÍSTICAS ---
+        // 🟢 NUEVA FUNCIÓN: LECTOR DE FECHAS LATINO (Blindado)
+        function procesarFechaFuerte(fechaStr) {
+            if (!fechaStr) return null;
+            
+            // Separar la parte de la fecha y la hora (si la trae)
+            const soloFecha = fechaStr.split(' ')[0]; 
+
+            // Formato Excel Latam: DD/MM/YYYY o DD-MM-YY
+            if (soloFecha.includes('/') || soloFecha.includes('-')) {
+                const separador = soloFecha.includes('/') ? '/' : '-';
+                const partes = soloFecha.split(separador);
+                
+                // Asegurarnos de que tenga 3 partes (Día, Mes, Año)
+                if (partes.length === 3) {
+                    let dia = partes[0];
+                    let mes = partes[1];
+                    let anio = partes[2];
+
+                    // Si el año viene en 2 dígitos (ej. 26), lo convertimos a 2026
+                    if (anio.length === 2) anio = "20" + anio;
+                    
+                    return `${anio}-${("0" + mes).slice(-2)}`; // Retorna formato puro YYYY-MM
+                }
+            }
+            return null;
+        }
+
+        // --- LÓGICA DE RENDERIZADO Y ESTADÍSTICAS ---
         function renderizarTablas() {
             const selectorMes = document.getElementById('filtro-mes-stats');
             if (selectorMes && selectorMes.options.length === 1) {
-                const mesesDisponibles = [...new Set(inscritosGlobal.map(al => {
-                    const fecha = new Date(al.fecha_registro);
-                    return isNaN(fecha) ? null : `${fecha.getFullYear()}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
-                }))].filter(m => m).sort().reverse();
+                
+                // Usamos el lector fuerte para obtener los meses reales
+                const mesesDisponibles = [...new Set(inscritosGlobal.map(al => procesarFechaFuerte(al.fecha_registro)))].filter(m => m).sort().reverse();
 
                 const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
                 
@@ -385,11 +411,9 @@
 
             let datosFiltrados = inscritosGlobal;
             if (mesSeleccionado !== "GLOBAL") {
-                datosFiltrados = inscritosGlobal.filter(al => {
-                    const fecha = new Date(al.fecha_registro);
-                    const mesFila = `${fecha.getFullYear()}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
-                    return mesFila === mesSeleccionado;
-                });
+                // Filtramos usando el lector fuerte
+                datosFiltrados = inscritosGlobal.filter(al => procesarFechaFuerte(al.fecha_registro) === mesSeleccionado);
+                
                 labelMes.innerText = document.getElementById('filtro-mes-stats').selectedOptions[0].text;
                 badgeMes.style.display = "block";
                 tituloTabla.innerText = `(${document.getElementById('filtro-mes-stats').selectedOptions[0].text})`;
@@ -473,8 +497,6 @@
 
             if(usuarioLogueado.rol === 'Administrador') obtenerDatosCatalogos();
         }
-
-        // --- FUNCIONES RESTANTES ---
 
         function dibujarGrafica(p, c, g, r) {
             const ctx = document.getElementById('canvasStats').getContext('2d');
