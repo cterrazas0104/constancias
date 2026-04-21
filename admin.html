@@ -403,63 +403,120 @@
             procesarEstadisticasMensuales();
         }
 
-        function procesarEstadisticasMensuales() {
+function procesarEstadisticasMensuales() {
             const mesSeleccionado = document.getElementById('filtro-mes-stats').value;
             const labelMes = document.getElementById('label-mes-activo');
             const badgeMes = document.getElementById('resumen-mes-badge');
             const tituloTabla = document.getElementById('titulo-tabla-mes');
 
-            let datosFiltrados = inscritosGlobal;
-            if (mesSeleccionado !== "GLOBAL") {
-                // Filtramos usando el lector fuerte
-                datosFiltrados = inscritosGlobal.filter(al => procesarFechaFuerte(al.fecha_registro) === mesSeleccionado);
-                
-                labelMes.innerText = document.getElementById('filtro-mes-stats').selectedOptions[0].text;
-                badgeMes.style.display = "block";
-                tituloTabla.innerText = `(${document.getElementById('filtro-mes-stats').selectedOptions[0].text})`;
-            } else {
+            let dataTotal = 0, dataPend = 0, dataCurs = 0, dataTerm = 0, dataRech = 0;
+            let setPersonasActivas = [];
+
+            if (mesSeleccionado === "GLOBAL") {
                 badgeMes.style.display = "none";
                 tituloTabla.innerText = "(Histórico Global)";
+                
+                const nuevas = inscritosGlobal.filter(al => !al.validado || al.validado === "");
+                const activos = inscritosGlobal.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
+                const terminados = inscritosGlobal.filter(al => parseInt(al.asistencias || 0) >= 8); 
+                const rechazados = inscritosGlobal.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
+
+                dataTotal = inscritosGlobal.length;
+                dataPend = nuevas.length;
+                dataCurs = activos.length;
+                dataTerm = terminados.filter(g => g.estatus === "Evaluación Recibida").length;
+                dataRech = rechazados.length;
+                setPersonasActivas = inscritosGlobal; // Todos
+
+            } else {
+                labelMes.innerText = document.getElementById('filtro-mes-stats').selectedOptions[0].text;
+                badgeMes.style.display = "block";
+                tituloTabla.innerText = `(Actividad en: ${document.getElementById('filtro-mes-stats').selectedOptions[0].text})`;
+
+                // LÓGICA DE REPORTE OPERATIVO (Por evento en el mes)
+                inscritosGlobal.forEach(al => {
+                    const mesReg = procesarFechaFuerte(al.fecha_registro);
+                    const mesTerm = procesarFechaFuerte(al.encuesta_fecha);
+                    let tomoClase = false;
+                    
+                    // ¿Tomó clase este mes? Revisamos sus pases de lista
+                    if (al.fechas_asis && al.fechas_asis.length > 0) {
+                        tomoClase = al.fechas_asis.some(f => procesarFechaFuerte(f) === mesSeleccionado);
+                    } else if (mesReg === mesSeleccionado && al.validado === "Sí" && parseInt(al.asistencias||0) < 8) {
+                        // Si se inscribió este mes, ya lo validaron y no tiene faltas, cuenta como activo
+                        tomoClase = true; 
+                    }
+
+                    let tuvoActividad = false;
+
+                    // 1. ¿Se inscribió este mes?
+                    if (mesReg === mesSeleccionado) {
+                        dataTotal++;
+                        tuvoActividad = true;
+                        if (!al.validado || al.validado === "") dataPend++;
+                        if ((al.validado || "").includes("No") || (al.validado || "").includes("Rechazado")) dataRech++;
+                    }
+
+                    // 2. ¿Se graduó este mes?
+                    if (mesTerm === mesSeleccionado) {
+                        dataTerm++;
+                        tuvoActividad = true;
+                    }
+
+                    // 3. ¿Estuvo sentado tomando clase este mes?
+                    if (tomoClase) {
+                        dataCurs++;
+                        tuvoActividad = true;
+                    }
+
+                    // Si hizo ALGO este mes, lo contamos para las métricas de Hombres/Mujeres
+                    if (tuvoActividad) {
+                        // Evitamos duplicados en la lista de activos
+                        if (!setPersonasActivas.find(p => p.folio === al.folio)) {
+                            setPersonasActivas.push(al);
+                        }
+                    }
+                });
             }
 
-            const nuevas = datosFiltrados.filter(al => !al.validado || al.validado === "");
-            const activos = datosFiltrados.filter(al => al.validado === "Sí" && parseInt(al.asistencias || 0) < 8);
-            const terminados = datosFiltrados.filter(al => parseInt(al.asistencias || 0) >= 8); 
-            const rechazados = datosFiltrados.filter(al => (al.validado || "").includes("No") || (al.validado || "").includes("Rechazado"));
+            // Pintar Tarjetas Principales
+            document.getElementById('stat-total').innerText = dataTotal;
+            document.getElementById('stat-pend').innerText = dataPend;
+            document.getElementById('stat-cursando').innerText = dataCurs;
+            document.getElementById('stat-term').innerText = dataTerm;
+            document.getElementById('stat-rech').innerText = dataRech;
+            document.getElementById('stat-hombres').innerText = setPersonasActivas.filter(al => al.sexo === 'H').length;
+            document.getElementById('stat-mujeres').innerText = setPersonasActivas.filter(al => al.sexo === 'M').length;
 
-            document.getElementById('stat-total').innerText = datosFiltrados.length;
-            document.getElementById('stat-pend').innerText = nuevas.length;
-            document.getElementById('stat-cursando').innerText = activos.length;
-            document.getElementById('stat-term').innerText = terminados.filter(g => g.estatus === "Evaluación Recibida").length;
-            document.getElementById('stat-rech').innerText = rechazados.length;
-            document.getElementById('stat-hombres').innerText = datosFiltrados.filter(al => al.sexo === 'H').length;
-            document.getElementById('stat-mujeres').innerText = datosFiltrados.filter(al => al.sexo === 'M').length;
-
-            dibujarGrafica(nuevas.length, activos.length, terminados.length, rechazados.length);
+            dibujarGrafica(dataPend, dataCurs, dataTerm, dataRech);
             
-            const talleresUnicos = [...new Set(datosFiltrados.map(al => al.taller))];
+            // Generar Tabla Desglose por Taller
+            const talleresUnicos = [...new Set(setPersonasActivas.map(al => al.taller))];
             document.getElementById('body-stats-taller').innerHTML = talleresUnicos.map(t => {
-                const porTaller = datosFiltrados.filter(al => al.taller === t);
-                const grads = porTaller.filter(al => parseInt(al.asistencias || 0) >= 8 && al.estatus === "Evaluación Recibida").length;
+                const porTaller = setPersonasActivas.filter(al => al.taller === t);
+                
+                let tInscritos = 0, tTerminados = 0;
+                if (mesSeleccionado === "GLOBAL") {
+                    tInscritos = porTaller.length;
+                    tTerminados = porTaller.filter(al => parseInt(al.asistencias || 0) >= 8 && al.estatus === "Evaluación Recibida").length;
+                } else {
+                    tInscritos = porTaller.filter(al => procesarFechaFuerte(al.fecha_registro) === mesSeleccionado).length;
+                    tTerminados = porTaller.filter(al => procesarFechaFuerte(al.encuesta_fecha) === mesSeleccionado).length;
+                }
+
                 const hombres = porTaller.filter(al => al.sexo === 'H').length;
                 const mujeres = porTaller.filter(al => al.sexo === 'M').length;
-                const porc = porTaller.length > 0 ? Math.round((grads / porTaller.length) * 100) : 0;
+                const porc = tInscritos > 0 ? Math.round((tTerminados / tInscritos) * 100) : (tTerminados > 0 ? 100 : 0);
                 
                 return `<tr>
                     <td>${t}</td>
-                    <td style="text-align:center"><b>${porTaller.length}</b></td>
+                    <td style="text-align:center"><b>${tInscritos}</b></td>
                     <td style="text-align:center; color:var(--man); font-weight:bold;">${hombres}</td>
                     <td style="text-align:center; color:var(--woman); font-weight:bold;">${mujeres}</td>
-                    <td style="text-align:center">${grads}</td>
+                    <td style="text-align:center">${tTerminados}</td>
                     <td style="text-align:center"><b>${porc}%</b></td>
                 </tr>`;
-            }).join('') || '<tr><td colspan="6" style="text-align:center">Sin datos en este periodo</td></tr>';
-
-            const talleresActivos = datosFiltrados.filter(t => t.estatus !== 'INACTIVO');
-            const institucionesUnicas = new Set();
-            talleresActivos.forEach(t => { if (t.impartido_por) institucionesUnicas.add(t.impartido_por.trim()); });
-            const elStat = document.getElementById('stat-inst');
-            if (elStat) elStat.innerText = institucionesUnicas.size;
+            }).join('') || '<tr><td colspan="6" style="text-align:center">Sin actividad en este periodo</td></tr>';
 
             renderizarTablasGestionAdmin(); 
         }
