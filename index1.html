@@ -304,7 +304,7 @@
             enviarFormulario();
         }
 
-        async function cargarTalleres() {
+async function cargarTalleres() {
             const select = document.getElementById('taller');
             try {
                 // 🟢 LEER TALLERES DIRECTO DE GOOGLE
@@ -321,22 +321,40 @@
                     select.appendChild(opt);
                 });
 
-                // 🚨 MAGIA: Si la CMER nos mandó el taller por URL, lo autoseleccionamos
+                // 🚨 Autoselección robusta a prueba de errores
                 if (tallerDesdeCmer) {
-                    const tallerBuscado = decodeURIComponent(tallerDesdeCmer);
-                    let optionExists = Array.from(select.options).some(opt => opt.value === tallerBuscado);
+                    // Limpiamos la cadena: quitamos espacios extra al inicio/final y pasamos a minúsculas
+                    const tallerBuscado = decodeURIComponent(tallerDesdeCmer).trim().toLowerCase();
                     
-                    if (optionExists) {
-                        select.value = tallerBuscado;
-                        select.style.pointerEvents = "none"; // Evita que le den clic para cambiarlo
-                        aplicarEstiloBloqueado(select);
-                        
-                        let labelTaller = select.previousElementSibling;
+                    // Buscamos si alguna opción coincide ignorando mayúsculas y espacios
+                    let opcionEncontrada = Array.from(select.options).find(opt => opt.value.trim().toLowerCase() === tallerBuscado);
+                    
+                    if (opcionEncontrada) {
+                        select.value = opcionEncontrada.value; // Selecciona el nombre exacto del sistema
+                    } else {
+                        // Si la CMER mandó un taller que no está en la lista exacta, lo forzamos a aparecer 
+                        // para que la experiencia no se rompa y el ciudadano pueda continuar.
+                        let optRezagada = document.createElement('option');
+                        optRezagada.value = decodeURIComponent(tallerDesdeCmer);
+                        optRezagada.textContent = decodeURIComponent(tallerDesdeCmer);
+                        select.appendChild(optRezagada);
+                        select.value = optRezagada.value;
+                    }
+
+                    // Bloqueamos el campo para que el ciudadano no lo cambie
+                    select.style.pointerEvents = "none"; 
+                    aplicarEstiloBloqueado(select);
+                    
+                    let labelTaller = select.previousElementSibling;
+                    if(!labelTaller.innerHTML.includes('Seleccionado desde CMER')) {
                         labelTaller.innerHTML += ` <span style="color:var(--secondary-blue); font-size:0.85em;">(Seleccionado desde CMER)</span>`;
                     }
                 }
 
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+                select.innerHTML = '<option value="">Error al cargar talleres. Intente recargar.</option>';
+            }
         }
 
         function manejarCanalizacion(valor) {
