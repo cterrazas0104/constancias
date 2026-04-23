@@ -192,9 +192,10 @@
     </div>
 
     <script>
-        // 🚀 URL DIRECTA A GOOGLE APPS SCRIPT (Reemplaza a Make)
+        // 🚀 URL DIRECTA A GOOGLE APPS SCRIPT
         const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby3HeIk2O6LsVlyYpHX1q5MckNU9_FYfqKKtShmSqUJ1Qpl5pKTAvCZ6vMqy0cY7IQ/exec'; 
         let estaEnviando = false;
+        let tallerDesdeCmer = null; // Guardará el taller si viene por URL
 
         // 
         // =================================================================
@@ -203,41 +204,48 @@
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Extraemos los datos que nos manda la CMER por la URL
+            // Extraemos TODOS los datos de la CMER
             const curpCmer = urlParams.get('curp');
-            const nombresCmer = urlParams.get('nombre'); // La llave en la URL es 'nombre'
+            const nombresCmer = urlParams.get('nombre'); 
             const paternoCmer = urlParams.get('paterno');
             const maternoCmer = urlParams.get('materno');
+            const correoCmer = urlParams.get('correo');
+            const telefonoCmer = urlParams.get('telefono');
+            tallerDesdeCmer = urlParams.get('taller'); 
 
-            // Si viene la CURP, significa que entró desde el portal oficial de la CMER
             if (curpCmer) {
                 const inputCurp = document.getElementById('curp');
                 const inputNombres = document.getElementById('nombre'); 
                 const inputPaterno = document.getElementById('paterno');
                 const inputMaterno = document.getElementById('materno');
+                const inputCorreo = document.getElementById('correo');
+                const inputTelefono = document.getElementById('telefono');
 
-                // Llenamos y bloqueamos (ReadOnly) para dar Certeza Jurídica
-                if (inputCurp) { 
-                    inputCurp.value = curpCmer.toUpperCase(); 
-                    inputCurp.readOnly = true; 
-                    inputCurp.style.backgroundColor = "#eef2ff"; 
-                    inputCurp.style.border = "2px solid var(--secondary-blue)";
-                }
-                if (inputNombres && nombresCmer) { inputNombres.value = nombresCmer.toUpperCase(); inputNombres.readOnly = true; inputNombres.style.backgroundColor = "#eef2ff"; }
-                if (inputPaterno && paternoCmer) { inputPaterno.value = paternoCmer.toUpperCase(); inputPaterno.readOnly = true; inputPaterno.style.backgroundColor = "#eef2ff"; }
-                if (inputMaterno && maternoCmer) { inputMaterno.value = maternoCmer.toUpperCase(); inputMaterno.readOnly = true; inputMaterno.style.backgroundColor = "#eef2ff"; }
+                // Llenamos y bloqueamos (ReadOnly)
+                if (inputCurp) { inputCurp.value = curpCmer.toUpperCase(); inputCurp.readOnly = true; aplicarEstiloBloqueado(inputCurp); }
+                if (inputNombres && nombresCmer) { inputNombres.value = nombresCmer.toUpperCase(); inputNombres.readOnly = true; aplicarEstiloBloqueado(inputNombres); }
+                if (inputPaterno && paternoCmer) { inputPaterno.value = paternoCmer.toUpperCase(); inputPaterno.readOnly = true; aplicarEstiloBloqueado(inputPaterno); }
+                if (inputMaterno && maternoCmer) { inputMaterno.value = maternoCmer.toUpperCase(); inputMaterno.readOnly = true; aplicarEstiloBloqueado(inputMaterno); }
+                if (inputCorreo && correoCmer) { inputCorreo.value = correoCmer.toLowerCase(); inputCorreo.readOnly = true; aplicarEstiloBloqueado(inputCorreo); }
+                if (inputTelefono && telefonoCmer) { inputTelefono.value = telefonoCmer; inputTelefono.readOnly = true; aplicarEstiloBloqueado(inputTelefono); }
 
-                // Insertamos una insignia visual para el ciudadano
+                // Insignia visual
                 const formHeader = document.getElementById('inscripcionFdh');
                 const badgeCMER = document.createElement('div');
-                badgeCMER.innerHTML = `<div style="background: #e6fcf5; color: #0ca678; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; font-weight: bold; border-left: 5px solid #00ad9f; text-align: center;">✅ Identidad validada vía RENAPO (Portal Único CMER)</div>`;
+                badgeCMER.innerHTML = `<div style="background: #e6fcf5; color: #0ca678; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; font-weight: bold; border-left: 5px solid #00ad9f; text-align: center;">✅ Identidad y datos validados desde el Portal Único CMER</div>`;
                 formHeader.insertBefore(badgeCMER, formHeader.firstChild);
             }
         });
+
+        function aplicarEstiloBloqueado(elemento) {
+            elemento.style.backgroundColor = "#eef2ff"; 
+            elemento.style.border = "2px solid var(--secondary-blue)";
+        }
         // 
         // =================================================================
-        //  FIN DE LA SECCIÓN MÓDULO DE INTEROPERABILIDAD CON CMER (Recepción de Parámetros URL)
+        // FIN DE MÓDULO DE INTEROPERABILIDAD CON CMER (Recepción de Parámetros URL)
         // =================================================================
+        
         // --- DATOS DE LOS TALLERES ---
         const INFO_TALLERES = [
             { nombre: "Conductas de riesgo de la vida familiar (El poder de la familia)", obj: "Brindar herramientas...", sede: "Centro Cultural Manuel Gómez Morín", temas: ["Conductas de riesgo", "Depresión", "Ansiedad", "Consumo de sustancias", "Autoestima", "Manejo de emociones"] },
@@ -303,16 +311,31 @@
                 const res = await fetch(`${URL_APPS_SCRIPT}?accion=listar_talleres`);
                 const data = await res.json();
                 
-                // Extraer solo los nombres de los talleres activos
                 const talleres = data.map(item => item.nombre).filter(t => t);
-                
                 select.innerHTML = '<option value="">Seleccione el taller...</option>';
+                
                 [...new Set(talleres)].forEach(nombre => {
                     let opt = document.createElement('option');
                     opt.value = nombre; 
                     opt.textContent = nombre;
                     select.appendChild(opt);
                 });
+
+                // 🚨 MAGIA: Si la CMER nos mandó el taller por URL, lo autoseleccionamos
+                if (tallerDesdeCmer) {
+                    const tallerBuscado = decodeURIComponent(tallerDesdeCmer);
+                    let optionExists = Array.from(select.options).some(opt => opt.value === tallerBuscado);
+                    
+                    if (optionExists) {
+                        select.value = tallerBuscado;
+                        select.style.pointerEvents = "none"; // Evita que le den clic para cambiarlo
+                        aplicarEstiloBloqueado(select);
+                        
+                        let labelTaller = select.previousElementSibling;
+                        labelTaller.innerHTML += ` <span style="color:var(--secondary-blue); font-size:0.85em;">(Seleccionado desde CMER)</span>`;
+                    }
+                }
+
             } catch (e) { console.error(e); }
         }
 
@@ -349,7 +372,7 @@
             const sexoExtraido = curpVal.length >= 11 ? curpVal.charAt(10) : "N/A";
 
             const datos = {
-                accion: 'nueva_inscripcion', // 🟢 LLAVE QUE ACTIVA EL SCRIPT EN GOOGLE
+                accion: 'nueva_inscripcion', 
                 correo_electronico: document.getElementById('correo').value.trim().toLowerCase(),
                 nombres: document.getElementById('nombre').value.trim().toUpperCase(),
                 paterno: document.getElementById('paterno').value.trim().toUpperCase(),
